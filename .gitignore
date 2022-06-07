@@ -1,0 +1,11 @@
+.bookkeeping
+.coverage
+dist
+.mypy_cache
+*.pyc
+__pycache__
+.pytest_cache
+.python-version
+src/measured.egg-info
+.tox
+.vscode
