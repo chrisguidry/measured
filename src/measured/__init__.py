@@ -1,4 +1,5 @@
-from typing import Dict, Iterable, List, Tuple
+from collections import defaultdict
+from typing import Dict, Iterable, List, Mapping, Set, Tuple
 
 __version__ = "0.0.1"
 
@@ -10,14 +11,13 @@ class Dimension:
     _skip_initialization_for: int = 0
 
     def __new__(cls, exponents: Tuple, **kwargs):
-        self = super().__new__(cls)
-
         key = tuple(exponents)
         if key in cls._known:
             known = cls._known[key]
             cls._skip_initialization_for = id(known)
             return known
 
+        self = super().__new__(cls)
         cls._known[key] = self
         return self
 
@@ -61,7 +61,7 @@ class Dimension:
 
     def __repr__(self) -> str:
         return (
-            "<measured.Dimension("
+            "<Dimension("
             f"exponents={self.exponents!r}, "
             f"name={self.name!r}, symbol={self.symbol!r}"
             ")>"
@@ -74,6 +74,7 @@ class Dimension:
         # may be compared, equated, added, or subtracted.
         if self is not other:
             return NotImplemented
+
         return self
 
     def __sub__(self, other: "Dimension") -> "Dimension":
@@ -83,6 +84,7 @@ class Dimension:
         # may be compared, equated, added, or subtracted.
         if self is not other:
             return NotImplemented
+
         return self
 
     def __mul__(self, other: "Dimension") -> "Dimension":
@@ -143,3 +145,143 @@ Crackle = Length / Time**5
 Pop = Length / Time**6
 
 Frequency = Number / Time
+
+
+class Unit:
+    _known: Dict[Tuple, "Unit"] = {}
+    _base: Set["Unit"] = set()
+
+    _skip_initialization_for: int = 0
+
+    def __new__(cls, factors: Mapping["Unit", int], *args, **kwargs):
+        if factors:
+            key = cls._factors_as_key(factors)
+            if key in cls._known:
+                known = cls._known[key]
+                cls._skip_initialization_for = id(known)
+                return known
+
+        self = super().__new__(cls)
+        factors = factors or {self: 1}
+        key = cls._factors_as_key(factors)
+        cls._known[key] = self
+        return self
+
+    def __init__(
+        self,
+        factors: Mapping["Unit", int],
+        dimension: Dimension,
+        name: str = None,
+        symbol: str = None,
+    ):
+        if self.__class__._skip_initialization_for == id(self):
+            self.__class__._skip_initialization_for = 0
+            return
+
+        self.factors = factors or {self: 1}
+        self.dimension = dimension
+        self.name = name
+        self.symbol = symbol
+
+    @classmethod
+    def _factors_as_key(cls, factors: Mapping["Unit", int]):
+        return tuple(sorted(factors.items(), key=lambda pair: id(pair[0])))
+
+    @classmethod
+    def base(cls) -> Iterable["Unit"]:
+        return list(cls._base)
+
+    @classmethod
+    def define(cls, dimension: Dimension, name: str, symbol: str) -> "Unit":
+        """Defines a new base unit"""
+        unit = cls({}, dimension, name, symbol)
+        cls._base.add(unit)
+        return unit
+
+    @classmethod
+    def derive(cls, unit: "Unit", name: str, symbol: str) -> "Unit":
+        """Registers a new named unit derived from other units"""
+        unit.name = name
+        unit.symbol = symbol
+        return unit
+
+    def __repr__(self) -> str:
+        return (
+            "<Unit("
+            f"dimension={self.dimension!r}, "
+            f"name={self.name!r}, symbol={self.symbol!r}"
+            ")>"
+        )
+
+    @classmethod
+    def _simplify(cls, factors: Mapping["Unit", int]) -> Mapping["Unit", int]:
+        simplified = {
+            unit: exponent
+            for unit, exponent in factors.items()
+            if unit is not One and exponent != 0
+        }
+        return simplified or {One: 1}
+
+    def __add__(self, other: "Unit") -> "Unit":
+        if self is not other:
+            return NotImplemented
+
+        return self
+
+    def __sub__(self, other: "Unit") -> "Unit":
+        if self is not other:
+            return NotImplemented
+
+        return self
+
+    def __mul__(self, other: "Unit") -> "Unit":
+        if not isinstance(other, Unit):
+            return NotImplemented
+
+        dimension = self.dimension * other.dimension
+
+        factors: Dict["Unit", int] = defaultdict(int, self.factors)
+        for unit, exponent in other.factors.items():
+            factors[unit] += exponent
+
+        return Unit(self._simplify(factors), dimension)
+
+    def __truediv__(self, other: "Unit") -> "Unit":
+        if not isinstance(other, Unit):
+            return NotImplemented
+
+        dimension = self.dimension / other.dimension
+
+        factors: Dict["Unit", int] = defaultdict(int, self.factors)
+        for unit, exponent in other.factors.items():
+            factors[unit] -= exponent
+
+        return Unit(self._simplify(factors), dimension)
+
+    def __pow__(self, power: int) -> "Unit":
+        if not isinstance(power, int):
+            return NotImplemented
+
+        dimension = self.dimension**power
+        factors = {unit: exponent * power for unit, exponent in self.factors.items()}
+
+        return Unit(self._simplify(factors), dimension)
+
+
+One = Unit.define(Number, name="one", symbol="1")
+
+# https://en.wikipedia.org/wiki/International_System_of_Units
+
+# https://en.wikipedia.org/wiki/SI_base_unit
+
+Meter = Unit.define(Length, name="meter", symbol="m")
+Second = Unit.define(Time, name="second", symbol="s")
+Gram = Unit.define(Mass, name="gram", symbol="g")
+Ampere = Unit.define(Current, name="ampere", symbol="A")
+Kelvin = Unit.define(Temperature, name="kelvin", symbol="K")
+Mole = Unit.define(AmountOfSubstance, name="mole", symbol="mol")
+Candela = Unit.define(LuminousIntensity, name="candela", symbol="cd")
+
+# https://en.wikipedia.org/wiki/SI_derived_unit
+
+Hertz = Unit.derive(One / Second, name="hertz", symbol="Hz")

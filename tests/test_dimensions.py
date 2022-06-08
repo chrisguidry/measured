@@ -112,7 +112,7 @@ def test_only_dimensional_division(dimension: Dimension):
 
 def test_repr(dimension: Dimension):
     r = repr(dimension)
-    assert r.startswith("<measured.Dimension(exponents=(0,")
+    assert r.startswith("<Dimension(exponents=(0,")
     assert dimension.name and dimension.name in r
     assert dimension.symbol and dimension.symbol in r
     assert r.endswith(")>")
