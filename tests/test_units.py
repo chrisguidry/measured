@@ -4,27 +4,20 @@ import pytest
 
 from measured import (
     AmountOfSubstance,
-    Ampere,
     Area,
-    Candela,
     Current,
     Frequency,
-    Gram,
-    Hertz,
-    Kelvin,
     Length,
     LuminousIntensity,
     Mass,
-    Meter,
-    Mole,
     Number,
     One,
-    Second,
     Temperature,
     Time,
     Unit,
     Volume,
 )
+from measured.si import Ampere, Candela, Gram, Hertz, Kelvin, Meter, Mole, Second
 
 
 def pytest_generate_tests(metafunc):

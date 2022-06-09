@@ -2,7 +2,8 @@
 
 import pytest
 
-from measured import Hertz, Meter, Quantity, Second
+from measured import Quantity
+from measured.si import Hertz, Meter, Second
 
 
 @pytest.mark.parametrize(

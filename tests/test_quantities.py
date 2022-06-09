@@ -2,7 +2,8 @@ from typing import Any
 
 import pytest
 
-from measured import Meter, Numeric, One, Second
+from measured import Numeric, One
+from measured.si import Meter, Second
 
 
 @pytest.mark.parametrize("value", [-2, 5, 0.1, -0.3, 2.5])

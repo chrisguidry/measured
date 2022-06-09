@@ -1,6 +1,7 @@
 import pytest
 
-from measured import Hertz, Meter, One, Quantity, Second
+from measured import One, Quantity
+from measured.si import Hertz, Meter, Second
 
 
 def pytest_generate_tests(metafunc):

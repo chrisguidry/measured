@@ -1,16 +1,8 @@
 import pytest
 
-from measured import (
-    Area,
-    Frequency,
-    Hertz,
-    Length,
-    Meter,
-    Number,
-    Second,
-    Volume,
-    superscript,
-)
+from measured import Area, Frequency, Length, Number, Volume
+from measured.formatting import superscript
+from measured.si import Hertz, Meter, Second
 
 
 @pytest.mark.parametrize(

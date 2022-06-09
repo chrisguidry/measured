@@ -1,22 +1,12 @@
 from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Mapping, Set, Tuple, Union, overload
 
+from .formatting import superscript
+
 __version__ = "0.0.1"
 
 NUMERIC_CLASSES = (int, float)
 Numeric = Union[int, float]
-
-SUPERSCRIPT_DIGITS = ["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"]
-SUPERSCRIPT_NEGATIVE = "⁻"
-
-
-def superscript(exponent: int) -> str:
-    if exponent == 1:
-        return ""
-
-    prefix = SUPERSCRIPT_NEGATIVE if exponent < 0 else ""
-    exponent = abs(exponent)
-    return prefix + "".join(SUPERSCRIPT_DIGITS[int(d)] for d in str(exponent))
 
 
 class Dimension:
@@ -95,45 +85,37 @@ class Dimension:
             or "?"
         )
 
+    # https://en.wikipedia.org/wiki/Dimensional_analysis#Dimensional_homogeneity
+    #
+    # Only commensurable quantities (physical quantities having the same dimension)
+    # may be compared, equated, added, or subtracted.
+
     def __add__(self, other: "Dimension") -> "Dimension":
-        # https://en.wikipedia.org/wiki/Dimensional_analysis#Dimensional_homogeneity
-        #
-        # Only commensurable quantities (physical quantities having the same dimension)
-        # may be compared, equated, added, or subtracted.
         if self is not other:
             return NotImplemented
 
         return self
 
     def __sub__(self, other: "Dimension") -> "Dimension":
-        # https://en.wikipedia.org/wiki/Dimensional_analysis#Dimensional_homogeneity
-        #
-        # Only commensurable quantities (physical quantities having the same dimension)
-        # may be compared, equated, added, or subtracted.
         if self is not other:
             return NotImplemented
 
         return self
 
+    # https://en.wikipedia.org/wiki/Dimensional_analysis#Dimensional_homogeneity
+    #
+    # The dimensions form an [abelian
+    # group](https://en.wikipedia.org/wiki/Abelian_group) under multiplication, so:
+    # One may take ratios of incommensurable quantities (quantities with different
+    # dimensions), and multiply or divide them.
+
     def __mul__(self, other: "Dimension") -> "Dimension":
-        # https://en.wikipedia.org/wiki/Dimensional_analysis#Dimensional_homogeneity
-        #
-        # The dimensions form an [abelian
-        # group](https://en.wikipedia.org/wiki/Abelian_group) under multiplication, so:
-        # One may take ratios of incommensurable quantities (quantities with different
-        # dimensions), and multiply or divide them.
         if not isinstance(other, Dimension):
             return NotImplemented
 
         return Dimension(tuple(s + o for s, o in zip(self.exponents, other.exponents)))
 
     def __truediv__(self, other: "Dimension") -> "Dimension":
-        # https://en.wikipedia.org/wiki/Dimensional_analysis#Dimensional_homogeneity
-        #
-        # The dimensions form an abelian group
-        # (https://en.wikipedia.org/wiki/Abelian_group) under multiplication, so: One
-        # may take ratios of incommensurable quantities (quantities with different
-        # dimensions), and multiply or divide them.
         if not isinstance(other, Dimension):
             return NotImplemented
 
@@ -146,33 +128,6 @@ class Dimension:
             return NotImplemented
 
         return Dimension(tuple([s * power for s in self.exponents]))
-
-
-# https://en.wikipedia.org/wiki/Dimensional_analysis#Definition
-#
-# time (T), length (L), mass (M), electric current (I),
-# absolute temperature (Θ), amount of substance (N) and luminous intensity (J).
-
-Number = Dimension.define(name="number", symbol="1")
-Length = Dimension.define(name="length", symbol="L")
-Time = Dimension.define(name="time", symbol="T")
-Mass = Dimension.define(name="mass", symbol="M")
-Current = Dimension.define(name="current", symbol="I")
-Temperature = Dimension.define(name="temperature", symbol="Θ")
-AmountOfSubstance = Dimension.define(name="amount of substance", symbol="N")
-LuminousIntensity = Dimension.define(name="luminous intensity", symbol="J")
-
-Area = Length * Length
-Volume = Area * Length
-
-Speed = Length / Time
-Acceleration = Length / Time**2
-Jerk = Length / Time**3
-Snap = Length / Time**4
-Crackle = Length / Time**5
-Pop = Length / Time**6
-
-Frequency = Number / Time
 
 
 class Unit:
@@ -318,25 +273,6 @@ class Unit:
         return Unit(self._simplify(factors), dimension)
 
 
-One = Unit.define(Number, name="one", symbol="1")
-
-# https://en.wikipedia.org/wiki/International_System_of_Units
-
-# https://en.wikipedia.org/wiki/SI_base_unit
-
-Meter = Unit.define(Length, name="meter", symbol="m")
-Second = Unit.define(Time, name="second", symbol="s")
-Gram = Unit.define(Mass, name="gram", symbol="g")
-Ampere = Unit.define(Current, name="ampere", symbol="A")
-Kelvin = Unit.define(Temperature, name="kelvin", symbol="K")
-Mole = Unit.define(AmountOfSubstance, name="mole", symbol="mol")
-Candela = Unit.define(LuminousIntensity, name="candela", symbol="cd")
-
-# https://en.wikipedia.org/wiki/SI_derived_unit
-
-Hertz = Unit.derive(One / Second, name="hertz", symbol="Hz")
-
-
 class Quantity:
     def __init__(self, magnitude: Numeric, unit: Unit):
         self.magnitude = magnitude
@@ -383,3 +319,39 @@ class Quantity:
             return False
 
         return self.magnitude == other.magnitude and self.unit == other.unit
+
+
+# https://en.wikipedia.org/wiki/Dimensional_analysis#Definition
+
+# Fundamental physical dimensions
+
+Number = Dimension.define(name="number", symbol="1")
+Length = Dimension.define(name="length", symbol="L")
+Time = Dimension.define(name="time", symbol="T")
+Mass = Dimension.define(name="mass", symbol="M")
+Current = Dimension.define(name="current", symbol="I")
+Temperature = Dimension.define(name="temperature", symbol="Θ")
+AmountOfSubstance = Dimension.define(name="amount of substance", symbol="N")
+LuminousIntensity = Dimension.define(name="luminous intensity", symbol="J")
+
+
+# Derived dimensions
+
+Area = Length * Length
+Volume = Area * Length
+
+# https://en.wikipedia.org/wiki/Fourth,_fifth,_and_sixth_derivatives_of_position
+
+Speed = Length / Time
+Acceleration = Length / Time**2
+Jerk = Length / Time**3
+Snap = Length / Time**4
+Crackle = Length / Time**5
+Pop = Length / Time**6
+
+Frequency = Number / Time
+
+
+# Fundamental units
+
+One = Unit.define(Number, name="one", symbol="1")
