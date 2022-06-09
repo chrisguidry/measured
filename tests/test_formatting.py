@@ -1,0 +1,55 @@
+import pytest
+
+from measured import (
+    Area,
+    Frequency,
+    Hertz,
+    Length,
+    Meter,
+    Number,
+    Second,
+    Volume,
+    superscript,
+)
+
+
+@pytest.mark.parametrize(
+    "exponent, superscripted",
+    [
+        (-1234567890, "⁻¹²³⁴⁵⁶⁷⁸⁹⁰"),
+        (-123, "⁻¹²³"),
+        (-23, "⁻²³"),
+        (-3, "⁻³"),
+        (-1, "⁻¹"),
+        (0, "⁰"),
+        (1, ""),
+        (2, "²"),
+        (23, "²³"),
+        (345, "³⁴⁵"),
+        (1234567890, "¹²³⁴⁵⁶⁷⁸⁹⁰"),
+    ],
+)
+def test_superscripts(exponent: int, superscripted: str):
+    assert superscript(exponent) == superscripted
+
+
+def test_formatting_dimensions():
+    assert str(Number) == "1"
+    assert str(Length) == "L"
+    assert str(Area) == "L²"
+    assert str(Volume) == "L³"
+    assert str(Frequency) == "T⁻¹"
+
+
+def test_formatting_units():
+    assert str(Meter) == "m"
+    assert str(Meter**2) == "m²"
+    assert str(Meter**3) == "m³"
+    assert str(Meter**3 / Second**2) == "m³s⁻²"
+    assert str(Hertz) == "Hz"
+    assert str(Hertz**2) == "s⁻²"
+
+
+def test_formatting_quantities():
+    assert str(5 * Meter) == "5 m"
+    assert str(5.1 * Meter**2) == "5.1 m²"

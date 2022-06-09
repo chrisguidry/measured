@@ -6,6 +6,18 @@ __version__ = "0.0.1"
 NUMERIC_CLASSES = (int, float)
 Numeric = Union[int, float]
 
+SUPERSCRIPT_DIGITS = ["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"]
+SUPERSCRIPT_NEGATIVE = "⁻"
+
+
+def superscript(exponent: int) -> str:
+    if exponent == 1:
+        return ""
+
+    prefix = SUPERSCRIPT_NEGATIVE if exponent < 0 else ""
+    exponent = abs(exponent)
+    return prefix + "".join(SUPERSCRIPT_DIGITS[int(d)] for d in str(exponent))
+
 
 class Dimension:
     _known: Dict[Tuple, "Dimension"] = {}
@@ -68,6 +80,19 @@ class Dimension:
             f"exponents={self.exponents!r}, "
             f"name={self.name!r}, symbol={self.symbol!r}"
             ")>"
+        )
+
+    def __str__(self) -> str:
+        if self.symbol:
+            return self.symbol
+
+        return (
+            "".join(
+                f"{dimension.symbol}{superscript(self.exponents[i])}"
+                for i, dimension in enumerate(self._fundamental)
+                if self.exponents[i] != 0
+            )
+            or "?"
         )
 
     def __add__(self, other: "Dimension") -> "Dimension":
@@ -216,6 +241,15 @@ class Unit:
             ")>"
         )
 
+    def __str__(self) -> str:
+        if self.symbol:
+            return self.symbol
+
+        return "".join(
+            f"{unit.symbol}{superscript(exponent)}"
+            for unit, exponent in self.factors.items()
+        )
+
     @classmethod
     def _simplify(cls, factors: Mapping["Unit", int]) -> Mapping["Unit", int]:
         simplified = {
@@ -310,6 +344,9 @@ class Quantity:
 
     def __repr__(self) -> str:
         return f"<Quantity(magnitude={self.magnitude!r}, unit={self.unit!r})>"
+
+    def __str__(self) -> str:
+        return f"{self.magnitude} {self.unit}"
 
     def __add__(self, other: "Quantity") -> "Quantity":
         return Quantity(self.magnitude + other.magnitude, self.unit + other.unit)

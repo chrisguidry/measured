@@ -193,39 +193,3 @@ def test_candela():
     assert Candela.dimension is LuminousIntensity
     assert Candela.name == "candela"
     assert Candela.symbol == "cd"
-
-
-@pytest.mark.xfail
-@pytest.mark.parametrize(
-    "unit, name",
-    [
-        (Meter**2, "meter²"),
-        (Meter**3, "meter³"),
-        (Meter**4, "meter⁴"),
-        (Meter**5, "meter⁵"),
-        (Meter**6, "meter⁶"),
-        (Meter**7, "meter⁷"),
-        (Meter**8, "meter⁸"),
-        (Meter**9, "meter⁹"),
-    ],
-)
-def test_derived_name(unit: Unit, name: str):
-    assert unit.name == name
-
-
-@pytest.mark.xfail
-@pytest.mark.parametrize(
-    "unit, symbol",
-    [
-        (Meter**2, "m²"),
-        (Meter**3, "m³"),
-        (Meter**4, "m⁴"),
-        (Meter**5, "m⁵"),
-        (Meter**6, "m⁶"),
-        (Meter**7, "m⁷"),
-        (Meter**8, "m⁸"),
-        (Meter**9, "m⁹"),
-    ],
-)
-def test_derived_symbol(unit: Unit, symbol: str):
-    assert unit.symbol == symbol
