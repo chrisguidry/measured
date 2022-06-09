@@ -85,12 +85,6 @@ def test_abelian_inverse(identity: Unit, a: Unit):
 
 
 def test_abelian_commutativity(a: Unit, b: Unit):
-    print("a =", a)
-    print("b =", b)
-    print("a*b =", a * b)
-    print("a*b =", (a * b).factors)
-    print("b*a =", b * a)
-    print("b*a =", (b * a).factors)
     assert a * b == b * a
 
 

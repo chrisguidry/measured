@@ -1,7 +1,10 @@
 from collections import defaultdict
-from typing import Dict, Iterable, List, Mapping, Set, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Set, Tuple, Union, overload
 
 __version__ = "0.0.1"
+
+NUMERIC_CLASSES = (int, float)
+Numeric = Union[int, float]
 
 
 class Dimension:
@@ -234,7 +237,18 @@ class Unit:
 
         return self
 
+    @overload
     def __mul__(self, other: "Unit") -> "Unit":
+        ...  # pragma: no cover
+
+    @overload
+    def __mul__(self, other: Numeric) -> "Quantity":
+        ...  # pragma: no cover
+
+    def __mul__(self, other: Union["Unit", Numeric]) -> Union["Unit", "Quantity"]:
+        if isinstance(other, NUMERIC_CLASSES):
+            return Quantity(other, self)
+
         if not isinstance(other, Unit):
             return NotImplemented
 
@@ -245,6 +259,8 @@ class Unit:
             factors[unit] += exponent
 
         return Unit(self._simplify(factors), dimension)
+
+    __rmul__ = __mul__
 
     def __truediv__(self, other: "Unit") -> "Unit":
         if not isinstance(other, Unit):
@@ -285,3 +301,48 @@ Candela = Unit.define(LuminousIntensity, name="candela", symbol="cd")
 # https://en.wikipedia.org/wiki/SI_derived_unit
 
 Hertz = Unit.derive(One / Second, name="hertz", symbol="Hz")
+
+
+class Quantity:
+    def __init__(self, magnitude: Numeric, unit: Unit):
+        self.magnitude = magnitude
+        self.unit = unit
+
+    def __repr__(self) -> str:
+        return f"<Quantity(magnitude={self.magnitude!r}, unit={self.unit!r})>"
+
+    def __add__(self, other: "Quantity") -> "Quantity":
+        return Quantity(self.magnitude + other.magnitude, self.unit + other.unit)
+
+    def __sub__(self, other: "Quantity") -> "Quantity":
+        return Quantity(self.magnitude - other.magnitude, self.unit - other.unit)
+
+    def __mul__(self, other: Union["Quantity", "Unit"]) -> "Quantity":
+        if isinstance(other, Unit):
+            return Quantity(self.magnitude, self.unit * other)
+
+        return Quantity(self.magnitude * other.magnitude, self.unit * other.unit)
+
+    def __truediv__(self, other: Union["Quantity", "Unit"]) -> "Quantity":
+        if isinstance(other, Unit):
+            return Quantity(self.magnitude, self.unit / other)
+
+        return Quantity(self.magnitude / other.magnitude, self.unit / other.unit)
+
+    def __pow__(self, power: int) -> "Quantity":
+        return Quantity(self.magnitude**power, self.unit**power)
+
+    def __neg__(self) -> "Quantity":
+        return Quantity(-self.magnitude, self.unit)
+
+    def __pos__(self) -> "Quantity":
+        return Quantity(+self.magnitude, self.unit)
+
+    def __abs__(self) -> "Quantity":
+        return Quantity(abs(self.magnitude), self.unit)
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Quantity):
+            return False
+
+        return self.magnitude == other.magnitude and self.unit == other.unit
