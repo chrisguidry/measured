@@ -1,5 +1,19 @@
 from collections import defaultdict
-from typing import Any, Dict, Iterable, List, Mapping, Set, Tuple, Union, overload
+from functools import total_ordering
+from math import log
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+    overload,
+)
 
 from .formatting import superscript
 
@@ -7,15 +21,20 @@ __version__ = "0.0.1"
 
 NUMERIC_CLASSES = (int, float)
 Numeric = Union[int, float]
+PrefixExponent = Union[int, float]
 
 
 class Dimension:
-    _known: Dict[Tuple, "Dimension"] = {}
-    _fundamental: List["Dimension"] = []
+    _known: ClassVar[Dict[Tuple[int, ...], "Dimension"]] = {}
+    _fundamental: ClassVar[List["Dimension"]] = []
 
-    _skip_initialization_for: int = 0
+    _skip_initialization_for: ClassVar[int] = 0
 
-    def __new__(cls, exponents: Tuple, **kwargs):
+    exponents: Tuple[int, ...]
+    name: Optional[str]
+    symbol: Optional[str]
+
+    def __new__(cls, exponents: Tuple[int, ...], **kwargs):
         key = tuple(exponents)
         if key in cls._known:
             known = cls._known[key]
@@ -26,7 +45,12 @@ class Dimension:
         cls._known[key] = self
         return self
 
-    def __init__(self, exponents: Tuple, name: str = None, symbol: str = None):
+    def __init__(
+        self,
+        exponents: Tuple[int, ...],
+        name: Optional[str] = None,
+        symbol: Optional[str] = None,
+    ):
         if self.__class__._skip_initialization_for == id(self):
             self.__class__._skip_initialization_for = 0
             return
@@ -131,12 +155,17 @@ class Dimension:
 
 
 class Prefix:
-    _by_base_and_exponent: Dict[Tuple[int, int], "Prefix"] = {}
-    _known: Set["Prefix"] = set()
+    _by_base_and_exponent: ClassVar[Dict[Tuple[int, PrefixExponent], "Prefix"]] = {}
+    _known: ClassVar[Set["Prefix"]] = set()
 
-    _skip_initialization_for: int = 0
+    _skip_initialization_for: ClassVar[int] = 0
 
-    def __new__(cls, base: int, exponent: int, **kwargs):
+    base: int
+    exponent: PrefixExponent
+    name: Optional[str]
+    symbol: Optional[str]
+
+    def __new__(cls, base: int, exponent: PrefixExponent, **kwargs):
         key = (base, exponent)
         if key in cls._by_base_and_exponent:
             known = cls._by_base_and_exponent[key]
@@ -148,7 +177,9 @@ class Prefix:
         cls._known.add(self)
         return self
 
-    def __init__(self, base: int, exponent: int, name: str = None, symbol: str = None):
+    def __init__(
+        self, base: int, exponent: PrefixExponent, name: str = None, symbol: str = None
+    ):
         if self.__class__._skip_initialization_for == id(self):
             self.__class__._skip_initialization_for = 0
             return
@@ -162,9 +193,11 @@ class Prefix:
     def identity(cls) -> "Prefix":
         return Prefix(0, 0)
 
-    @property
-    def magnitude(self) -> Numeric:
-        return self.base**self.exponent
+    def quantify(self) -> "Quantity":
+        return Quantity(self.base**self.exponent, One)
+
+    def __repr__(self) -> str:
+        return f"<Prefix(base={self.base!r}, exponent={self.exponent!r}>"
 
     def __str__(self) -> str:
         if self.symbol:
@@ -187,10 +220,13 @@ class Prefix:
                 return self
             elif self.base == 0:
                 return other
-            elif other.base != self.base:
-                return NotImplemented
+            elif other.base == self.base:
+                return Prefix(self.base, self.exponent + other.exponent)
 
-            return Prefix(self.base, self.exponent + other.exponent)
+            base, exponent = self.base, self.exponent
+            exponent += other.exponent * (log(other.base) / log(self.base))
+
+            return Prefix(base, exponent)
 
         if isinstance(other, Unit):
             return other.scale(self)
@@ -217,11 +253,16 @@ class Prefix:
 
 
 class Unit:
-    _by_factors: Dict[Tuple, "Unit"] = {}
-    _base: Set["Unit"] = set()
-    _known: Set["Unit"] = set()
+    _by_factors: ClassVar[Dict[Tuple, "Unit"]] = {}
+    _base: ClassVar[Set["Unit"]] = set()
+    _known: ClassVar[Set["Unit"]] = set()
 
     _skip_initialization_for: int = 0
+
+    prefix: Prefix
+    factors: Mapping["Unit", int]
+    name: Optional[str]
+    symbol: Optional[str]
 
     def __new__(
         cls,
@@ -298,15 +339,15 @@ class Unit:
         return self.__class__(self.prefix * prefix, self.factors, self.dimension)
 
     def quantify(self) -> "Quantity":
-        return Quantity(
-            self.prefix.magnitude,
-            Unit(Prefix.identity(), self.factors, self.dimension),
+        return self.prefix.quantify() * Unit(
+            Prefix.identity(), self.factors, self.dimension
         )
 
     def __repr__(self) -> str:
         return (
             "<Unit("
             f"dimension={self.dimension!r}, "
+            f"prefix={self.prefix!r}, "
             f"name={self.name!r}, symbol={self.symbol!r}"
             ")>"
         )
@@ -395,6 +436,7 @@ class Unit:
         return Unit(prefix, factors, dimension)
 
 
+@total_ordering
 class Quantity:
     def __init__(self, magnitude: Numeric, unit: Unit):
         self.magnitude = magnitude
@@ -441,12 +483,48 @@ class Quantity:
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Quantity):
-            return False
+            return NotImplemented
+
+        if self.unit.dimension != other.unit.dimension:
+            return NotImplemented
 
         this = self.in_base_units()
         other = other.in_base_units()
 
         return this.magnitude == other.magnitude and this.unit == other.unit
+
+    def __lt__(self, other: Any) -> bool:
+        if not isinstance(other, Quantity):
+            return NotImplemented
+
+        if self.unit.dimension != other.unit.dimension:
+            return NotImplemented
+
+        this = self.in_base_units()
+        other = other.in_base_units()
+
+        if this.unit != other.unit:
+            return NotImplemented
+
+        return this.magnitude < other.magnitude
+
+    def approximates(self, other: "Quantity", within: Numeric = 1e-9) -> bool:
+        if self == other:
+            return True
+
+        if self.unit.dimension != other.unit.dimension:
+            return False
+
+        this = self.in_base_units()
+        other = other.in_base_units()
+
+        if this.unit != other.unit:
+            return False
+
+        difference = this - other
+        tolerance = Quantity(within, this.unit)
+
+        return abs(difference) <= tolerance
 
 
 # https://en.wikipedia.org/wiki/Dimensional_analysis#Definition
