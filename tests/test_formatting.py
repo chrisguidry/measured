@@ -1,8 +1,8 @@
 import pytest
 
-from measured import Area, Frequency, Length, Number, Volume
+from measured import Area, Frequency, Length, Number, Prefix, Volume
 from measured.formatting import superscript
-from measured.si import Hertz, Meter, Second
+from measured.si import Hertz, Kilo, Meter, Second
 
 
 @pytest.mark.parametrize(
@@ -45,3 +45,19 @@ def test_formatting_units():
 def test_formatting_quantities():
     assert str(5 * Meter) == "5 m"
     assert str(5.1 * Meter**2) == "5.1 m²"
+
+
+def test_formatting_prefixes():
+    assert str(5 * (Kilo * Meter)) == "5 km"
+    assert str(5.1 * (Kilo * Meter**2) / Second) == "5.1 km²s⁻¹"
+
+
+def test_formatting_prefixes_simplifies():
+    # This is a little surprising, but what's happening here is that
+    # 5 meter per kilosecond is getting reduced to 5 millimeter per second
+    assert str((5 * Meter) / (Kilo * Second)) == "5 mms⁻¹"
+
+
+def test_do_the_best_we_can_with_odd_prefixes():
+    kilo_plus_one = Prefix(10, 4)
+    assert str(5 * (kilo_plus_one * Meter)) == "5 10⁴m"

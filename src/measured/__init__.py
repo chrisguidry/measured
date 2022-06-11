@@ -130,28 +130,123 @@ class Dimension:
         return Dimension(tuple([s * power for s in self.exponents]))
 
 
-class Unit:
-    _known: Dict[Tuple, "Unit"] = {}
-    _base: Set["Unit"] = set()
+class Prefix:
+    _by_base_and_exponent: Dict[Tuple[int, int], "Prefix"] = {}
+    _known: Set["Prefix"] = set()
 
     _skip_initialization_for: int = 0
 
-    def __new__(cls, factors: Mapping["Unit", int], *args, **kwargs):
+    def __new__(cls, base: int, exponent: int, **kwargs):
+        key = (base, exponent)
+        if key in cls._by_base_and_exponent:
+            known = cls._by_base_and_exponent[key]
+            cls._skip_initialization_for = id(known)
+            return known
+
+        self = super().__new__(cls)
+        cls._by_base_and_exponent[key] = self
+        cls._known.add(self)
+        return self
+
+    def __init__(self, base: int, exponent: int, name: str = None, symbol: str = None):
+        if self.__class__._skip_initialization_for == id(self):
+            self.__class__._skip_initialization_for = 0
+            return
+
+        self.base = base
+        self.exponent = exponent
+        self.name = name
+        self.symbol = symbol
+
+    @classmethod
+    def identity(cls) -> "Prefix":
+        return Prefix(0, 0)
+
+    @property
+    def magnitude(self) -> Numeric:
+        return self.base**self.exponent
+
+    def __str__(self) -> str:
+        if self.symbol:
+            return self.symbol
+        if self.exponent == 0:
+            return ""
+        return f"{self.base}{superscript(self.exponent)}"
+
+    @overload
+    def __mul__(self, other: "Prefix") -> "Prefix":
+        ...  # pragma: no cover
+
+    @overload
+    def __mul__(self, other: "Unit") -> "Unit":
+        ...  # pragma: no cover
+
+    def __mul__(self, other: Union["Prefix", "Unit"]) -> Union["Prefix", "Unit"]:
+        if isinstance(other, Prefix):
+            if other.base == 0:
+                return self
+            elif self.base == 0:
+                return other
+            elif other.base != self.base:
+                return NotImplemented
+
+            return Prefix(self.base, self.exponent + other.exponent)
+
+        if isinstance(other, Unit):
+            return other.scale(self)
+
+        return NotImplemented
+
+    __rmul__ = __mul__
+
+    def __truediv__(self, other: "Prefix") -> "Prefix":
+        if not isinstance(other, Prefix):
+            return NotImplemented
+
+        if other.base == 0:
+            return self
+        elif self.base == 0:
+            return Prefix(other.base, -other.exponent)
+        elif other.base != self.base:
+            return NotImplemented
+
+        return Prefix(self.base, self.exponent - other.exponent)
+
+    def __pow__(self, power: int) -> "Prefix":
+        return Prefix(self.base, self.exponent * power)
+
+
+class Unit:
+    _by_factors: Dict[Tuple, "Unit"] = {}
+    _base: Set["Unit"] = set()
+    _known: Set["Unit"] = set()
+
+    _skip_initialization_for: int = 0
+
+    def __new__(
+        cls,
+        prefix: Prefix,
+        factors: Mapping["Unit", int],
+        *args,
+        **kwargs,
+    ):
         if factors:
-            key = cls._factors_as_key(factors)
-            if key in cls._known:
-                known = cls._known[key]
+            key = cls._build_key(prefix, factors)
+            if key in cls._by_factors:
+                known = cls._by_factors[key]
                 cls._skip_initialization_for = id(known)
                 return known
 
         self = super().__new__(cls)
         factors = factors or {self: 1}
-        key = cls._factors_as_key(factors)
-        cls._known[key] = self
+        key = cls._build_key(prefix, factors)
+        cls._by_factors[key] = self
+        cls._known.add(self)
         return self
 
     def __init__(
         self,
+        prefix: Prefix,
         factors: Mapping["Unit", int],
         dimension: Dimension,
         name: str = None,
@@ -161,14 +256,19 @@ class Unit:
             self.__class__._skip_initialization_for = 0
             return
 
+        self.prefix = prefix
         self.factors = factors or {self: 1}
         self.dimension = dimension
         self.name = name
         self.symbol = symbol
+        self.names = [name]
+        self.symbols = [symbol]
 
     @classmethod
-    def _factors_as_key(cls, factors: Mapping["Unit", int]):
-        return tuple(sorted(factors.items(), key=lambda pair: id(pair[0])))
+    def _build_key(cls, prefix: Prefix, factors: Mapping["Unit", int]):
+        prefix_key = (prefix,)
+        factor_key = tuple(sorted(factors.items(), key=lambda pair: id(pair[0])))
+        return prefix_key + factor_key
 
     @classmethod
     def base(cls) -> Iterable["Unit"]:
@@ -177,16 +277,31 @@ class Unit:
     @classmethod
     def define(cls, dimension: Dimension, name: str, symbol: str) -> "Unit":
         """Defines a new base unit"""
-        unit = cls({}, dimension, name, symbol)
+        unit = cls(Prefix.identity(), {}, dimension, name, symbol)
         cls._base.add(unit)
         return unit
 
     @classmethod
     def derive(cls, unit: "Unit", name: str, symbol: str) -> "Unit":
         """Registers a new named unit derived from other units"""
+        if unit.name:
+            unit.names.append(name)
+            unit.symbols.append(symbol)
+            return unit
+
         unit.name = name
         unit.symbol = symbol
         return unit
+
+    def scale(self, prefix: Prefix) -> "Unit":
+        """Given a Prefix, creates a new unit scaled by that Prefix"""
+        return self.__class__(self.prefix * prefix, self.factors, self.dimension)
+
+    def quantify(self) -> "Quantity":
+        return Quantity(
+            self.prefix.magnitude,
+            Unit(Prefix.identity(), self.factors, self.dimension),
+        )
 
     def __repr__(self) -> str:
         return (
@@ -200,13 +315,13 @@ class Unit:
         if self.symbol:
             return self.symbol
 
-        return "".join(
-            f"{unit.symbol}{superscript(exponent)}"
+        return str(self.prefix) + "".join(
+            f"{unit.prefix}{unit.symbol}{superscript(exponent)}"
             for unit, exponent in self.factors.items()
         )
 
     @classmethod
-    def _simplify(cls, factors: Mapping["Unit", int]) -> Mapping["Unit", int]:
+    def _simplify(cls, factors: Mapping["Unit", int]) -> Dict["Unit", int]:
         simplified = {
             unit: exponent
             for unit, exponent in factors.items()
@@ -242,12 +357,14 @@ class Unit:
             return NotImplemented
 
         dimension = self.dimension * other.dimension
+        prefix = self.prefix * other.prefix
 
         factors: Dict["Unit", int] = defaultdict(int, self.factors)
         for unit, exponent in other.factors.items():
             factors[unit] += exponent
+        factors = self._simplify(factors)
 
-        return Unit(self._simplify(factors), dimension)
+        return Unit(prefix, factors, dimension)
 
     __rmul__ = __mul__
 
@@ -256,27 +373,35 @@ class Unit:
             return NotImplemented
 
         dimension = self.dimension / other.dimension
+        prefix = self.prefix / other.prefix
 
         factors: Dict["Unit", int] = defaultdict(int, self.factors)
         for unit, exponent in other.factors.items():
             factors[unit] -= exponent
+        factors = self._simplify(factors)
 
-        return Unit(self._simplify(factors), dimension)
+        return Unit(prefix, factors, dimension)
 
     def __pow__(self, power: int) -> "Unit":
         if not isinstance(power, int):
             return NotImplemented
 
         dimension = self.dimension**power
-        factors = {unit: exponent * power for unit, exponent in self.factors.items()}
+        prefix = self.prefix**power
 
-        return Unit(self._simplify(factors), dimension)
+        factors = self._simplify(
+            {unit: exponent * power for unit, exponent in self.factors.items()}
+        )
+        return Unit(prefix, factors, dimension)
 
 
 class Quantity:
     def __init__(self, magnitude: Numeric, unit: Unit):
         self.magnitude = magnitude
         self.unit = unit
+
+    def in_base_units(self) -> "Quantity":
+        return (self.magnitude * One) * self.unit.quantify()
 
     def __repr__(self) -> str:
         return f"<Quantity(magnitude={self.magnitude!r}, unit={self.unit!r})>"
@@ -318,7 +443,10 @@ class Quantity:
         if not isinstance(other, Quantity):
             return False
 
-        return self.magnitude == other.magnitude and self.unit == other.unit
+        this = self.in_base_units()
+        other = other.in_base_units()
+
+        return this.magnitude == other.magnitude and this.unit == other.unit
 
 
 # https://en.wikipedia.org/wiki/Dimensional_analysis#Definition
@@ -333,12 +461,16 @@ Current = Dimension.define(name="current", symbol="I")
 Temperature = Dimension.define(name="temperature", symbol="Θ")
 AmountOfSubstance = Dimension.define(name="amount of substance", symbol="N")
 LuminousIntensity = Dimension.define(name="luminous intensity", symbol="J")
+Information = Dimension.define(name="information", symbol="B")  # TODO
 
 
 # Derived dimensions
 
 Area = Length * Length
 Volume = Area * Length
+
+Angle = Length / Length
+SolidAngle = Area / Area
 
 # https://en.wikipedia.org/wiki/Fourth,_fifth,_and_sixth_derivatives_of_position
 
@@ -350,6 +482,28 @@ Crackle = Length / Time**5
 Pop = Length / Time**6
 
 Frequency = Number / Time
+
+# https://en.wikipedia.org/wiki/Newton%27s_laws_of_motion#Second
+
+Force = Mass * Acceleration
+Energy = Length * Force
+Power = Energy / Time
+
+Charge = Time * Current
+Potential = Power / Charge
+Capacitance = Charge / Potential
+Resistance = Potential / Current
+Conductance = Current / Potential
+Inductance = Potential * Time / Current
+
+MagneticFlux = Power / Current
+MagneticInduction = Potential * Time / Area
+
+Illuminance = LuminousIntensity / Area
+
+RadioactiveDose = Power / Mass
+
+CatalyticActivity = AmountOfSubstance / Time
 
 
 # Fundamental units
