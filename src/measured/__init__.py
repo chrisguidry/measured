@@ -17,7 +17,7 @@ from typing import (
 
 from .formatting import superscript
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 NUMERIC_CLASSES = (int, float)
 Numeric = Union[int, float]
