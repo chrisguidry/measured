@@ -13,6 +13,24 @@ def test_constructing_quantities_by_multiplying_units(value: Numeric):
     assert value * Meter / Second == value * (Meter / Second)
 
 
+@pytest.mark.parametrize("value", ["nope", b"nah"])
+def test_construction_by_multiplication_only_with_number_types(value: Any):
+    with pytest.raises(TypeError):
+        Meter * value
+
+    with pytest.raises(TypeError):
+        value * Meter
+
+
+@pytest.mark.parametrize("value", ["nope", b"nah"])
+def test_construction_by_division_only_with_number_types(value: Any):
+    with pytest.raises(TypeError):
+        Meter / value
+
+    with pytest.raises(TypeError):
+        value / Meter
+
+
 def test_equality_only_with_quantities():
     assert 5 * One != 5
     assert 5 * Meter != 5
@@ -23,22 +41,45 @@ def test_equality_only_in_same_dimension():
     assert 5 * Meter != 5 * Second
 
 
-@pytest.mark.parametrize("value", ["nope", b"nah"])
-def test_multiplication_only_with_number_types(value: Any):
+def test_addition_only_with_quantities():
     with pytest.raises(TypeError):
-        Meter * value
+        (5 * Meter) + 10
 
     with pytest.raises(TypeError):
-        value * Meter
+        10 + (5 * Meter)
 
 
-@pytest.mark.parametrize("value", ["nope", b"nah"])
-def test_division_only_with_number_types(value: Any):
+def test_subtraction_only_with_quantities():
     with pytest.raises(TypeError):
-        Meter / value
+        (5 * Meter) - 10
 
     with pytest.raises(TypeError):
-        value / Meter
+        10 - (5 * Meter)
+
+
+def test_multiplication_by_scalar():
+    assert 10 * (5 * Meter) == 50 * Meter
+
+
+def test_division_by_scalar():
+    assert (500 * Meter) / 10 == 50 * Meter
+
+
+def test_exponentation_by_scalar():
+    assert (5 * Meter) ** 2 == 25 * Meter**2
+
+
+def test_cannot_multiply_by_random_types():
+    with pytest.raises(TypeError):
+        "hi" * (5 * Meter)
+
+    with pytest.raises(TypeError):
+        (5 * Meter) * "hi"
+
+
+def test_cannot_divide_by_random_types():
+    with pytest.raises(TypeError):
+        (5 * Meter) / "hi"
 
 
 def test_repr():

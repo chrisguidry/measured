@@ -1,6 +1,6 @@
 import pytest
 
-from measured import Information
+from measured import Information, One
 from measured.iec import Bit, Byte, Gibi, Kibi, Mebi
 from measured.si import Giga, Kilo, Mega, Second
 
@@ -19,6 +19,8 @@ def test_bytes_measure_information():
 
 def test_bytes_are_8_bits():
     assert 8 * Bit == 1 * Byte
+    assert 1 * (Byte / Bit) == 8 * One
+    assert 1 * Byte / Bit == 8 * One
 
 
 def test_iec_prefixes():

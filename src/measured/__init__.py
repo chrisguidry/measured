@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from collections import defaultdict
 from functools import total_ordering
 from math import log
@@ -30,7 +29,7 @@ FT = TypeVar("FT")
 FK = TypeVar("FK")
 
 
-class Flyweight(ABC, Generic[FT, FK]):
+class Flyweight(Generic[FT, FK]):
     _known: Dict[FK, FT] = {}
     _skip_initialization_for: ClassVar[int] = 0
 
@@ -57,9 +56,8 @@ class Flyweight(ABC, Generic[FT, FK]):
         self.__init_flyweight__(*args, **kwargs)
 
     @classmethod
-    @abstractmethod
     def __flyweight_key__(cls, *args, **kwargs) -> FK:
-        ...  # pragma: no cover
+        raise NotImplementedError()  # pragma: no cover
 
     @classmethod
     def known(cls) -> Iterable[FT]:
@@ -83,7 +81,7 @@ class Dimension(Flyweight["Dimension", Tuple[int, ...]]):
         exponents: Tuple[int, ...],
         name: Optional[str] = None,
         symbol: Optional[str] = None,
-    ):
+    ) -> None:
         self.exponents = exponents
         self.name = name
         self.symbol = symbol
@@ -198,9 +196,9 @@ class Prefix(Flyweight["Prefix", Tuple[int, PrefixExponent]]):
         self,
         base: int,
         exponent: PrefixExponent,
-        name: str = None,
-        symbol: str = None,
-    ):
+        name: Optional[str] = None,
+        symbol: Optional[str] = None,
+    ) -> None:
         self.base = base
         self.exponent = exponent
         self.name = name
@@ -231,7 +229,13 @@ class Prefix(Flyweight["Prefix", Tuple[int, PrefixExponent]]):
     def __mul__(self, other: "Unit") -> "Unit":
         ...  # pragma: no cover
 
-    def __mul__(self, other: Union["Prefix", "Unit"]) -> Union["Prefix", "Unit"]:
+    @overload
+    def __mul__(self, other: Numeric) -> "Quantity":
+        ...  # pragma: no cover
+
+    def __mul__(
+        self, other: Union["Prefix", "Unit", Numeric]
+    ) -> Union["Prefix", "Unit", "Quantity"]:
         if isinstance(other, Prefix):
             if other.base == 0:
                 return self
@@ -248,6 +252,9 @@ class Prefix(Flyweight["Prefix", Tuple[int, PrefixExponent]]):
         if isinstance(other, Unit):
             return other.scale(self)
 
+        if isinstance(other, NUMERIC_CLASSES):
+            return (other * One) * self.quantify()
+
         return NotImplemented
 
     __rmul__ = __mul__
@@ -260,10 +267,13 @@ class Prefix(Flyweight["Prefix", Tuple[int, PrefixExponent]]):
             return self
         elif self.base == 0:
             return Prefix(other.base, -other.exponent)
-        elif other.base != self.base:
-            return NotImplemented
+        elif other.base == self.base:
+            return Prefix(self.base, self.exponent - other.exponent)
 
-        return Prefix(self.base, self.exponent - other.exponent)
+        base, exponent = self.base, self.exponent
+        exponent -= other.exponent * (log(other.base) / log(self.base))
+
+        return Prefix(base, exponent)
 
     def __pow__(self, power: int) -> "Prefix":
         return Prefix(self.base, self.exponent * power)
@@ -291,9 +301,9 @@ class Unit(Flyweight["Unit", Tuple]):
         prefix: Prefix,
         factors: Mapping["Unit", int],
         dimension: Dimension,
-        name: str = None,
-        symbol: str = None,
-    ):
+        name: Optional[str] = None,
+        symbol: Optional[str] = None,
+    ) -> None:
         self.prefix = prefix
         self.factors = factors or {self: 1}
         self.dimension = dimension
@@ -443,22 +453,42 @@ class Quantity:
         return f"{self.magnitude} {self.unit}"
 
     def __add__(self, other: "Quantity") -> "Quantity":
-        return Quantity(self.magnitude + other.magnitude, self.unit + other.unit)
+        if isinstance(other, Quantity):
+            return Quantity(self.magnitude + other.magnitude, self.unit + other.unit)
+
+        return NotImplemented
 
     def __sub__(self, other: "Quantity") -> "Quantity":
-        return Quantity(self.magnitude - other.magnitude, self.unit - other.unit)
+        if isinstance(other, Quantity):
+            return Quantity(self.magnitude - other.magnitude, self.unit - other.unit)
 
-    def __mul__(self, other: Union["Quantity", "Unit"]) -> "Quantity":
+        return NotImplemented
+
+    def __mul__(self, other: Union["Quantity", "Unit", "Numeric"]) -> "Quantity":
         if isinstance(other, Unit):
             return Quantity(self.magnitude, self.unit * other)
 
-        return Quantity(self.magnitude * other.magnitude, self.unit * other.unit)
+        if isinstance(other, Quantity):
+            return Quantity(self.magnitude * other.magnitude, self.unit * other.unit)
 
-    def __truediv__(self, other: Union["Quantity", "Unit"]) -> "Quantity":
+        if isinstance(other, NUMERIC_CLASSES):
+            return Quantity(self.magnitude * other, self.unit)
+
+        return NotImplemented
+
+    __rmul__ = __mul__
+
+    def __truediv__(self, other: Union["Quantity", "Unit", "Numeric"]) -> "Quantity":
         if isinstance(other, Unit):
             return Quantity(self.magnitude, self.unit / other)
 
-        return Quantity(self.magnitude / other.magnitude, self.unit / other.unit)
+        if isinstance(other, Quantity):
+            return Quantity(self.magnitude / other.magnitude, self.unit / other.unit)
+
+        if isinstance(other, NUMERIC_CLASSES):
+            return Quantity(self.magnitude / other, self.unit)
+
+        return NotImplemented
 
     def __pow__(self, power: int) -> "Quantity":
         return Quantity(self.magnitude**power, self.unit**power)
