@@ -6,7 +6,7 @@
 
 .bookkeeping/installed: .bookkeeping/pip-tools .bookkeeping/development.txt
 	pip-sync .bookkeeping/development.txt
-	tox --recreate --notest
+	tox -p --recreate --notest
 	touch .bookkeeping/installed
 
 .bookkeeping/pip-tools:

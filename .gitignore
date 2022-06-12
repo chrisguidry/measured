@@ -2,6 +2,7 @@
 .coverage
 dist
 .mypy_cache
+.profiles
 *.pyc
 __pycache__
 .pytest_cache

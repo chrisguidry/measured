@@ -1,5 +1,5 @@
 from collections import defaultdict
-from functools import total_ordering
+from functools import cache, total_ordering
 from math import log
 from typing import (
     Any,
@@ -12,6 +12,7 @@ from typing import (
     Set,
     Tuple,
     Union,
+    cast,
     overload,
 )
 
@@ -133,25 +134,33 @@ class Dimension:
     # One may take ratios of incommensurable quantities (quantities with different
     # dimensions), and multiply or divide them.
 
+    @cache
+    @staticmethod
+    def _multiply(self: "Dimension", other: "Dimension") -> "Dimension":
+        return Dimension(tuple(s + o for s, o in zip(self.exponents, other.exponents)))
+
     def __mul__(self, other: "Dimension") -> "Dimension":
         if not isinstance(other, Dimension):
             return NotImplemented
 
-        return Dimension(tuple(s + o for s, o in zip(self.exponents, other.exponents)))
+        return Dimension._multiply(self, other)
+
+    @cache
+    @staticmethod
+    def _divide(self: "Dimension", other: "Dimension") -> "Dimension":
+        return Dimension(tuple(s - o for s, o in zip(self.exponents, other.exponents)))
 
     def __truediv__(self, other: "Dimension") -> "Dimension":
         if not isinstance(other, Dimension):
             return NotImplemented
 
-        return Dimension(
-            tuple([s - o for s, o in zip(self.exponents, other.exponents)])
-        )
+        return Dimension._divide(self, other)
 
     def __pow__(self, power: int) -> "Dimension":
         if not isinstance(power, int):
             return NotImplemented
 
-        return Dimension(tuple([s * power for s in self.exponents]))
+        return Dimension(tuple(s * power for s in self.exponents))
 
 
 class Prefix:
@@ -194,12 +203,9 @@ class Prefix:
         self.symbol = symbol
         self._initialized = True
 
-    @classmethod
-    def identity(cls) -> "Prefix":
-        return Prefix(0, 0)
-
-    def quantify(self) -> "Quantity":
-        return Quantity(self.base**self.exponent, One)
+    @cache
+    def quantify(self) -> Numeric:
+        return cast(Numeric, self.base**self.exponent)
 
     def __repr__(self) -> str:
         return f"<Prefix(base={self.base!r}, exponent={self.exponent!r}>"
@@ -269,6 +275,9 @@ class Prefix:
         return Prefix(self.base, self.exponent * power)
 
 
+IdentityPrefix = Prefix(0, 0)
+
+
 class Unit:
     UnitKey = Tuple[Prefix, Tuple[Tuple["Unit", int], ...]]
 
@@ -295,7 +304,8 @@ class Unit:
             return cls._known[key]
 
         self = super().__new__(cls)
-        key = cls._build_key(prefix, factors or {self: 1})
+        if not factors:
+            key = cls._build_key(prefix, {self: 1})
         cls._known[key] = self
         return self
 
@@ -330,7 +340,7 @@ class Unit:
     @classmethod
     def define(cls, dimension: Dimension, name: str, symbol: str) -> "Unit":
         """Defines a new base unit"""
-        unit = cls(Prefix.identity(), {}, dimension, name, symbol)
+        unit = cls(IdentityPrefix, {}, dimension, name, symbol)
         cls._base.add(unit)
         return unit
 
@@ -350,9 +360,10 @@ class Unit:
         """Given a Prefix, creates a new unit scaled by that Prefix"""
         return self.__class__(self.prefix * prefix, self.factors, self.dimension)
 
+    @cache
     def quantify(self) -> "Quantity":
         return self.prefix.quantify() * Unit(
-            Prefix.identity(), self.factors, self.dimension
+            IdentityPrefix, self.factors, self.dimension
         )
 
     def __repr__(self) -> str:
@@ -394,6 +405,19 @@ class Unit:
 
         return self
 
+    @cache
+    @staticmethod
+    def _multiply(self: "Unit", other: "Unit") -> "Unit":
+        dimension = self.dimension * other.dimension
+        prefix = self.prefix * other.prefix
+
+        factors: Dict["Unit", int] = defaultdict(int, self.factors)
+        for unit, exponent in other.factors.items():
+            factors[unit] += exponent
+        factors = self._simplify(factors)
+
+        return Unit(prefix, factors, dimension)
+
     @overload
     def __mul__(self, other: "Unit") -> "Unit":
         ...  # pragma: no cover
@@ -409,22 +433,13 @@ class Unit:
         if not isinstance(other, Unit):
             return NotImplemented
 
-        dimension = self.dimension * other.dimension
-        prefix = self.prefix * other.prefix
-
-        factors: Dict["Unit", int] = defaultdict(int, self.factors)
-        for unit, exponent in other.factors.items():
-            factors[unit] += exponent
-        factors = self._simplify(factors)
-
-        return Unit(prefix, factors, dimension)
+        return Unit._multiply(self, other)
 
     __rmul__ = __mul__
 
-    def __truediv__(self, other: "Unit") -> "Unit":
-        if not isinstance(other, Unit):
-            return NotImplemented
-
+    @cache
+    @staticmethod
+    def _divide(self: "Unit", other: "Unit") -> "Unit":
         dimension = self.dimension / other.dimension
         prefix = self.prefix / other.prefix
 
@@ -434,6 +449,12 @@ class Unit:
         factors = self._simplify(factors)
 
         return Unit(prefix, factors, dimension)
+
+    def __truediv__(self, other: "Unit") -> "Unit":
+        if not isinstance(other, Unit):
+            return NotImplemented
+
+        return Unit._divide(self, other)
 
     def __pow__(self, power: int) -> "Unit":
         if not isinstance(power, int):
@@ -455,7 +476,7 @@ class Quantity:
         self.unit = unit
 
     def in_base_units(self) -> "Quantity":
-        return (self.magnitude * One) * self.unit.quantify()
+        return self.magnitude * self.unit.quantify()
 
     def __repr__(self) -> str:
         return f"<Quantity(magnitude={self.magnitude!r}, unit={self.unit!r})>"
