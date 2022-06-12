@@ -7,10 +7,14 @@ from measured.si import Giga, Kilo, Mega, Second
 
 def test_bits_measure_information():
     assert Bit.dimension == Information
+    assert Bit.name == "bit"
+    assert Bit.symbol == "b"
 
 
 def test_bytes_measure_information():
     assert Byte.dimension == Information
+    assert Byte.name == "byte"
+    assert Byte.symbol == "B"
 
 
 def test_bytes_are_8_bits():

@@ -1,5 +1,5 @@
-from measured import Acceleration, Force, Mass
-from measured.si import Gram, Kilo, Meter, Milli, Newton, Second
+from measured import Acceleration, Energy, Force, Mass, Power
+from measured.si import Gram, Joule, Kilo, Meter, Milli, Newton, Second, Watt
 
 
 def test_newtons_second_law_gram_meter():
@@ -28,3 +28,18 @@ def test_newtons_second_law_kilogram_millimeter():
 
     assert force == 15 * Gram * Meter / Second**2
     assert force == 0.015 * Newton
+
+
+def test_energy_is_force_through_distance():
+    force = 10 * Newton
+    distance = 5 * Meter
+    energy = force * distance
+    assert energy.unit == Joule
+    assert energy.unit.dimension == Energy
+
+
+def test_power_is_energy_per_time():
+    energy = 10 * Joule
+    power = energy / (2 * Second)
+    assert power.unit == Watt
+    assert power.unit.dimension == Power
