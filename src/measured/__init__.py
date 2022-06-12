@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from functools import total_ordering
 from math import log
@@ -5,12 +6,14 @@ from typing import (
     Any,
     ClassVar,
     Dict,
+    Generic,
     Iterable,
     List,
     Mapping,
     Optional,
     Set,
     Tuple,
+    TypeVar,
     Union,
     overload,
 )
@@ -23,38 +26,64 @@ NUMERIC_CLASSES = (int, float)
 Numeric = Union[int, float]
 PrefixExponent = Union[int, float]
 
+FT = TypeVar("FT")
+FK = TypeVar("FK")
 
-class Dimension:
-    _known: ClassVar[Dict[Tuple[int, ...], "Dimension"]] = {}
-    _fundamental: ClassVar[List["Dimension"]] = []
 
+class Flyweight(ABC, Generic[FT, FK]):
+    _known: Dict[FK, FT] = {}
     _skip_initialization_for: ClassVar[int] = 0
 
-    exponents: Tuple[int, ...]
-    name: Optional[str]
-    symbol: Optional[str]
+    def __init_subclass__(cls) -> None:
+        cls._known = {}
 
-    def __new__(cls, exponents: Tuple[int, ...], **kwargs):
-        key = tuple(exponents)
+    def __new__(cls, *args, **kwargs) -> "Flyweight[FT, FK]":
+        key = cls.__flyweight_key__(*args, **kwargs)
         if key in cls._known:
             known = cls._known[key]
             cls._skip_initialization_for = id(known)
             return known
 
         self = super().__new__(cls)
+        key = cls.__flyweight_key__(*args, instance=self, **kwargs)
         cls._known[key] = self
         return self
 
-    def __init__(
+    def __init__(self, *args, **kwargs):
+        if self.__class__._skip_initialization_for == id(self):
+            self.__class__._skip_initialization_for = 0
+            return
+
+        self.__init_flyweight__(*args, **kwargs)
+
+    @classmethod
+    @abstractmethod
+    def __flyweight_key__(cls, *args, **kwargs) -> FK:
+        ...  # pragma: no cover
+
+    @classmethod
+    def known(cls) -> Iterable[FT]:
+        return list(cls._known.values())
+
+
+class Dimension(Flyweight["Dimension", Tuple[int, ...]]):
+    _fundamental: ClassVar[List["Dimension"]] = []
+
+    exponents: Tuple[int, ...]
+    name: Optional[str]
+    symbol: Optional[str]
+
+    @classmethod
+    def __flyweight_key__(cls, *args, **kwargs) -> Tuple[int, ...]:
+        exponents, *_ = args
+        return tuple(exponents)
+
+    def __init_flyweight__(
         self,
         exponents: Tuple[int, ...],
         name: Optional[str] = None,
         symbol: Optional[str] = None,
     ):
-        if self.__class__._skip_initialization_for == id(self):
-            self.__class__._skip_initialization_for = 0
-            return
-
         self.exponents = exponents
         self.name = name
         self.symbol = symbol
@@ -154,36 +183,24 @@ class Dimension:
         return Dimension(tuple([s * power for s in self.exponents]))
 
 
-class Prefix:
-    _by_base_and_exponent: ClassVar[Dict[Tuple[int, PrefixExponent], "Prefix"]] = {}
-    _known: ClassVar[Set["Prefix"]] = set()
-
-    _skip_initialization_for: ClassVar[int] = 0
-
+class Prefix(Flyweight["Prefix", Tuple[int, PrefixExponent]]):
     base: int
     exponent: PrefixExponent
     name: Optional[str]
     symbol: Optional[str]
 
-    def __new__(cls, base: int, exponent: PrefixExponent, **kwargs):
-        key = (base, exponent)
-        if key in cls._by_base_and_exponent:
-            known = cls._by_base_and_exponent[key]
-            cls._skip_initialization_for = id(known)
-            return known
+    @classmethod
+    def __flyweight_key__(cls, *args, **kwargs) -> Tuple[int, PrefixExponent]:
+        base, exponent, *_ = args
+        return base, exponent
 
-        self = super().__new__(cls)
-        cls._by_base_and_exponent[key] = self
-        cls._known.add(self)
-        return self
-
-    def __init__(
-        self, base: int, exponent: PrefixExponent, name: str = None, symbol: str = None
+    def __init_flyweight__(
+        self,
+        base: int,
+        exponent: PrefixExponent,
+        name: str = None,
+        symbol: str = None,
     ):
-        if self.__class__._skip_initialization_for == id(self):
-            self.__class__._skip_initialization_for = 0
-            return
-
         self.base = base
         self.exponent = exponent
         self.name = name
@@ -252,40 +269,24 @@ class Prefix:
         return Prefix(self.base, self.exponent * power)
 
 
-class Unit:
-    _by_factors: ClassVar[Dict[Tuple, "Unit"]] = {}
+class Unit(Flyweight["Unit", Tuple]):
     _base: ClassVar[Set["Unit"]] = set()
-    _known: ClassVar[Set["Unit"]] = set()
-
-    _skip_initialization_for: int = 0
 
     prefix: Prefix
     factors: Mapping["Unit", int]
     name: Optional[str]
     symbol: Optional[str]
 
-    def __new__(
-        cls,
-        prefix: Prefix,
-        factors: Mapping["Unit", int],
-        *args,
-        **kwargs,
-    ):
-        if factors:
-            key = cls._build_key(prefix, factors)
-            if key in cls._by_factors:
-                known = cls._by_factors[key]
-                cls._skip_initialization_for = id(known)
-                return known
+    @classmethod
+    def __flyweight_key__(cls, *args, instance=None, **kwargs) -> Tuple:
+        prefix, factors, *_ = args
+        if instance:
+            factors = factors or {instance: 1}
+        prefix_key = (prefix,)
+        factor_key = tuple(sorted(factors.items(), key=lambda pair: id(pair[0])))
+        return prefix_key + factor_key
 
-        self = super().__new__(cls)
-        factors = factors or {self: 1}
-        key = cls._build_key(prefix, factors)
-        cls._by_factors[key] = self
-        cls._known.add(self)
-        return self
-
-    def __init__(
+    def __init_flyweight__(
         self,
         prefix: Prefix,
         factors: Mapping["Unit", int],
@@ -293,10 +294,6 @@ class Unit:
         name: str = None,
         symbol: str = None,
     ):
-        if self.__class__._skip_initialization_for == id(self):
-            self.__class__._skip_initialization_for = 0
-            return
-
         self.prefix = prefix
         self.factors = factors or {self: 1}
         self.dimension = dimension
@@ -304,12 +301,6 @@ class Unit:
         self.symbol = symbol
         self.names = [name]
         self.symbols = [symbol]
-
-    @classmethod
-    def _build_key(cls, prefix: Prefix, factors: Mapping["Unit", int]):
-        prefix_key = (prefix,)
-        factor_key = tuple(sorted(factors.items(), key=lambda pair: id(pair[0])))
-        return prefix_key + factor_key
 
     @classmethod
     def base(cls) -> Iterable["Unit"]:
