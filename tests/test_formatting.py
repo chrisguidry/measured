@@ -29,11 +29,11 @@ from measured.si import Hertz, Kilo, Meter, Second
         (1234567890, "¹²³⁴⁵⁶⁷⁸⁹⁰"),
     ],
 )
-def test_superscripts(exponent: int, superscripted: str):
+def test_superscripts(exponent: int, superscripted: str) -> None:
     assert superscript(exponent) == superscripted
 
 
-def test_formatting_dimensions():
+def test_formatting_dimensions() -> None:
     assert str(Number) == "1"
     assert str(Length) == "L"
     assert str(Area) == "L²"
@@ -41,7 +41,7 @@ def test_formatting_dimensions():
     assert str(Frequency) == "T⁻¹"
 
 
-def test_formatting_units():
+def test_formatting_units() -> None:
     assert str(Meter) == "m"
     assert str(Meter**2) == "m²"
     assert str(Meter**3) == "m³"
@@ -50,22 +50,22 @@ def test_formatting_units():
     assert str(Hertz**2) == "s⁻²"
 
 
-def test_formatting_quantities():
+def test_formatting_quantities() -> None:
     assert str(5 * Meter) == "5 m"
     assert str(5.1 * Meter**2) == "5.1 m²"
 
 
-def test_formatting_prefixes():
+def test_formatting_prefixes() -> None:
     assert str(5 * (Kilo * Meter)) == "5 km"
     assert str(5.1 * (Kilo * Meter**2) / Second) == "5.1 km²s⁻¹"
 
 
-def test_formatting_prefixes_simplifies():
+def test_formatting_prefixes_simplifies() -> None:
     # This is a little surprising, but what's happening here is that
     # 5 meter per kilosecond is getting reduced to 5 millimeter per second
     assert str((5 * Meter) / (Kilo * Second)) == "5 mms⁻¹"
 
 
-def test_do_the_best_we_can_with_odd_prefixes():
+def test_do_the_best_we_can_with_odd_prefixes() -> None:
     kilo_plus_one = Prefix(10, 4)
     assert str(5 * (kilo_plus_one * Meter)) == "5 10⁴m"

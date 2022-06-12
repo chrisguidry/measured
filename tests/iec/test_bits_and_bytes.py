@@ -1,33 +1,33 @@
 import pytest
 
-from measured import Information, One
+from measured import Information, One, Quantity
 from measured.iec import Bit, Byte, Gibi, Kibi, Mebi
 from measured.si import Giga, Kilo, Mega, Second
 
 
-def test_bits_measure_information():
+def test_bits_measure_information() -> None:
     assert Bit.dimension == Information
     assert Bit.name == "bit"
     assert Bit.symbol == "b"
 
 
-def test_bytes_measure_information():
+def test_bytes_measure_information() -> None:
     assert Byte.dimension == Information
     assert Byte.name == "byte"
     assert Byte.symbol == "B"
 
 
-def test_bytes_are_8_bits():
+def test_bytes_are_8_bits() -> None:
     assert 8 * Bit == 1 * Byte
     assert 1 * (Byte / Bit) == 8 * One
     assert 1 * Byte / Bit == 8 * One
 
 
-def test_iec_prefixes():
+def test_iec_prefixes() -> None:
     assert 1024 * (Kibi * Byte) == 1 * (Mebi * Byte)
 
 
-def test_data_rates():
+def test_data_rates() -> None:
     assert 1024 * (Mebi * Byte) / Second == 1 * (Gibi * Byte / Second)
 
 
@@ -39,7 +39,7 @@ def test_data_rates():
         (1 * (Giga * Bit), 0.9313225746154785 * (Gibi * Bit)),
     ],
 )
-def test_bit_iec_si_compatibility(iec, si):
+def test_bit_iec_si_compatibility(iec: Quantity, si: Quantity) -> None:
     assert iec == si
 
 
@@ -57,6 +57,6 @@ def test_bit_iec_si_compatibility(iec, si):
         (8 * (Giga * Bit), 0.9313225746154785 * (Gibi * Byte)),
     ],
 )
-def test_byte_iec_si_compatibility(iec, si):
+def test_byte_iec_si_compatibility(iec: Quantity, si: Quantity) -> None:
     difference = iec.in_base_units() - si.in_base_units()
     assert iec.approximates(si, within=1e-5), f"{iec} and {si} differ by {difference}"

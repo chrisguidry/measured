@@ -15,35 +15,35 @@ from measured import (
 from measured.si import Ampere, Candela, Gram, Hertz, Kelvin, Meter, Mole, Second
 
 
-def test_meter():
+def test_meter() -> None:
     assert isinstance(Meter, Unit)
     assert Meter.dimension is Length
     assert Meter.name == "meter"
     assert Meter.symbol == "m"
 
 
-def test_square_meter():
+def test_square_meter() -> None:
     square_meter = Meter**2
     assert square_meter.dimension is Area
     assert square_meter.factors == {Meter: 2}
     assert square_meter is Meter * Meter
 
 
-def test_cubic_meter():
+def test_cubic_meter() -> None:
     cubic_meter = Meter**3
     assert cubic_meter.dimension is Volume
     assert cubic_meter.factors == {Meter: 3}
     assert cubic_meter is Meter * Meter * Meter
 
 
-def test_second():
+def test_second() -> None:
     assert isinstance(Second, Unit)
     assert Second.dimension is Time
     assert Second.name == "second"
     assert Second.symbol == "s"
 
 
-def test_hertz():
+def test_hertz() -> None:
     assert Hertz.dimension is Frequency
     assert Hertz.factors == {Second: -1}
     assert Hertz.name == "hertz"
@@ -52,35 +52,35 @@ def test_hertz():
     assert Hertz is Second**-1
 
 
-def test_gram():
+def test_gram() -> None:
     assert isinstance(Gram, Unit)
     assert Gram.dimension is Mass
     assert Gram.name == "gram"
     assert Gram.symbol == "g"
 
 
-def test_ampere():
+def test_ampere() -> None:
     assert isinstance(Ampere, Unit)
     assert Ampere.dimension is Current
     assert Ampere.name == "ampere"
     assert Ampere.symbol == "A"
 
 
-def test_kelvin():
+def test_kelvin() -> None:
     assert isinstance(Kelvin, Unit)
     assert Kelvin.dimension is Temperature
     assert Kelvin.name == "kelvin"
     assert Kelvin.symbol == "K"
 
 
-def test_mole():
+def test_mole() -> None:
     assert isinstance(Mole, Unit)
     assert Mole.dimension is AmountOfSubstance
     assert Mole.name == "mole"
     assert Mole.symbol == "mol"
 
 
-def test_candela():
+def test_candela() -> None:
     assert isinstance(Candela, Unit)
     assert Candela.dimension is LuminousIntensity
     assert Candela.name == "candela"

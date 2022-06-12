@@ -4,7 +4,7 @@ from measured.si import Meter, Second
 # https://en.wikipedia.org/wiki/Fourth,_fifth,_and_sixth_derivatives_of_position
 
 
-def test_derivatives_of_position():
+def test_derivatives_of_position() -> None:
     length = 128 * Meter
     assert length.unit.dimension == Length
 

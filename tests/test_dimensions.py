@@ -18,7 +18,7 @@ from measured import (
 )
 
 
-def pytest_generate_tests(metafunc):
+def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     fundamental = Dimension.fundamental()
     ids = [d.name for d in fundamental]
 
@@ -35,7 +35,7 @@ def identity() -> Dimension:
     return Number
 
 
-def test_homogenous_under_addition(a: Dimension, b: Dimension):
+def test_homogenous_under_addition(a: Dimension, b: Dimension) -> None:
     # https://en.wikipedia.org/wiki/Dimensional_analysis#Dimensional_homogeneity
     #
     # Only commensurable quantities (physical quantities having the same dimension) may
@@ -47,7 +47,7 @@ def test_homogenous_under_addition(a: Dimension, b: Dimension):
             a + b
 
 
-def test_homogenous_under_subtraction(a: Dimension, b: Dimension):
+def test_homogenous_under_subtraction(a: Dimension, b: Dimension) -> None:
     # https://en.wikipedia.org/wiki/Dimensional_analysis#Dimensional_homogeneity
     #
     # Only commensurable quantities (physical quantities having the same dimension) may
@@ -59,42 +59,42 @@ def test_homogenous_under_subtraction(a: Dimension, b: Dimension):
             a - b
 
 
-def test_abelian_associativity(a: Dimension, b: Dimension, c: Dimension):
+def test_abelian_associativity(a: Dimension, b: Dimension, c: Dimension) -> None:
     # https://en.wikipedia.org/wiki/Abelian_group
     assert (a * b) * c == a * (b * c)
 
 
-def test_abelian_identity(identity: Dimension, a: Dimension):
+def test_abelian_identity(identity: Dimension, a: Dimension) -> None:
     assert identity * a == a
 
 
-def test_abelian_inverse(identity: Dimension, a: Dimension):
+def test_abelian_inverse(identity: Dimension, a: Dimension) -> None:
     inverse = a**-1
     assert inverse * a == a * inverse
     assert inverse * a == identity
     assert identity / a == inverse
 
 
-def test_abelian_commutativity(a: Dimension, b: Dimension):
+def test_abelian_commutativity(a: Dimension, b: Dimension) -> None:
     assert a * b == b * a
 
 
-def test_no_dimensional_exponentation(dimension: Dimension):
+def test_no_dimensional_exponentation(dimension: Dimension) -> None:
     with pytest.raises(TypeError):
         dimension**dimension  # type: ignore
 
 
-def test_no_floating_point_exponentation(dimension: Dimension):
+def test_no_floating_point_exponentation(dimension: Dimension) -> None:
     with pytest.raises(TypeError):
         dimension**0.5  # type: ignore
 
 
-def test_no_fractional_exponentation(dimension: Dimension):
+def test_no_fractional_exponentation(dimension: Dimension) -> None:
     with pytest.raises(TypeError):
         dimension ** Fraction(1, 2)  # type: ignore
 
 
-def test_only_dimensional_multiplication(dimension: Dimension):
+def test_only_dimensional_multiplication(dimension: Dimension) -> None:
     with pytest.raises(TypeError):
         5 * dimension  # type: ignore
 
@@ -102,7 +102,7 @@ def test_only_dimensional_multiplication(dimension: Dimension):
         dimension * 5  # type: ignore
 
 
-def test_only_dimensional_division(dimension: Dimension):
+def test_only_dimensional_division(dimension: Dimension) -> None:
     with pytest.raises(TypeError):
         dimension / 5  # type: ignore
 
@@ -110,7 +110,7 @@ def test_only_dimensional_division(dimension: Dimension):
         5 / dimension  # type: ignore
 
 
-def test_repr(dimension: Dimension):
+def test_repr(dimension: Dimension) -> None:
     r = repr(dimension)
     assert r.startswith("<Dimension(exponents=(0,")
     assert dimension.name and dimension.name in r
@@ -118,73 +118,73 @@ def test_repr(dimension: Dimension):
     assert r.endswith(")>")
 
 
-def test_number():
+def test_number() -> None:
     assert isinstance(Number, Dimension)
     assert Number.name == "number"
     assert Number.symbol == "1"
     assert Number is Number * Number
 
 
-def test_length():
+def test_length() -> None:
     assert isinstance(Length, Dimension)
     assert Length.name == "length"
     assert Length.symbol == "L"
     assert Length is Number * Length
 
 
-def test_area():
+def test_area() -> None:
     assert isinstance(Area, Dimension)
     assert Area is Length * Length
 
 
-def test_volume():
+def test_volume() -> None:
     assert isinstance(Area, Dimension)
     assert Volume is Length * Length * Length
     assert Volume is Length * Area
     assert Volume is Area * Length
 
 
-def test_time():
+def test_time() -> None:
     assert isinstance(Time, Dimension)
     assert Time.name == "time"
     assert Time.symbol == "T"
     assert Time is Number * Time
 
 
-def test_frequency():
+def test_frequency() -> None:
     assert isinstance(Frequency, Dimension)
     assert Frequency is Number / Time
 
 
-def test_mass():
+def test_mass() -> None:
     assert isinstance(Mass, Dimension)
     assert Mass.name == "mass"
     assert Mass.symbol == "M"
     assert Mass is Number * Mass
 
 
-def test_current():
+def test_current() -> None:
     assert isinstance(Current, Dimension)
     assert Current.name == "current"
     assert Current.symbol == "I"
     assert Current is Number * Current
 
 
-def test_temperature():
+def test_temperature() -> None:
     assert isinstance(Temperature, Dimension)
     assert Temperature.name == "temperature"
     assert Temperature.symbol == "Θ"
     assert Temperature is Number * Temperature
 
 
-def test_amount_of_substance():
+def test_amount_of_substance() -> None:
     assert isinstance(AmountOfSubstance, Dimension)
     assert AmountOfSubstance.name == "amount of substance"
     assert AmountOfSubstance.symbol == "N"
     assert AmountOfSubstance is Number * AmountOfSubstance
 
 
-def test_luminous_intensity():
+def test_luminous_intensity() -> None:
     assert isinstance(LuminousIntensity, Dimension)
     assert LuminousIntensity.name == "luminous intensity"
     assert LuminousIntensity.symbol == "J"

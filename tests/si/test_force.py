@@ -2,7 +2,7 @@ from measured import Acceleration, Energy, Force, Mass, Power
 from measured.si import Gram, Joule, Kilo, Meter, Milli, Newton, Second, Watt
 
 
-def test_newtons_second_law_gram_meter():
+def test_newtons_second_law_gram_meter() -> None:
     mass = 5 * Gram
     assert mass.unit.dimension == Mass
 
@@ -16,7 +16,7 @@ def test_newtons_second_law_gram_meter():
     assert force == 0.015 * Newton
 
 
-def test_newtons_second_law_kilogram_millimeter():
+def test_newtons_second_law_kilogram_millimeter() -> None:
     mass = 5 * (Kilo * Gram)
     assert mass.unit.dimension == Mass
 
@@ -30,7 +30,7 @@ def test_newtons_second_law_kilogram_millimeter():
     assert force == 0.015 * Newton
 
 
-def test_energy_is_force_through_distance():
+def test_energy_is_force_through_distance() -> None:
     force = 10 * Newton
     distance = 5 * Meter
     energy = force * distance
@@ -38,7 +38,7 @@ def test_energy_is_force_through_distance():
     assert energy.unit.dimension == Energy
 
 
-def test_power_is_energy_per_time():
+def test_power_is_energy_per_time() -> None:
     energy = 10 * Joule
     power = energy / (2 * Second)
     assert power.unit == Watt

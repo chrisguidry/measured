@@ -2,7 +2,7 @@ from measured import One
 from measured.si import Meter, Radian, Steradian
 
 
-def test_radian_is_dimensionless():
+def test_radian_is_dimensionless() -> None:
     assert Radian == Meter / Meter
     assert Radian == One
     assert Radian.name == "one"
@@ -11,7 +11,7 @@ def test_radian_is_dimensionless():
     assert Radian.symbols == ["1", "rad", "sr"]
 
 
-def test_steradian_is_dimensionless():
+def test_steradian_is_dimensionless() -> None:
     assert Steradian == Meter / Meter
     assert Steradian == One
     assert Steradian.name == "one"
