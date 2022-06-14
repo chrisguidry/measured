@@ -626,6 +626,33 @@ class Quantity:
     def in_base_units(self) -> "Quantity":
         return self.magnitude * self.unit.quantify()
 
+    # JSON support
+
+    def __json__(self) -> Dict[str, Any]:
+        return {
+            "magnitude": self.magnitude,
+            "unit": self.unit,
+        }
+
+    # Pydantic support
+
+    @classmethod
+    def __get_validators__(
+        cls,
+    ) -> Generator[Callable[["Quantity"], "Quantity"], None, None]:
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, value: Union[str, "Quantity"]) -> "Quantity":
+        if isinstance(value, Quantity):
+            return value
+
+        raise ValueError(f"No conversion from {value!r} to Quantity")
+
+    @classmethod
+    def from_json(cls, json_object: Dict[str, Any]) -> "Quantity":
+        return Quantity(json_object["magnitude"], json_object["unit"])
+
     def __repr__(self) -> str:
         return f"<Quantity(magnitude={self.magnitude!r}, unit={self.unit!r})>"
 

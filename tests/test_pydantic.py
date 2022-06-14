@@ -5,7 +5,7 @@ import pytest
 from pydantic import BaseModel
 
 import measured.json
-from measured import Dimension, Length, Prefix, Unit
+from measured import Dimension, Length, Prefix, Quantity, Unit
 from measured.si import Kilo, Meter
 
 
@@ -25,6 +25,9 @@ class ExampleModel(BaseModel):
     unit: Unit = Meter
     optional_unit: Optional[Unit] = None
 
+    quantity: Quantity = 5 * Meter
+    optional_quantity: Optional[Quantity] = None
+
 
 def test_dimension_field() -> None:
     model = ExampleModel(dimension=Length)
@@ -42,6 +45,11 @@ def test_unit_field() -> None:
     model = ExampleModel(unit=Meter)
     assert model.unit == Meter
     assert model.unit is Meter
+
+
+def test_quantity_field() -> None:
+    model = ExampleModel(quantity=2 * Meter)
+    assert model.quantity == 2 * Meter
 
 
 def test_dimension_field_from_string() -> None:
@@ -77,6 +85,11 @@ def test_unit_field_from_none() -> None:
     assert model.optional_unit is None
 
 
+def test_quantity_field_from_none() -> None:
+    model = ExampleModel(optional_quantity=None)
+    assert model.optional_quantity is None
+
+
 def test_dimension_field_from_incompatible() -> None:
     with pytest.raises(ValueError):
         ExampleModel(dimension=11)
@@ -90,6 +103,11 @@ def test_prefix_field_from_incompatible() -> None:
 def test_unit_field_from_incompatible() -> None:
     with pytest.raises(ValueError):
         ExampleModel(unit=11)
+
+
+def test_quantity_field_from_incompatible() -> None:
+    with pytest.raises(ValueError):
+        ExampleModel(quantity=11)
 
 
 def test_dimension_field_from_string_must_exist() -> None:
@@ -125,6 +143,8 @@ def test_to_dict(instance: ExampleModel) -> None:
         "optional_prefix": None,
         "unit": Meter,
         "optional_unit": None,
+        "quantity": 5 * Meter,
+        "optional_quantity": None,
     }
 
 
@@ -164,4 +184,22 @@ def test_to_json(codecs_installed: None, instance: ExampleModel) -> None:
             },
         },
         "optional_unit": None,
+        "quantity": {
+            "__measured__": "Quantity",
+            "magnitude": 5,
+            "unit": {
+                "__measured__": "Unit",
+                "name": "meter",
+                "symbol": "m",
+                "prefix": None,
+                "factors": None,
+                "dimension": {
+                    "__measured__": "Dimension",
+                    "name": "length",
+                    "symbol": "L",
+                    "exponents": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                },
+            },
+        },
+        "optional_quantity": None,
     }

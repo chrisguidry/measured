@@ -46,6 +46,8 @@ class MeasuredJSONDecoder(JSONDecoder):
             return Prefix.from_json(o)
         elif type_name == "Unit":
             return Unit.from_json(o)
+        elif type_name == "Quantity":
+            return Quantity.from_json(o)
 
         return o
 

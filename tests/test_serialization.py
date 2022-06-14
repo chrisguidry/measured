@@ -7,7 +7,7 @@ import cloudpickle
 import pytest
 
 import measured.json
-from measured import Area, Dimension, Length, Prefix, Resistance, Unit
+from measured import Area, Dimension, Length, Prefix, Quantity, Resistance, Unit
 from measured.json import MeasuredJSONDecoder, MeasuredJSONEncoder, install, uninstall
 from measured.si import Giga, Hertz, Kilo, Meter, Milli, Ohm
 
@@ -19,12 +19,14 @@ def codecs_installed() -> Generator[None, None, None]:
 
 
 NamedType = Union[Dimension, Prefix, Unit]
-MeasuredType = NamedType  # TODO: add Quantity
+MeasuredType = Union[NamedType, Quantity]
 
 DIMENSIONS: List[NamedType] = [Length, Area, Resistance]
 PREFIXES: List[NamedType] = [Kilo, Milli, Kilo * Giga]
 UNITS: List[NamedType] = [Meter, Kilo * Meter, Hertz, Ohm]
 NAMED = DIMENSIONS + PREFIXES + UNITS
+
+QUANTITIES: List[MeasuredType] = [5 * Meter, 5 * Hertz, 5.1 * Ohm]
 
 
 @pytest.mark.parametrize("serializer", [json, pickle, cloudpickle])
@@ -45,6 +47,19 @@ def test_named_type_serializer_roundtrip(
     assert roundtripped.symbol == prior_symbol
 
 
+@pytest.mark.parametrize("serializer", [json, pickle, cloudpickle])
+@pytest.mark.parametrize("quantity", QUANTITIES, ids=map(str, QUANTITIES))
+def test_quantity_serializer_roundtrip(
+    codecs_installed: None,
+    serializer: ModuleType,
+    quantity: Quantity,
+) -> None:
+    roundtripped: Quantity = serializer.loads(serializer.dumps(quantity))
+
+    assert roundtripped == quantity
+    assert roundtripped is not quantity
+
+
 @pytest.mark.parametrize("named", NAMED, ids=[d.name for d in NAMED])
 def test_named_type_explicit_json_roundtrip(named: NamedType) -> None:
     prior_name = named.name
@@ -61,7 +76,7 @@ def test_named_type_explicit_json_roundtrip(named: NamedType) -> None:
     assert roundtripped.symbol == prior_symbol
 
 
-INSTANCES = [Length, Kilo, Meter]  # TODO: add a Quantity
+INSTANCES = [Length, Kilo, Meter, 5 * Meter]
 INSTANCE_IDS = [str(i) for i in INSTANCES]
 
 
@@ -96,17 +111,6 @@ def test_json_installation(obj: MeasuredType) -> None:
 
     with pytest.raises(TypeError, match="is not JSON serializable"):
         json.dumps(obj)
-
-
-def test_dimension_to_json() -> None:
-    assert json.dumps(Length, cls=MeasuredJSONEncoder) == json.dumps(
-        {
-            "__measured__": "Dimension",
-            "name": "length",
-            "symbol": "L",
-            "exponents": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-        }
-    )
 
 
 def test_still_raises_on_unrecognized_types() -> None:

@@ -6,7 +6,7 @@ from measured import Number, One, Unit
 
 
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
-    base = Unit.base()
+    base = sorted(Unit.base(), key=lambda u: u.name or "")
     ids = [d.name for d in base]
 
     for exemplar in ["a", "b", "c"]:
