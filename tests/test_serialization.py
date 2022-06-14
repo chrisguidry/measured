@@ -3,7 +3,11 @@ import pickle
 from types import ModuleType
 from typing import Generator, List, Union
 
-import cloudpickle
+try:
+    import cloudpickle
+except ImportError:  # pragma: no cover
+    cloudpickle = None
+
 import pytest
 
 import measured.json
@@ -28,8 +32,10 @@ NAMED = DIMENSIONS + PREFIXES + UNITS
 
 QUANTITIES: List[MeasuredType] = [5 * Meter, 5 * Hertz, 5.1 * Ohm]
 
+SERIALIZERS = [json, pickle] + [cloudpickle] if cloudpickle else []
 
-@pytest.mark.parametrize("serializer", [json, pickle, cloudpickle])
+
+@pytest.mark.parametrize("serializer", SERIALIZERS)
 @pytest.mark.parametrize("named", NAMED, ids=[d.name for d in NAMED])
 def test_named_type_serializer_roundtrip(
     codecs_installed: None,
@@ -47,7 +53,7 @@ def test_named_type_serializer_roundtrip(
     assert roundtripped.symbol == prior_symbol
 
 
-@pytest.mark.parametrize("serializer", [json, pickle, cloudpickle])
+@pytest.mark.parametrize("serializer", SERIALIZERS)
 @pytest.mark.parametrize("quantity", QUANTITIES, ids=map(str, QUANTITIES))
 def test_quantity_serializer_roundtrip(
     codecs_installed: None,

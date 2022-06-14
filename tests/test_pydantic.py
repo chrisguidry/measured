@@ -154,7 +154,7 @@ def test_to_json_without_codecs_installed(instance: ExampleModel) -> None:
 
 
 def test_to_json(codecs_installed: None, instance: ExampleModel) -> None:
-    assert json.loads(instance.json(), cls=json.JSONDecoder) == {
+    assert json.loads(instance.json(), cls=json.JSONDecoder, object_hook=None) == {
         "dimension": {
             "__measured__": "Dimension",
             "name": "length",

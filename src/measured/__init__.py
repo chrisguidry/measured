@@ -1,5 +1,5 @@
 from collections import defaultdict
-from functools import cache, total_ordering
+from functools import lru_cache, total_ordering
 from math import log
 from typing import (
     Any,
@@ -179,8 +179,8 @@ class Dimension:
     # One may take ratios of incommensurable quantities (quantities with different
     # dimensions), and multiply or divide them.
 
-    @cache
     @staticmethod
+    @lru_cache(maxsize=None)
     def _multiply(self: "Dimension", other: "Dimension") -> "Dimension":
         return Dimension(tuple(s + o for s, o in zip(self.exponents, other.exponents)))
 
@@ -190,8 +190,8 @@ class Dimension:
 
         return Dimension._multiply(self, other)
 
-    @cache
     @staticmethod
+    @lru_cache(maxsize=None)
     def _divide(self: "Dimension", other: "Dimension") -> "Dimension":
         return Dimension(tuple(s - o for s, o in zip(self.exponents, other.exponents)))
 
@@ -508,7 +508,7 @@ class Unit:
         """Given a Prefix, creates a new unit scaled by that Prefix"""
         return self.__class__(self.prefix * prefix, self.factors, self.dimension)
 
-    @cache
+    @lru_cache(maxsize=None)
     def quantify(self) -> "Quantity":
         return self.prefix.quantify() * Unit(
             IdentityPrefix, self.factors, self.dimension
@@ -553,8 +553,8 @@ class Unit:
 
         return self
 
-    @cache
     @staticmethod
+    @lru_cache(maxsize=None)
     def _multiply(self: "Unit", other: "Unit") -> "Unit":
         dimension = self.dimension * other.dimension
         prefix = self.prefix * other.prefix
@@ -585,8 +585,8 @@ class Unit:
 
     __rmul__ = __mul__
 
-    @cache
     @staticmethod
+    @lru_cache(maxsize=None)
     def _divide(self: "Unit", other: "Unit") -> "Unit":
         dimension = self.dimension / other.dimension
         prefix = self.prefix / other.prefix
