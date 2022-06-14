@@ -1,6 +1,5 @@
 """
-# `measured`
-## A library for measurements and quantities
+A library for measurements and quantities
 
 The goal of the `measured` library is to provide a sound foundation for recording and
 converting physical quantities, while maintaining the integrity of their units and
@@ -24,8 +23,9 @@ Attributes: Fundamental dimensions
     Number (Dimension): the basis of [counting and measuring][1], used to define
         [dimensionless quantities][2]
 
-        [1]: https://en.wikipedia.org/wiki/Number [2]:
-        https://en.wikipedia.org/wiki/Dimensionless_quantity
+        [1]: https://en.wikipedia.org/wiki/Number
+
+        [2]: https://en.wikipedia.org/wiki/Dimensionless_quantity
 
     Length (Dimension): [distance][1] or extent through space
 
@@ -59,6 +59,12 @@ Attributes: Fundamental dimensions
     Information (Dimension): how much [entropy][1] is present in a random variable
 
         [1]: https://en.wikipedia.org/wiki/Information#Information_theory
+
+
+
+Attributes: Base Prefixes
+
+    IdentityPrefix (Prefix): represents the number 1, expressed as the prefix 0⁰
 
 
 Attributes: Base Units
@@ -99,6 +105,10 @@ Numeric = Union[int, float]
 class Dimension:
     """Dimension represents the kind of physical quantity being measured.
 
+    Unless you're doing something really cool, you probably won't instantiate new
+    dimensions directly.  Instead, you'll import the base dimensions and combine them
+    through multiplication, division, or exponentation.
+
     Attributes:
         name (str): The name of this dimension
 
@@ -136,7 +146,7 @@ class Dimension:
         >>> assert Speed == Length / Time
         >>> assert Frequency == Number / Time
 
-        measured attempts to maintain Dimensions as singletons, so they can be used in
+        `measured` attempts to maintain Dimensions as singletons, so they can be used in
         both equality and identity tests.
 
         >>> assert Volume is Length**3
@@ -157,8 +167,8 @@ class Dimension:
         >>> json.dumps(Length, cls=MeasuredJSONEncoder)
         '{"__measured__": "Dimension", "name": "length", "symbol": "L", ...}'
 
-        While using measured's JSON codecs, Dimensions may be deserialized directly from
-        that JSON representation.
+        While using `measured`'s JSON codecs, Dimensions may be deserialized directly
+        from that JSON representation.
 
         >>> encoded = json.dumps(Length, cls=MeasuredJSONEncoder)
         >>> json.loads(encoded, cls=MeasuredJSONDecoder)
@@ -213,12 +223,27 @@ class Dimension:
 
     @classmethod
     def fundamental(cls) -> Iterable["Dimension"]:
-        """Returns the registered fundamental Dimensions"""
+        """Returns the registered fundamental dimensions
+
+        Fundamental dimensions are not derived from other dimensions, and they will
+        always have an `exponents` tuple with a single `1`, like `[0, 0, 1, 0, 0...]`
+        (except for `Number`, which is all `0`s).
+
+        The fundamental dimensions are those defined directly using
+        [`Dimension.define`][measured.Dimension.define], like those provided by
+        `measured`.  The length and order of these Dimensions is also the length and
+        order of each Dimensions `exponents` tuple.
+        """
         return list(cls._fundamental)
 
     @classmethod
     def define(cls, name: str, symbol: str) -> "Dimension":
-        """Defines a new fundamental Dimension"""
+        """Defines a new fundamental Dimension
+
+        Used by `measured` itself to define the fundamental Dimensions.  You may define
+        additional dimensions, but be aware that doing so will change the cardinality of
+        the `exponents` tuple for _all_ defined Dimensions.
+        """
         index = len(cls._fundamental)
         if index == 0:
             # the first dimension must be Number, with an exponent of zero (identity)
@@ -507,9 +532,6 @@ class Prefix:
 
     def __pow__(self, power: int) -> "Prefix":
         return Prefix(self.base, self.exponent * power)
-
-
-IdentityPrefix = Prefix(0, 0)
 
 
 class Unit:
@@ -955,6 +977,11 @@ Illuminance = LuminousIntensity / Area
 RadioactiveDose = Power / Mass
 
 CatalyticActivity = AmountOfSubstance / Time
+
+
+# Fundamental prefixes
+
+IdentityPrefix = Prefix(0, 0)
 
 
 # Fundamental units

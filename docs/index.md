@@ -1,6 +1,4 @@
 ::: measured
-    options:
-        show_root_toc_entry: False
 
 ::: measured.si
 
