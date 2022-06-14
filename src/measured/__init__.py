@@ -3,8 +3,10 @@ from functools import cache, total_ordering
 from math import log
 from typing import (
     Any,
+    Callable,
     ClassVar,
     Dict,
+    Generator,
     Iterable,
     List,
     Mapping,
@@ -29,6 +31,7 @@ class Dimension:
     _initialized: bool = False
 
     _fundamental: ClassVar[List["Dimension"]] = []
+    _by_name: ClassVar[Dict[str, "Dimension"]] = {}
 
     exponents: Tuple[int, ...]
     name: Optional[str]
@@ -60,6 +63,9 @@ class Dimension:
         self.symbol = symbol
         self._initialized = True
 
+        if name:
+            self._by_name[name] = self
+
     @classmethod
     def fundamental(cls) -> Iterable["Dimension"]:
         """Returns the registered fundamental Dimensions"""
@@ -88,6 +94,45 @@ class Dimension:
         cls._fundamental.append(dimension)
 
         return dimension
+
+    # Pickle support
+
+    def __getnewargs_ex__(self) -> Tuple[Tuple[Tuple[int, ...]], Dict[str, Any]]:
+        return (self.exponents,), {}
+
+    # JSON support
+
+    def __json__(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "symbol": self.symbol,
+            "exponents": list(self.exponents),
+        }
+
+    @classmethod
+    def from_json(cls, json_object: Dict[str, Any]) -> "Dimension":
+        return Dimension(tuple(json_object["exponents"]))
+
+    # Pydantic support
+
+    @classmethod
+    def __get_validators__(
+        cls,
+    ) -> Generator[Callable[[Union[str, "Dimension"]], "Dimension"], None, None]:
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, value: Union[str, "Dimension"]) -> "Dimension":
+        if isinstance(value, str):
+            if value not in cls._by_name:
+                raise ValueError(f"{value!r} is not a named Dimension")
+
+            return cls._by_name[value]
+
+        if isinstance(value, Dimension):
+            return value
+
+        raise ValueError(f"No conversion from {value!r} to Dimension")
 
     def __repr__(self) -> str:
         return (
@@ -167,6 +212,8 @@ class Prefix:
     _known: ClassVar[Dict[Tuple[int, Numeric], "Prefix"]] = {}
     _initialized: bool = False
 
+    _by_name: ClassVar[Dict[str, "Prefix"]] = {}
+
     base: int
     exponent: Numeric
     name: Optional[str]
@@ -203,9 +250,48 @@ class Prefix:
         self.symbol = symbol
         self._initialized = True
 
-    @cache
-    def quantify(self) -> Numeric:
-        return cast(Numeric, self.base**self.exponent)
+        if name:
+            self._by_name[name] = self
+
+    # Pickle support
+
+    def __getnewargs_ex__(self) -> Tuple[Tuple[int, Numeric], Dict[str, Any]]:
+        return (self.base, self.exponent), {}
+
+    # JSON support
+
+    def __json__(self) -> Dict[str, Any]:
+        return {
+            "base": self.base,
+            "exponent": self.exponent,
+            "name": self.name,
+            "symbol": self.symbol,
+        }
+
+    @classmethod
+    def from_json(cls, json_object: Dict[str, Any]) -> "Prefix":
+        return Prefix(json_object["base"], json_object["exponent"])
+
+    # Pydantic support
+
+    @classmethod
+    def __get_validators__(
+        cls,
+    ) -> Generator[Callable[[Union[str, "Prefix"]], "Prefix"], None, None]:
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, value: Union[str, "Prefix"]) -> "Prefix":
+        if isinstance(value, str):
+            if value not in cls._by_name:
+                raise ValueError(f"{value!r} is not a named Prefix")
+
+            return cls._by_name[value]
+
+        if isinstance(value, Prefix):
+            return value
+
+        raise ValueError(f"No conversion from {value!r} to Prefix")
 
     def __repr__(self) -> str:
         return f"<Prefix(base={self.base!r}, exponent={self.exponent!r}>"
@@ -216,6 +302,9 @@ class Prefix:
         if self.exponent == 0:
             return ""
         return f"{self.base}{superscript(self.exponent)}"
+
+    def quantify(self) -> Numeric:
+        return cast(Numeric, self.base**self.exponent)
 
     @overload
     def __mul__(self, other: "Prefix") -> "Prefix":
@@ -285,6 +374,7 @@ class Unit:
     _initialized: bool = False
 
     _base: ClassVar[Set["Unit"]] = set()
+    _by_name: ClassVar[Dict[str, "Unit"]] = {}
 
     prefix: Prefix
     factors: Mapping["Unit", int]
@@ -302,6 +392,9 @@ class Unit:
         key = cls._build_key(prefix, factors)
         if key in cls._known:
             return cls._known[key]
+
+        if name and name in cls._by_name:
+            return cls._by_name[name]
 
         self = super().__new__(cls)
         if not factors:
@@ -327,6 +420,9 @@ class Unit:
         self.names = [name]
         self.symbols = [symbol]
         self._initialized = True
+
+        if name:
+            self._by_name[name] = self
 
     @classmethod
     def _build_key(cls, prefix: Prefix, factors: Mapping["Unit", int]) -> UnitKey:
@@ -355,6 +451,58 @@ class Unit:
         unit.name = name
         unit.symbol = symbol
         return unit
+
+    # Pickle support
+
+    def __getnewargs_ex__(
+        self,
+    ) -> Tuple[Tuple[Prefix, Mapping["Unit", int], Dimension], Dict[str, Any]]:
+        factors = {} if self.factors == {self: 1} else self.factors
+        args = (self.prefix, factors, self.dimension)
+        kwargs = {"name": self.name, "symbol": self.symbol}
+        return args, kwargs
+
+    # JSON support
+
+    def __json__(self) -> Dict[str, Any]:
+        prefix, factors = self._build_key(self.prefix, self.factors)
+        return {
+            "name": self.name,
+            "symbol": self.symbol,
+            "dimension": self.dimension,
+            "prefix": prefix if prefix.quantify() != 1 else None,
+            "factors": None if factors == ((self, 1),) else factors,
+        }
+
+    @classmethod
+    def from_json(cls, json_object: Dict[str, Any]) -> "Unit":
+        if not json_object["factors"]:
+            return cls._by_name[json_object["name"]]
+        prefix = json_object["prefix"] or Prefix(0, 0)
+        factors = dict(json_object["factors"])
+        dimension = json_object["dimension"]
+        return Unit(prefix, factors, dimension)
+
+    # Pydantic support
+
+    @classmethod
+    def __get_validators__(
+        cls,
+    ) -> Generator[Callable[[Union[str, "Unit"]], "Unit"], None, None]:
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, value: Union[str, "Unit"]) -> "Unit":
+        if isinstance(value, str):
+            if value not in cls._by_name:
+                raise ValueError(f"{value!r} is not a named Unit")
+
+            return cls._by_name[value]
+
+        if isinstance(value, Unit):
+            return value
+
+        raise ValueError(f"No conversion from {value!r} to Unit")
 
     def scale(self, prefix: Prefix) -> "Unit":
         """Given a Prefix, creates a new unit scaled by that Prefix"""
