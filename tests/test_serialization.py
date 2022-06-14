@@ -32,7 +32,7 @@ NAMED = DIMENSIONS + PREFIXES + UNITS
 
 QUANTITIES: List[MeasuredType] = [5 * Meter, 5 * Hertz, 5.1 * Ohm]
 
-SERIALIZERS = [json, pickle] + [cloudpickle] if cloudpickle else []
+SERIALIZERS = [json, pickle] + ([cloudpickle] if cloudpickle else [])
 
 
 @pytest.mark.parametrize("serializer", SERIALIZERS)
