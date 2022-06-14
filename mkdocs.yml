@@ -1,0 +1,12 @@
+site_name: measured
+plugins:
+- search
+- mkdocstrings:
+    handlers:
+      python:
+        paths: [src]
+        options:
+          show_signature_annotations: true
+watch:
+- docs
+- src

@@ -13,14 +13,16 @@ SUPERSCRIPTS = {
 def superscript(exponent: Union[int, float]) -> str:
     """Given a signed integer exponent, returns the Unicode superscript string for it
 
-    >>> f"x{superscript(123)}"
-    'x¹²³'
-    >>> f"x{superscript(0)}"
-    'x⁰'
-    >>> f"x{superscript(-1)}"
-    'x⁻¹'
-    >>> f"x{superscript(1)}"
-    'x'
+    Examples:
+
+        >>> f"x{superscript(123)}"
+        'x¹²³'
+        >>> f"x{superscript(0)}"
+        'x⁰'
+        >>> f"x{superscript(-1)}"
+        'x⁻¹'
+        >>> f"x{superscript(1)}"
+        'x'
     """
     if exponent == 1:
         return ""

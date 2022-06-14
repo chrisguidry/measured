@@ -1,3 +1,73 @@
+"""
+# `measured`
+## A library for measurements and quantities
+
+The goal of the `measured` library is to provide a sound foundation for recording and
+converting physical quantities, while maintaining the integrity of their units and
+dimensions.
+
+While it aims to be the fastest library of its kind, automatically tracking the units
+and dimensions of quantities introduces significant overhead.  You can use `measured`
+for applications where the accuracy of the units is more important than raw numerical
+computing speed.
+
+Examples:
+
+    >>> from measured.si import Meter, Second
+    >>> distance = 10 * Meter
+    >>> time = 2 * Second
+    >>> speed = distance / time
+    >>> assert speed == 5 * Meter / Second
+
+Attributes: Fundamental dimensions
+
+    Number (Dimension): the basis of [counting and measuring][1], used to define
+        [dimensionless quantities][2]
+
+        [1]: https://en.wikipedia.org/wiki/Number [2]:
+        https://en.wikipedia.org/wiki/Dimensionless_quantity
+
+    Length (Dimension): [distance][1] or extent through space
+
+        [1]: https://en.wikipedia.org/wiki/Length
+
+    Time (Dimension): [what clocks read][1], the intervals between events
+
+        [1]: https://en.wikipedia.org/wiki/Time
+
+    Mass (Dimension): how much [matter][1] is in a physical body
+
+        [1]: https://en.wikipedia.org/wiki/Mass
+
+    Current (Dimension): the net rate of [flow of electrical charge][1] through a
+        conductor
+
+        [1]: https://en.wikipedia.org/wiki/Electric_current
+
+    Temperature (Dimension): the average amount of [kinetic energy][1] in a system
+
+        [1]: https://en.wikipedia.org/wiki/Temperature
+
+    AmountOfSubstance (Dimension): how many [elementary entities][1] are in an object
+
+        [1]: https://en.wikipedia.org/wiki/Mole_(unit)
+
+    LuminousIntensity (Dimension): how strong a [light source][1] is over a volume
+
+        [1]: https://en.wikipedia.org/wiki/Luminous_intensity
+
+    Information (Dimension): how much [entropy][1] is present in a random variable
+
+        [1]: https://en.wikipedia.org/wiki/Information#Information_theory
+
+
+Attributes: Base Units
+
+    One (Unit): represents the number 1, expressed as a unit of dimension `Number`
+
+"""
+
+
 from collections import defaultdict
 from functools import lru_cache, total_ordering
 from math import log
@@ -27,6 +97,81 @@ Numeric = Union[int, float]
 
 
 class Dimension:
+    """Dimension represents the kind of physical quantity being measured.
+
+    Attributes:
+        name (str): The name of this dimension
+
+        symbol (str): The conventional [dimensional
+            analysis](https://en.wikipedia.org/wiki/Dimensional_analysis#Definition)
+            symbol of this dimension
+
+        exponents (Tuple[int, ...]): The exponents that define this dimension in terms
+            of the fundamental dimensions
+
+    Examples:
+
+        >>> from measured import (
+        ...     Number,
+        ...     Length,
+        ...     Time,
+        ...     Mass,
+        ...     Current,
+        ...     Temperature,
+        ...     AmountOfSubstance,
+        ...     LuminousIntensity,
+        ...     Information
+        ... )
+        >>> Length.symbol
+        'L'
+        >>> Length.name
+        'length'
+
+        These dimensions form the basis for more complex dimensions, which can be
+        produced through multiplication, exponentation, and division.
+
+        >>> from measured import Area, Volume, Frequency, Speed
+        >>> assert Area == Length * Length
+        >>> assert Volume == Length**3
+        >>> assert Speed == Length / Time
+        >>> assert Frequency == Number / Time
+
+        measured attempts to maintain Dimensions as singletons, so they can be used in
+        both equality and identity tests.
+
+        >>> assert Volume is Length**3
+
+        Dimensions are hashable and may be used as keys in dictionaries.
+
+        >>> lookup = {Volume: 'spacious'}
+        >>> lookup[Volume]
+        'spacious'
+
+        Dimensions can be serialized in a number of ways, preserving their identity.
+
+        >>> import pickle
+        >>> assert pickle.loads(pickle.dumps(Volume)) is Volume
+
+        >>> import json
+        >>> from measured.json import MeasuredJSONEncoder, MeasuredJSONDecoder
+        >>> json.dumps(Length, cls=MeasuredJSONEncoder)
+        '{"__measured__": "Dimension", "name": "length", "symbol": "L", ...}'
+
+        While using measured's JSON codecs, Dimensions may be deserialized directly from
+        that JSON representation.
+
+        >>> encoded = json.dumps(Length, cls=MeasuredJSONEncoder)
+        >>> json.loads(encoded, cls=MeasuredJSONDecoder)
+        <Dimension(exponents=(0, 1, 0, 0, 0, 0, 0, 0, 0, 0), name='length', symbol='L')>
+
+        With measured's JSON codecs installed, you can omit passing the encoder and
+        decoder.
+
+        >>> from measured.json import codecs_installed
+        >>> with codecs_installed():
+        ...     assert json.loads(json.dumps(Volume)) is Volume
+    """
+
     _known: ClassVar[Dict[Tuple[int, ...], "Dimension"]] = {}
     _initialized: bool = False
 

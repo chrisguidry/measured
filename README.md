@@ -1,3 +1,1 @@
-# measured
-
-Fast and Pythonic library for working with measurements and quantities
+# `measured`, a library for measurements and quantities
