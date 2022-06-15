@@ -1,5 +1,6 @@
 import json
 import pickle
+from copy import copy
 from types import ModuleType
 from typing import Generator, List, Union
 
@@ -33,6 +34,17 @@ NAMED = DIMENSIONS + PREFIXES + UNITS
 QUANTITIES: List[MeasuredType] = [5 * Meter, 5 * Hertz, 5.1 * Ohm]
 
 SERIALIZERS = [json, pickle] + ([cloudpickle] if cloudpickle else [])
+
+
+@pytest.mark.parametrize("named", NAMED, ids=[d.name for d in NAMED])
+def test_named_type_copies_are_singletons(named: NamedType) -> None:
+    assert copy(named) is named
+
+
+@pytest.mark.parametrize("quantity", QUANTITIES, ids=map(str, QUANTITIES))
+def test_quantiy_copies_are_new(quantity: NamedType) -> None:
+    assert copy(quantity) == quantity
+    assert copy(quantity) is not quantity
 
 
 @pytest.mark.parametrize("serializer", SERIALIZERS)

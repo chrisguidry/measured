@@ -10,6 +10,12 @@ and dimensions of quantities introduces significant overhead.  You can use `meas
 for applications where the accuracy of the units is more important than raw numerical
 computing speed.
 
+The value classes of `measured` should generally be treated as immutable.  Rather than
+setting the `magnitude` of a [`Quantity`][measured.Quantity], consider instantiating a
+new one, or performing arithmetic on an existing one to produce new values.  Instances
+of [`Dimension`][measured.Dimension], [`Prefix`][measured.Prefix], and
+[`Unit`][measured.Unit] are always singletons within a Python process.
+
 Examples:
 
     >>> from measured.si import Meter, Second
@@ -110,9 +116,10 @@ class Dimension:
     through multiplication, division, or exponentation.
 
     Attributes:
-        name (str): The name of this dimension
+        name (Optional[str]): The name of this dimension, which may not be set in the
+            case of complex dimensions
 
-        symbol (str): The conventional [dimensional
+        symbol (Optional[str]): The conventional [dimensional
             analysis](https://en.wikipedia.org/wiki/Dimensional_analysis#Definition)
             symbol of this dimension
 
@@ -167,8 +174,8 @@ class Dimension:
         >>> json.dumps(Length, cls=MeasuredJSONEncoder)
         '{"__measured__": "Dimension", "name": "length", "symbol": "L", ...}'
 
-        While using `measured`'s JSON codecs, Dimensions may be deserialized directly
-        from that JSON representation.
+        While using `measured`'s [JSON codecs][measured.json], Dimensions may be
+        deserialized directly from that JSON representation.
 
         >>> encoded = json.dumps(Length, cls=MeasuredJSONEncoder)
         >>> json.loads(encoded, cls=MeasuredJSONDecoder)
@@ -263,6 +270,16 @@ class Dimension:
 
         cls._fundamental.append(dimension)
 
+        return dimension
+
+    @classmethod
+    def derive(
+        cls, dimension: "Dimension", name: str, symbol: Optional[str] = None
+    ) -> "Dimension":
+        """Registers a new named dimension derived from other dimension"""
+        dimension.name = name
+        dimension.symbol = symbol or str(dimension)
+        cls._by_name[name] = dimension
         return dimension
 
     # Pickle support
@@ -379,6 +396,53 @@ class Dimension:
 
 
 class Prefix:
+    """Prefixes scale a [`Unit`][measured.Unit] up or down by a constant factor.
+
+    Prefixes are defined in systems of factors with a common integer base, and
+    successive positive and/or negative exponents, like the SI system of prefixes using
+    base 10 (micro, milli, kilo, mega, etc) or the IEC system of binary prefixes (kibi,
+    mebi, gibi, etc).
+
+    Attributes:
+
+        base (int): The base of the system, like `10` for the SI system
+        exponent (int | float): The exponent that the base is raised to
+
+    Examples:
+
+        Prefixes have a base and an exponent:
+
+        >>> from measured.si import Milli, Kilo
+        >>> Milli.symbol, Milli.base, Milli.exponent
+        ('m', 10, -3)
+        >>> Kilo.symbol, Kilo.base, Kilo.exponent
+        ('k', 10, 3)
+
+        Prefixes can be multiplied by numbers, Prefixes, and Units:
+
+        >>> from measured.si import Kilo, Mega, Meter
+        >>> assert 1 * Kilo * Meter == 1000 * Meter
+        >>> assert 1 * (Kilo * Kilo * Meter) == 1 * Mega * Meter
+
+        Prefixes can be divided by Prefixes and other prefixed units:
+
+        >>> from measured.si import Kilo, Mega, Meter, Second
+        >>> assert (1 * Mega * Meter) / (1 * Kilo * Second) == 1000 * Meter / Second
+
+        Prefixes can be raised to an exponent:
+
+        >>> from measured.si import Kilo, Mega, Meter
+        >>> assert (2 * Kilo * Meter)**2 == 4 * Mega * Meter**2
+
+        Prefixes can translate between bases, although be careful with the loss of
+        precision during this conversion:
+
+        >>> from measured.si import Kilo
+        >>> from measured.iec import Mebi, Bit
+        >>> assert 1 * Mebi * Bit == 1048.576 * Kilo * Bit
+
+    """
+
     _known: ClassVar[Dict[Tuple[int, Numeric], "Prefix"]] = {}
     _initialized: bool = False
 
@@ -535,6 +599,47 @@ class Prefix:
 
 
 class Unit:
+    """Unit is a predetermined reference amount or definition for a measurable quantity
+
+    `measured` includes a number of well-known units, and additional contributions are
+    always welcome.  The SI system of units is covered in the [`measured.si`][] package.
+
+    Attributes:
+
+        name (Optional[str]): the name of this unit, which may not be set in the case
+            of complex derived units
+
+        symbol (Optional[str]): the symbol of this unit, which may not be set in the
+            case of complex derived units
+
+        prefix (Prefix): the prefix to multiply this unit by (`IdentityPrefix` for
+            unprefixed units)
+
+        factors (Mapping["Unit", int]): a mapping of the base units and their powers
+            that make up a compound unit, or `{self: 1}` for base units
+
+    Examples:
+
+        >>> from measured import Length, Time, Speed
+        >>> from measured.si import Meter, Second
+        >>> Meter.name, Meter.symbol
+        ('meter', 'm')
+
+        >>> meter_per_second = Meter / Second
+        >>> assert meter_per_second.dimension is Speed
+        >>> assert meter_per_second.dimension is Length / Time
+        >>> meter_per_second.name, meter_per_second.symbol
+        (None, None)
+
+        >>> back_to_meter = (meter_per_second * Second)
+        >>> back_to_meter.name, back_to_meter.symbol
+        ('meter', 'm')
+
+        >>> assert Meter.factors == {Meter: 1}
+        >>> assert Second.factors == {Second: 1}
+        >>> assert meter_per_second.factors == {Meter: 1, Second: -1}
+    """
+
     UnitKey = Tuple[Prefix, Tuple[Tuple["Unit", int], ...]]
 
     _known: ClassVar[Dict[UnitKey, "Unit"]] = {}
@@ -677,6 +782,15 @@ class Unit:
 
     @lru_cache(maxsize=None)
     def quantify(self) -> "Quantity":
+        """Produce a Quantity of this Unit, including the Prefix.
+
+        Examples:
+
+            >>> from measured.si import Kilo, Meter
+            >>> assert Kilo * Meter != 1000 * Meter
+            >>> assert 1 * Kilo * Meter == 1000 * Meter
+            >>> assert (Kilo * Meter).quantify() == 1000 * Meter
+        """
         return self.prefix.quantify() * Unit(
             IdentityPrefix, self.factors, self.dimension
         )
@@ -786,11 +900,55 @@ class Unit:
 
 @total_ordering
 class Quantity:
+    """Quantity represents a quantity of some Unit
+
+    Attributes:
+
+        magnitude (int | float): the quantity
+
+        unit (Unit): the [`Unit`][measured.Unit]
+
+    Examples:
+
+        All of the arithmetic operations are supported between Quantities.
+        Multiplication and division with [`Unit`][measured.Unit], `int`, and `float`
+        are also supported.
+
+        >>> from measured.si import Meter, Second
+        >>> assert 2 * Meter + 3 * Meter == 5 * Meter
+        >>> assert 3 * Meter - 1 * Meter == 2 * Meter
+        >>> assert (2 * Meter) / (1 * Second) == 2 * Meter / Second
+        >>> assert 10 * Meter / 2 == 5 * Meter
+        >>> assert 10 * Meter * 2 == 20 * Meter
+        >>> assert (10 * Meter)**2 == 100 * Meter**2
+
+        Keep an eye on Python's operator precedence, which may lead to surprising
+        results.  Consider the following:
+
+        >>> assert (2 * Meter / 1 * Second) != (2 * Meter) / (1 * Second)
+
+        In the above example, the order of operations on the left is:
+
+        * `2 * Meter` → `Quantity(2, Meter)`
+        * `Quantity(2, Meter) / 1` → `Quantity(2, Meter)`
+        * `Quantity(2, Meter) * Second` → `Quantity(2, Meter * Second)`
+
+        But on the right, the order is:
+
+        * `2 * Meter` → `Quantity(2, Meter)`
+        * `1 * Second` → `Quantity(1, Second)`
+        * `Quantity(2, Meter) / Quantity(1, Second)` → `Quantity(2, Meter / Second)`
+
+
+    """
+
     def __init__(self, magnitude: Numeric, unit: Unit):
         self.magnitude = magnitude
         self.unit = unit
 
     def in_base_units(self) -> "Quantity":
+        """Reduces this Quantity into a new Quantity expressed only in base units
+        without any Prefixes"""
         return self.magnitude * self.unit.quantify()
 
     # JSON support
@@ -904,6 +1062,18 @@ class Quantity:
         return this.magnitude < other.magnitude
 
     def approximates(self, other: "Quantity", within: Numeric = 1e-9) -> bool:
+        """Indicates whether this Quantity and another Quantity are close enough to
+        each other to be considered equal.
+
+        Parameters:
+            other (Quantity): the other quantity to compare this quantity to
+            within (int | float): the tolerance
+
+        Examples:
+
+            >>> from measured.si import Meter
+            >>> assert (0.001 * Meter).approximates(0.002 * Meter, within=0.01)
+        """
         if self == other:
             return True
 
@@ -939,44 +1109,44 @@ Information = Dimension.define(name="information", symbol="B")  # TODO
 
 # Derived dimensions
 
-Area = Length * Length
-Volume = Area * Length
+Area = Dimension.derive(Length * Length, name="area")
+Volume = Dimension.derive(Area * Length, name="volume")
 
 Angle = Length / Length
 SolidAngle = Area / Area
 
 # https://en.wikipedia.org/wiki/Fourth,_fifth,_and_sixth_derivatives_of_position
 
-Speed = Length / Time
-Acceleration = Length / Time**2
-Jerk = Length / Time**3
-Snap = Length / Time**4
-Crackle = Length / Time**5
-Pop = Length / Time**6
+Speed = Dimension.derive(Length / Time, name="speed")
+Acceleration = Dimension.derive(Length / Time**2, name="acceleration")
+Jerk = Dimension.derive(Length / Time**3, name="jerk")
+Snap = Dimension.derive(Length / Time**4, name="snap")
+Crackle = Dimension.derive(Length / Time**5, name="crackle")
+Pop = Dimension.derive(Length / Time**6, name="pop")
 
-Frequency = Number / Time
+Frequency = Dimension.derive(Number / Time, name="frequency")
 
 # https://en.wikipedia.org/wiki/Newton%27s_laws_of_motion#Second
 
-Force = Mass * Acceleration
-Energy = Length * Force
-Power = Energy / Time
+Force = Dimension.derive(Mass * Acceleration, name="force")
+Energy = Dimension.derive(Length * Force, name="energy")
+Power = Dimension.derive(Energy / Time, name="power")
 
-Charge = Time * Current
-Potential = Power / Charge
-Capacitance = Charge / Potential
-Resistance = Potential / Current
-Conductance = Current / Potential
-Inductance = Potential * Time / Current
+Charge = Dimension.derive(Time * Current, name="charge")
+Potential = Dimension.derive(Power / Charge, name="potential")
+Capacitance = Dimension.derive(Charge / Potential, name="capacitance")
+Resistance = Dimension.derive(Potential / Current, name="resistance")
+Conductance = Dimension.derive(Current / Potential, name="conductance")
+Inductance = Dimension.derive(Potential * Time / Current, name="inductance")
 
-MagneticFlux = Power / Current
-MagneticInduction = Potential * Time / Area
+MagneticFlux = Dimension.derive(Power / Current, name="magnetic flux")
+MagneticInduction = Dimension.derive(Potential * Time / Area, name="magnetic induction")
 
-Illuminance = LuminousIntensity / Area
+Illuminance = Dimension.derive(LuminousIntensity / Area, name="illuminance")
 
-RadioactiveDose = Power / Mass
+RadioactiveDose = Dimension.derive(Power / Mass, name="radioactivedose")
 
-CatalyticActivity = AmountOfSubstance / Time
+Catalysis = Dimension.derive(AmountOfSubstance / Time, name="catalysis")
 
 
 # Fundamental prefixes

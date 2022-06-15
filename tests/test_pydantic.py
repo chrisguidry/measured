@@ -115,11 +115,6 @@ def test_dimension_field_from_string_must_exist() -> None:
         ExampleModel(dimension="flibbity")
 
 
-def test_dimension_field_from_string_must_be_named() -> None:
-    with pytest.raises(ValueError, match="'area' is not a named Dimension"):
-        ExampleModel(dimension="area")
-
-
 def test_prefix_field_from_string_must_exist() -> None:
     with pytest.raises(ValueError, match="'kibbity' is not a named Prefix"):
         ExampleModel(prefix="kibbity")
