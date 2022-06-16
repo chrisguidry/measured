@@ -1,6 +1,4 @@
 """
-A library for measurements and quantities
-
 The goal of the `measured` library is to provide a sound foundation for recording and
 converting physical quantities, while maintaining the integrity of their units and
 dimensions.
@@ -140,7 +138,7 @@ from typing import (
 
 from .formatting import superscript
 
-__version__ = "0.0.4"
+__version__ = "0.1.0"
 
 NUMERIC_CLASSES = (int, float)
 Numeric = Union[int, float]
