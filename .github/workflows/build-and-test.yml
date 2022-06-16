@@ -41,6 +41,6 @@ jobs:
         pytest --cov-report=xml
     - uses: codecov/codecov-action@v2
       with:
-        name: ${{ matrix.python-version }}
+        flags: ${{ matrix.python-version }}
         fail_ci_if_error: true
         verbose: true
