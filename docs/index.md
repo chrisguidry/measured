@@ -1,9 +1,5 @@
+# Core Concepts
+
 ::: measured
-
-::: measured.si
-
-::: measured.iec
-
-::: measured.formatting
-
-::: measured.json
+    options:
+        show_root_toc_entry: true

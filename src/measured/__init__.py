@@ -66,6 +66,44 @@ Attributes: Fundamental dimensions
 
         [1]: https://en.wikipedia.org/wiki/Information#Information_theory
 
+Attributes: Derived dimensions
+
+    Area (Dimension):
+    Volume (Dimension):
+
+    Angle (Dimension):
+    SolidAngle (Dimension):
+
+    Speed (Dimension):
+    Acceleration (Dimension):
+    Jerk (Dimension):
+    Snap (Dimension):
+    Crackle (Dimension):
+    Pop (Dimension):
+
+    Frequency (Dimension):
+
+    Force (Dimension):
+    Energy (Dimension):
+    Power (Dimension):
+
+    Charge (Dimension):
+    Potential (Dimension):
+    Capacitance (Dimension):
+    Resistance (Dimension):
+    Conductance (Dimension):
+    Inductance (Dimension):
+
+    MagneticFlux (Dimension):
+    MagneticBField (Dimension):
+
+    LuminousFlux (Dimension):
+    Illuminance (Dimension):
+
+    RadioactiveDose (Dimension):
+
+    Catalysis (Dimension):
+
 
 
 Attributes: Base Prefixes
@@ -1140,8 +1178,9 @@ Conductance = Dimension.derive(Current / Potential, name="conductance")
 Inductance = Dimension.derive(Potential * Time / Current, name="inductance")
 
 MagneticFlux = Dimension.derive(Power / Current, name="magnetic flux")
-MagneticInduction = Dimension.derive(Potential * Time / Area, name="magnetic induction")
+MagneticBField = Dimension.derive(Potential * Time / Area, name="magnetic B-field")
 
+LuminousFlux = LuminousIntensity * SolidAngle
 Illuminance = Dimension.derive(LuminousIntensity / Area, name="illuminance")
 
 RadioactiveDose = Dimension.derive(Power / Mass, name="radioactivedose")
