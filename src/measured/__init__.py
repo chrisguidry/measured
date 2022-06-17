@@ -934,6 +934,10 @@ class Unit:
         return Unit(prefix, factors, dimension)
 
 
+class ConversionNotFound(ValueError):
+    pass
+
+
 @total_ordering
 class Quantity:
     """Quantity represents a quantity of some Unit
@@ -986,6 +990,26 @@ class Quantity:
         """Reduces this Quantity into a new Quantity expressed only in base units
         without any Prefixes"""
         return self.magnitude * self.unit.quantify()
+
+    def in_unit(self, other: Unit) -> "Quantity":
+        """Convert this Quantity into another unit"""
+        if self.unit.dimension != other.dimension:
+            raise TypeError(
+                "Cannot convert between dimensions {self.unit.dimension} "
+                "to {other.dimension}"
+            )
+
+        this = self.in_base_units()
+        other_quantity = (1 * other).in_base_units()
+        path = conversions.find(this.unit, other_quantity.unit)
+        if not path:
+            raise ConversionNotFound(f"No conversion from {this} to {other}")
+
+        magnitude = other_quantity.magnitude * this.magnitude
+        for scale, _ in path:
+            magnitude *= scale
+
+        return Quantity(magnitude, other)
 
     # JSON support
 
@@ -1080,7 +1104,13 @@ class Quantity:
         this = self.in_base_units()
         other = other.in_base_units()
 
-        return this.magnitude == other.magnitude and this.unit == other.unit
+        if this.unit == other.unit:
+            return this.magnitude == other.magnitude
+
+        try:
+            return this.in_unit(other.unit) == other
+        except ConversionNotFound:
+            return NotImplemented
 
     def __lt__(self, other: Any) -> bool:
         if not isinstance(other, Quantity):
@@ -1092,12 +1122,15 @@ class Quantity:
         this = self.in_base_units()
         other = other.in_base_units()
 
-        if this.unit != other.unit:
+        if this.unit == other.unit:
+            return this.magnitude < other.magnitude
+
+        try:
+            return this.in_unit(other.unit) < other
+        except ConversionNotFound:
             return NotImplemented
 
-        return this.magnitude < other.magnitude
-
-    def approximates(self, other: "Quantity", within: Numeric = 1e-9) -> bool:
+    def approximates(self, other: "Quantity", within: Numeric = 1e-6) -> bool:
         """Indicates whether this Quantity and another Quantity are close enough to
         each other to be considered equal.
 
@@ -1120,12 +1153,59 @@ class Quantity:
         other = other.in_base_units()
 
         if this.unit != other.unit:
-            return False
+            try:
+                this = this.in_unit(other.unit)
+            except ConversionNotFound:
+                return False
 
         difference = this - other
         tolerance = Quantity(within, this.unit)
 
         return abs(difference) <= tolerance
+
+
+class ConversionTable:
+    _known: Dict[Unit, Dict[Unit, Numeric]]
+
+    def __init__(self) -> None:
+        self._known = defaultdict(dict)
+
+    def equate(self, a: Quantity, b: Quantity) -> None:
+        a = a.in_base_units()
+        b = b.in_base_units()
+
+        self._known[a.unit][b.unit] = b.magnitude / a.magnitude
+        self._known[b.unit][a.unit] = a.magnitude / b.magnitude
+
+    def find(
+        self, start: Unit, end: Unit, visited: Optional[Set[Unit]] = None
+    ) -> Optional[Iterable[Tuple[Numeric, Unit]]]:
+        if visited is None:
+            visited = {start}
+        elif start in visited:
+            return None
+        else:
+            visited.add(start)
+
+        if start not in self._known or end not in self._known:
+            return None
+
+        if end in self._known[start]:
+            return [(self._known[start][end], end)]
+
+        best_path = None
+
+        for intermediate, scale in self._known[start].items():
+            path = self.find(intermediate, end, visited=visited)
+            if path:
+                path = [(scale, intermediate)] + list(path)
+                if not best_path or len(path) < len(best_path):
+                    best_path = path
+
+        return best_path
+
+
+conversions = ConversionTable()
 
 
 # https://en.wikipedia.org/wiki/Dimensional_analysis#Definition

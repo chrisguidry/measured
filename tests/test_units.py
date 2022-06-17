@@ -9,9 +9,14 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     base = sorted(Unit.base(), key=lambda u: u.name or "")
     ids = [d.name for d in base]
 
-    for exemplar in ["a", "b", "c"]:
-        if exemplar in metafunc.fixturenames:
-            metafunc.parametrize(exemplar, base, ids=ids)
+    # just take a sample of units (with overlaps) to prevent the tests from
+    # growing exponentially
+    if "a" in metafunc.fixturenames:
+        metafunc.parametrize("a", base[:10], ids=ids[:10])
+    if "b" in metafunc.fixturenames:
+        metafunc.parametrize("b", base[5:15], ids=ids[5:15])
+    if "c" in metafunc.fixturenames:
+        metafunc.parametrize("c", base[-10:], ids=ids[-10:])
 
     if "base" in metafunc.fixturenames:
         metafunc.parametrize("base", base, ids=ids)
@@ -23,7 +28,7 @@ def identity() -> Unit:
 
 
 def test_homogenous_under_addition(a: Unit, b: Unit) -> None:
-    # https://en.wikipedia.org/wiki/Oneional_analysis#Dimensional_homogeneity
+    # https://en.wikipedia.org/wiki/Dimensional_analysis#Dimensional_homogeneity
     #
     # Only commensurable quantities (physical quantities having the same dimension) may
     # be compared, equated, added, or subtracted.

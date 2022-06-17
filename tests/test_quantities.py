@@ -124,11 +124,28 @@ def test_ordering_only_within_dimension() -> None:
         1 * Meter >= 1 * Second
 
 
-def test_ordering_requires_compatible_types() -> None:
+def test_ordering_requires_types_with_a_conversion() -> None:
     Bogus = Unit.define(Length, name="bogus", symbol="bog")
 
     one = 1 * Meter
     other = 1 * Bogus
+
+    with pytest.raises(TypeError):
+        one < other
+
+    with pytest.raises(TypeError):
+        one <= other
+
+    with pytest.raises(TypeError):
+        one > other
+
+    with pytest.raises(TypeError):
+        one >= other
+
+
+def test_ordering_requires_types_in_the_same_dimension() -> None:
+    one = 1 * Meter
+    other = 1 * Second
 
     with pytest.raises(TypeError):
         one < other
@@ -164,3 +181,8 @@ def test_approximating_requires_units_with_conversion() -> None:
     other = 1 * Bogus
 
     assert not one.approximates(other, within=1e100)
+
+
+def test_unit_conversion_must_be_in_same_dimensino() -> None:
+    with pytest.raises(TypeError):
+        (1 * Meter).in_unit(Second)
