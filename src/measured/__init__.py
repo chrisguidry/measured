@@ -1180,6 +1180,9 @@ class ConversionTable:
     def find(
         self, start: Unit, end: Unit, visited: Optional[Set[Unit]] = None
     ) -> Optional[Iterable[Tuple[Numeric, Unit]]]:
+        if start is end:
+            return [(1, end)]
+
         if visited is None:
             visited = {start}
         elif start in visited:

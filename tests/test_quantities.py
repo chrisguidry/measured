@@ -183,6 +183,12 @@ def test_approximating_requires_units_with_conversion() -> None:
     assert not one.approximates(other, within=1e100)
 
 
-def test_unit_conversion_must_be_in_same_dimensino() -> None:
+def test_unit_conversion_must_be_in_same_dimension() -> None:
     with pytest.raises(TypeError):
         (1 * Meter).in_unit(Second)
+
+
+def test_unit_always_converts_to_itself() -> None:
+    converted = (10 * Meter).in_unit(Meter)
+    assert converted.magnitude == 10
+    assert converted.unit == Meter
