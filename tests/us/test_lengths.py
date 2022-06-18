@@ -26,7 +26,7 @@ def test_point() -> None:
     assert Point.dimension == Length
 
     assert 1 * Point == (1 / 12) * Pica
-    assert 1 * Point == (1 / 72) * Inch
+    assert (1 * Point).approximates((1 / 72) * Inch, within=1e-9)
     assert 1 * Point == (127 / 360 * Milli * Meter)
     assert (1 * Point).approximates(352.778 * Micro * Meter)
 
@@ -123,5 +123,5 @@ def test_nautical_measures() -> None:
 
     assert 1 * Cable == 0.219456 * Kilo * Meter
 
-    assert 1 * NauticalMile == 1.151 * Mile
     assert 1 * NauticalMile == 1.852 * Kilo * Meter
+    assert (1 * NauticalMile).approximates(1.151 * Mile, within=1e-3)

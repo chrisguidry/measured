@@ -14,9 +14,11 @@ conversions.equate(1 * Point, 127 / 360 * Milli * Meter)
 
 Pica = Unit.define(Length, "pica", "P.")
 conversions.equate(1 * Pica, 12 * Point)
+conversions.equate(1 * Pica, 127 / 30 * Milli * Meter)
 
 Inch = Unit.define(Length, "inch", "in.")
 conversions.equate(1 * Inch, 6 * Pica)
+conversions.equate(1 * Inch, 25.4 * Milli * Meter)
 
 Foot = Unit.define(Length, "foot", "ft.")
 conversions.equate(1 * Foot, 12 * Inch)
@@ -27,6 +29,7 @@ conversions.equate(1 * Yard, 3 * Foot)
 conversions.equate(1 * Yard, 0.9144 * Meter)
 
 Mile = Unit.define(Length, "mile", "mi.")
+conversions.equate(1 * Mile, 5280 * Foot)
 conversions.equate(1 * Mile, 1760 * Yard)
 conversions.equate(1 * Mile, 1.609344 * Kilo * Meter)
 
@@ -34,6 +37,7 @@ conversions.equate(1 * Mile, 1.609344 * Kilo * Meter)
 
 Link = Unit.define(Length, "link", "li.")
 conversions.equate(1 * Link, 7.92 * Inch)
+conversions.equate(1 * Link, 33 / 50 * Foot)
 conversions.equate(1 * Link, 792 / 3937 * Meter)
 
 SurveyFoot = Unit.define(Length, "US survey foot", "US survey foot")
@@ -70,10 +74,7 @@ conversions.equate(1 * Fathom, 1143 / 625 * Meter)
 
 Cable = Unit.define(Length, "cable", "cb.")
 conversions.equate(1 * Cable, 120 * Fathom)
-conversions.equate(1 * Cable, 1.091 * Furlong)
 conversions.equate(1 * Cable, 3429 / 15625 * Kilo * Meter)
 
 NauticalMile = Unit.define(Length, "nautical mile", "nmi.")
-conversions.equate(1 * NauticalMile, 1.151 * Mile)
-conversions.equate(1 * NauticalMile, 8.439 * Cable)
-conversions.equate(1 * NauticalMile, 1.852 * Kilo * Meter)
+conversions.equate(1 * NauticalMile, 1852 * Meter)
