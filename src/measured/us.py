@@ -54,7 +54,7 @@ conversions.equate(1 * Furlong, 10 * Chain)
 conversions.equate(1 * Furlong, 792 / 3937 * Kilo * Meter)
 
 StatuteMile = Unit.define(Length, "US statute mile", "US statute mile")
-conversions.equate(1 * StatuteMile, 8 * StatuteMile)
+conversions.equate(1 * StatuteMile, 8 * Furlong)
 conversions.equate(1 * StatuteMile, 6336 / 3937 * Kilo * Meter)
 
 League = Unit.define(Length, "league", "lea.")
