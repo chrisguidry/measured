@@ -4,9 +4,10 @@ Defines the [United States customary units][1] and their conversions to SI
 [1]: https://en.wikipedia.org/wiki/United_States_customary_units
 """
 
-from . import Length, Unit, conversions
+from . import Area, Length, Unit, Volume, conversions
 from .si import Kilo, Meter, Milli
 
+# Length
 # https://en.wikipedia.org/wiki/United_States_customary_units#Length
 
 Point = Unit.define(Length, "point", "p.")
@@ -78,3 +79,26 @@ conversions.equate(1 * Cable, 3429 / 15625 * Kilo * Meter)
 
 NauticalMile = Unit.define(Length, "nautical mile", "nmi.")
 conversions.equate(1 * NauticalMile, 1852 * Meter)
+
+
+# Area
+# https://en.wikipedia.org/wiki/United_States_customary_units#Area
+
+Acre = Unit.define(Area, name="acre", symbol="acre")
+conversions.equate(1 * Acre, 43560 * Foot**2)
+conversions.equate(1 * Acre, 10 * Chain**2)
+
+Section = Unit.define(Area, name="section", symbol="section")
+conversions.equate(1 * Section, 640 * Acre)
+conversions.equate(1 * Section, 1 * StatuteMile**2)
+
+SurveyTownship = Unit.define(Area, name="survey township", symbol="twp.")
+conversions.equate(1 * SurveyTownship, 36 * Section)
+conversions.equate(1 * SurveyTownship, 4 * League**2)
+
+
+# Volume
+# https://en.wikipedia.org/wiki/United_States_customary_units#Volume
+
+AcreFoot = Unit.define(Volume, name="acre-foot", symbol="acre-ft.")
+conversions.equate(1 * AcreFoot, 43560 * Foot**3)

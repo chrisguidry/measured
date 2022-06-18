@@ -69,6 +69,12 @@ def test_exponentation_by_scalar() -> None:
     assert (5 * Meter) ** 2 == 25 * Meter**2
 
 
+def test_roots() -> None:
+    assert ((10 * Meter) ** 2).root(2) == 10 * Meter
+    assert (100 * Meter**2).root(2) == 10 * Meter
+    assert (64 * Meter**3).root(3).approximates(4 * Meter)
+
+
 def test_cannot_multiply_by_random_types() -> None:
     with pytest.raises(TypeError):
         "hi" * (5 * Meter)  # type: ignore
@@ -172,23 +178,3 @@ def test_approximating() -> None:
     assert (1 * Meter).approximates(1.0000000001 * Meter)
     assert not (1 * Meter).approximates(1.01 * Meter)
     assert not (1 * Meter).approximates(1.0 * Second)
-
-
-def test_approximating_requires_units_with_conversion() -> None:
-    Bogus = Unit.define(Length, name="bogus", symbol="bog")
-
-    one = 1 * Meter
-    other = 1 * Bogus
-
-    assert not one.approximates(other, within=1e100)
-
-
-def test_unit_conversion_must_be_in_same_dimension() -> None:
-    with pytest.raises(TypeError):
-        (1 * Meter).in_unit(Second)
-
-
-def test_unit_always_converts_to_itself() -> None:
-    converted = (10 * Meter).in_unit(Meter)
-    assert converted.magnitude == 10
-    assert converted.unit == Meter

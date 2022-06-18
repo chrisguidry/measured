@@ -2,7 +2,7 @@ import pytest
 
 from measured import One
 from measured.iec import Bit, Kibi, Mebi
-from measured.si import Kilo, Mega, Meter, Micro, Milli, Second
+from measured.si import Deci, Kilo, Mega, Meter, Micro, Milli, Second
 
 
 def test_prefixes_scale_quantities_up() -> None:
@@ -81,3 +81,18 @@ def test_dividing_by_random_things() -> None:
 
     with pytest.raises(TypeError):
         Kilo / "hello"  # type: ignore
+
+
+def test_roots() -> None:
+    assert Mega.root(2) == Kilo
+    assert Mebi.root(2) == Kibi
+
+
+def test_only_integer_roots() -> None:
+    with pytest.raises(TypeError):
+        Deci.root(0.5)  # type: ignore
+
+
+def test_whole_power_roots_only() -> None:
+    with pytest.raises(ValueError):
+        Deci.root(3)

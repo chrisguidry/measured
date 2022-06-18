@@ -3,6 +3,7 @@ from fractions import Fraction
 import pytest
 
 from measured import Number, One, Unit
+from measured.si import Meter, Second
 
 
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
@@ -104,3 +105,22 @@ def test_one() -> None:
     assert One.dimension is Number
     assert One.name == "one"
     assert One.symbol == "1"
+
+
+def test_roots() -> None:
+    assert One.root(2) == One
+    assert One.root(3) == One
+    assert One.root(100) == One
+    assert (Meter**2).root(2) == Meter
+    assert (Meter**4).root(2) == Meter**2
+    assert (Meter**16 / Second**12).root(4) == Meter**4 / Second**3
+
+
+def test_only_integer_roots() -> None:
+    with pytest.raises(TypeError):
+        (Meter**2).root(0.5)  # type: ignore
+
+
+def test_whole_power_roots_only() -> None:
+    with pytest.raises(ValueError):
+        (Meter**3).root(2)
