@@ -329,6 +329,10 @@ class Dimension:
         cls._by_name[name] = dimension
         return dimension
 
+    def unit(self, name: str, symbol: str) -> "Unit":
+        """Define a new unit of this dimension"""
+        return Unit.define(self, name, symbol)
+
     # Pickle support
 
     def __getnewargs_ex__(self) -> Tuple[Tuple[Tuple[int, ...]], Dict[str, Any]]:
@@ -788,6 +792,12 @@ class Unit:
         unit.name = name
         unit.symbol = symbol
         return unit
+
+    def equals(self, other: "Quantity") -> None:
+        """Defines a conversion between this Unit and another"""
+        if other.unit == self:
+            raise ValueError("No need to define conversions for a unit and itself")
+        return conversions.equate(1 * self, other)
 
     # Pickle support
 

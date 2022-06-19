@@ -133,13 +133,13 @@ Yocto = Prefix(10, -24, name="yocto", symbol="y")
 # Base Units
 # https://en.wikipedia.org/wiki/SI_base_unit
 
-Meter = Unit.define(Length, name="meter", symbol="m")
-Second = Unit.define(Time, name="second", symbol="s")
-Gram = Unit.define(Mass, name="gram", symbol="g")
-Ampere = Unit.define(Current, name="ampere", symbol="A")
-Kelvin = Unit.define(Temperature, name="kelvin", symbol="K")
-Mole = Unit.define(AmountOfSubstance, name="mole", symbol="mol")
-Candela = Unit.define(LuminousIntensity, name="candela", symbol="cd")
+Meter = Length.unit(name="meter", symbol="m")
+Second = Time.unit(name="second", symbol="s")
+Gram = Mass.unit(name="gram", symbol="g")
+Ampere = Current.unit(name="ampere", symbol="A")
+Kelvin = Temperature.unit(name="kelvin", symbol="K")
+Mole = AmountOfSubstance.unit(name="mole", symbol="mol")
+Candela = LuminousIntensity.unit(name="candela", symbol="cd")
 
 
 # Derived Units

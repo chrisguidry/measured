@@ -7,6 +7,11 @@ from measured.si import Meter, Second
 from measured.us import Acre, Foot, Inch
 
 
+def test_disallow_self_conversion() -> None:
+    with pytest.raises(ValueError, match="unit and itself"):
+        Meter.equals(1 * Meter)
+
+
 def test_approximating_requires_units_with_conversion() -> None:
     Bogus = Unit.define(Length, name="bogus", symbol="bog")
 
