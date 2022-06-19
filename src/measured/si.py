@@ -145,6 +145,8 @@ Candela = Unit.define(LuminousIntensity, name="candela", symbol="cd")
 # Derived Units
 # https://en.wikipedia.org/wiki/SI_derived_unit
 
+Liter = Unit.derive((Deci * Meter) ** 3, name="Liter", symbol="L")
+
 Hertz = Unit.derive(One / Second, name="hertz", symbol="Hz")
 
 Radian = Unit.derive(Meter / Meter, name="radian", symbol="rad")

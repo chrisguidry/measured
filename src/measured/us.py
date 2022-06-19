@@ -5,7 +5,7 @@ Defines the [United States customary units][1] and their conversions to SI
 """
 
 from . import Area, Length, Unit, Volume, conversions
-from .si import Kilo, Meter, Milli
+from .si import Kilo, Liter, Meter, Micro, Milli
 
 # Length
 # https://en.wikipedia.org/wiki/United_States_customary_units#Length
@@ -104,3 +104,91 @@ conversions.equate(1 * SurveyTownship, 4 * League**2)
 
 AcreFoot = Unit.define(Volume, name="acre-foot", symbol="acre-ft.")
 conversions.equate(1 * AcreFoot, 43560 * Foot**3)
+
+# Fluid Volumes
+# https://en.wikipedia.org/wiki/United_States_customary_units#Fluid_volume
+
+Minim = Unit.define(Volume, name="minim", symbol="min")
+conversions.equate(1 * Minim, 61.611519921875 * Micro * Liter)
+
+FluidDram = Unit.define(Volume, name="fluid dram", symbol="fl. dr.")
+conversions.equate(1 * FluidDram, 60 * Minim)
+conversions.equate(1 * FluidDram, 3.6966911953125 * Milli * Liter)
+
+Teaspoon = Unit.define(Volume, name="teaspoon", symbol="tsp.")
+conversions.equate(1 * Teaspoon, 80 * Minim)
+conversions.equate(1 * Teaspoon, 4.92892159375 * Milli * Liter)
+
+Tablespoon = Unit.define(Volume, name="tablespoon", symbol="tbsp.")
+conversions.equate(1 * Tablespoon, 3 * Teaspoon)
+conversions.equate(1 * Tablespoon, 4 * FluidDram)
+conversions.equate(1 * Tablespoon, 14.78676478125 * Milli * Liter)
+
+FluidOunce = Unit.define(Volume, name="fluid ounce", symbol="fl. oz.")
+conversions.equate(1 * FluidOunce, 2 * Tablespoon)
+conversions.equate(1 * FluidOunce, 29.5735295625 * Milli * Liter)
+
+Shot = Unit.define(Volume, name="shot", symbol="jig.")
+conversions.equate(1 * Shot, 1.5 * FluidOunce)
+conversions.equate(1 * Shot, 3 * Tablespoon)
+conversions.equate(1 * Shot, 44.36029434375 * Milli * Liter)
+
+Gill = Unit.define(Volume, name="gill", symbol="gi.")
+conversions.equate(1 * Gill, 8 / 3 * Shot)
+conversions.equate(1 * Gill, 4 * FluidOunce)
+conversions.equate(1 * Gill, 118.29411825 * Milli * Liter)
+
+Cup = Unit.define(Volume, name="cup", symbol="c.")
+conversions.equate(1 * Cup, 2 * Gill)
+conversions.equate(1 * Cup, 8 * FluidOunce)
+conversions.equate(1 * Cup, 236.5882365 * Milli * Liter)
+
+Pint = Unit.define(Volume, name="pint", symbol="pt.")
+conversions.equate(1 * Pint, 2 * Cup)
+conversions.equate(1 * Pint, 473.176473 * Milli * Liter)
+
+Quart = Unit.define(Volume, name="quart", symbol="qt.")
+conversions.equate(1 * Quart, 2 * Pint)
+conversions.equate(1 * Quart, 0.946352946 * Liter)
+
+Pottle = Unit.define(Volume, name="pottle", symbol="pot.")
+conversions.equate(1 * Pottle, 2 * Quart)
+conversions.equate(1 * Pottle, 1.892705892 * Liter)
+
+Gallon = Unit.define(Volume, name="gallon", symbol="gal.")
+conversions.equate(1 * Gallon, 4 * Quart)
+conversions.equate(1 * Gallon, 231 * Inch**3)
+conversions.equate(1 * Gallon, 3.785411784 * Liter)
+
+Barrel = Unit.define(Volume, name="barrel", symbol="bbl.")
+conversions.equate(1 * Barrel, 42 * Gallon)
+conversions.equate(1 * Barrel, 158.987294928 * Liter)
+
+Hogshead = Unit.define(Volume, name="hogshead", symbol="hogshead")
+conversions.equate(1 * Hogshead, 1.5 * Barrel)
+conversions.equate(1 * Hogshead, 63 * Gallon)
+conversions.equate(1 * Hogshead, 8.421875 * Foot**3)
+conversions.equate(1 * Hogshead, 238.480942392 * Liter)
+
+# Dry Volumes
+# https://en.wikipedia.org/wiki/United_States_customary_units#Dry_volume
+
+DryPint = Unit.define(Volume, name="dry pint", symbol="dry pint")
+conversions.equate(1 * DryPint, 33.6003125 * Inch**3)
+conversions.equate(1 * DryPint, 0.5506104713575 * Liter)
+
+DryQuart = Unit.define(Volume, name="dry quart", symbol="dry quart")
+conversions.equate(1 * DryQuart, 2 * DryPint)
+
+DryGallon = Unit.define(Volume, name="dry gallon", symbol="dry gallon")
+conversions.equate(1 * DryGallon, 2 * DryQuart)
+
+Peck = Unit.define(Volume, name="peck", symbol="pk.")
+conversions.equate(1 * Peck, 2 * DryGallon)
+
+Bushel = Unit.define(Volume, name="bushel", symbol="bu.")
+conversions.equate(1 * Bushel, 4 * Peck)
+conversions.equate(1 * Bushel, 35.23907016688 * Liter)
+
+DryBarrel = Unit.define(Volume, name="dry barrel", symbol="dry barrel")
+conversions.equate(1 * DryBarrel, 7056 * Inch**3)
