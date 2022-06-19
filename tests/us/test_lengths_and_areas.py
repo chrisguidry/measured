@@ -31,9 +31,9 @@ def test_point() -> None:
     assert Point.dimension == Length
 
     assert 1 * Point == (1 / 12) * Pica
-    assert (1 * Point).approximates((1 / 72) * Inch, within=1e-9)
+    (1 * Point).assert_approximates((1 / 72) * Inch, within=1e-9)
     assert 1 * Point == (127 / 360 * Milli * Meter)
-    assert (1 * Point).approximates(352.778 * Micro * Meter)
+    (1 * Point).assert_approximates(352.778 * Micro * Meter)
 
 
 def test_pica() -> None:
@@ -43,7 +43,7 @@ def test_pica() -> None:
 
     assert 1 * Pica == 12 * Point
     assert 1 * Pica == (1 / 6) * Inch
-    assert (1 * Pica).approximates(4.233 * Milli * Meter)
+    (1 * Pica).assert_approximates(4.233 * Milli * Meter)
 
 
 def test_inch() -> None:
@@ -63,7 +63,7 @@ def test_foot() -> None:
     assert Foot.symbol == "ft."
     assert Foot.dimension == Length
 
-    assert (1 * Foot).approximates(864 * Point, within=1e-3)
+    (1 * Foot).assert_approximates(864 * Point, within=1e-3)
     assert 1 * Foot == 72 * Pica
     assert 1 * Foot == 12 * Inch
     assert 1 * Foot == (1 / 3) * Yard
@@ -101,25 +101,25 @@ def test_ordering() -> None:
 
 def test_survey_measures() -> None:
     assert 1 * Link == 792 / 3937 * Meter
-    assert (1 * Link).approximates(0.2011684 * Meter)
+    (1 * Link).assert_approximates(0.2011684 * Meter)
 
     assert 1 * SurveyFoot == 1200 / 3937 * Meter
-    assert (1 * SurveyFoot).approximates(0.3048006 * Meter)
+    (1 * SurveyFoot).assert_approximates(0.3048006 * Meter)
 
     assert 1 * Rod == (19800 / 3937) * Meter
-    assert (1 * Rod).approximates(5.0292100 * Meter)
+    (1 * Rod).assert_approximates(5.0292100 * Meter)
 
     assert 1 * Chain == (79200 / 3937) * Meter
-    assert (1 * Chain).approximates(20.1168402 * Meter)
+    (1 * Chain).assert_approximates(20.1168402 * Meter)
 
     assert 1 * Furlong == (792 / 3937) * Kilo * Meter
-    assert (1 * Furlong).approximates(201.1684023 * Meter)
+    (1 * Furlong).assert_approximates(201.1684023 * Meter)
 
     assert 1 * StatuteMile == (6336 / 3937) * Kilo * Meter
-    assert (1 * StatuteMile).approximates(1609.3472186 * Meter)
+    (1 * StatuteMile).assert_approximates(1609.3472186 * Meter)
 
     assert 1 * League == (19008 / 3937) * Kilo * Meter
-    assert (1 * League).approximates(4828.0416560 * Meter)
+    (1 * League).assert_approximates(4828.0416560 * Meter)
 
 
 @pytest.mark.parametrize(
@@ -145,8 +145,8 @@ def test_nautical_measures_equal(left: Quantity, right: Quantity) -> None:
 def test_nautical_measures_approximate(
     left: Quantity, right: Quantity, within: float
 ) -> None:
-    assert left.approximates(right, within), f"{left} !~ {right.in_unit(left.unit)}"
-    assert right.approximates(left, within), f"{right} !~ {left.in_unit(left.unit)}"
+    left.assert_approximates(right, within)
+    right.assert_approximates(left, within)
 
 
 @pytest.mark.parametrize(
@@ -154,60 +154,12 @@ def test_nautical_measures_approximate(
     [
         (1 * Chain**2, 4356 * SurveyFoot**2),
         (1 * Chain**2, 16 * Rod**2),
-        (1 * Acre, 43560 * SurveyFoot**2),
+        (1 * Acre, 43560 * Foot**2),
         (1 * Acre, 10 * Chain**2),
-        pytest.param(
-            1 * Acre,
-            4046.873 * Meter**2,
-            marks=pytest.mark.xfail(
-                reason=(
-                    "finding conversions from a defined Area "
-                    "only works in one direction right now"
-                )
-            ),
-        ),
         (1 * Section, 640 * Acre),
         (1 * Section, 1 * StatuteMile**2),
-        pytest.param(
-            1 * Section,
-            2.589998 * (Kilo * Meter) ** 2,
-            marks=pytest.mark.xfail(
-                reason=(
-                    "finding conversions from a defined Area "
-                    "only works in one direction right now"
-                )
-            ),
-        ),
-        pytest.param(
-            1 * SurveyTownship,
-            36 * Section,
-            marks=pytest.mark.xfail(
-                reason=(
-                    "finding conversions from a defined Area "
-                    "only works in one direction right now"
-                )
-            ),
-        ),
-        pytest.param(
-            1 * SurveyTownship,
-            4 * League**2,
-            marks=pytest.mark.xfail(
-                reason=(
-                    "finding conversions from a defined Area "
-                    "only works in one direction right now"
-                )
-            ),
-        ),
-        pytest.param(
-            1 * SurveyTownship,
-            93.23993 * (Kilo * Meter) ** 2,
-            marks=pytest.mark.xfail(
-                reason=(
-                    "finding conversions from a defined Area "
-                    "only works in one direction right now"
-                )
-            ),
-        ),
+        (1 * SurveyTownship, 36 * Section),
+        (1 * SurveyTownship, 4 * League**2),
     ],
 )
 def test_areas_equal(left: Quantity, right: Quantity) -> None:
@@ -219,8 +171,11 @@ def test_areas_equal(left: Quantity, right: Quantity) -> None:
     "left, right, within",
     [
         (1 * Chain**2, 404.6873 * Meter**2, 1e-4),
+        (1 * Acre, 4046.86 * Meter**2, 1e-2),
+        (1 * Section, 2.589998 * (Kilo * Meter) ** 2, 1e0),
+        (1 * SurveyTownship, 93.23993 * (Kilo * Meter) ** 2, 1e2),
     ],
 )
 def test_areas_approximate(left: Quantity, right: Quantity, within: float) -> None:
-    assert left.approximates(right, within), f"{left} !~ {right.in_unit(left.unit)}"
-    assert right.approximates(left, within), f"{right} !~ {left.in_unit(left.unit)}"
+    left.assert_approximates(right, within)
+    right.assert_approximates(left, within)

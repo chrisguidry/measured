@@ -27,6 +27,7 @@ conversions.equate(1 * Foot, 0.3048 * Meter)
 
 Yard = Unit.define(Length, "yard", "yd.")
 conversions.equate(1 * Yard, 3 * Foot)
+conversions.equate(1 * Yard, 36 * Inch)
 conversions.equate(1 * Yard, 0.9144 * Meter)
 
 Mile = Unit.define(Length, "mile", "mi.")
@@ -43,6 +44,7 @@ conversions.equate(1 * Link, 792 / 3937 * Meter)
 
 SurveyFoot = Unit.define(Length, "US survey foot", "US survey foot")
 conversions.equate(1 * SurveyFoot, 1200 / 3937 * Meter)
+conversions.equate(1 * SurveyFoot, 1.000002 * Foot)
 
 Rod = Unit.define(Length, "rod", "rd.")
 conversions.equate(1 * Rod, 25 * Link)

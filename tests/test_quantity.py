@@ -72,7 +72,7 @@ def test_exponentation_by_scalar() -> None:
 def test_roots() -> None:
     assert ((10 * Meter) ** 2).root(2) == 10 * Meter
     assert (100 * Meter**2).root(2) == 10 * Meter
-    assert (64 * Meter**3).root(3).approximates(4 * Meter)
+    (64 * Meter**3).root(3).assert_approximates(4 * Meter)
 
 
 def test_cannot_multiply_by_random_types() -> None:
@@ -172,9 +172,9 @@ def test_sorting() -> None:
 
 
 def test_approximating() -> None:
-    assert (1 * Meter).approximates(1.0 * Meter)
-    assert (1 * Meter).approximates(1 * Meter)
-    assert (1.0 * Meter).approximates(1.0 * Meter)
-    assert (1 * Meter).approximates(1.0000000001 * Meter)
+    (1 * Meter).assert_approximates(1.0 * Meter)
+    (1 * Meter).assert_approximates(1 * Meter)
+    (1.0 * Meter).assert_approximates(1.0 * Meter)
+    (1 * Meter).assert_approximates(1.0000000001 * Meter)
     assert not (1 * Meter).approximates(1.01 * Meter)
     assert not (1 * Meter).approximates(1.0 * Second)

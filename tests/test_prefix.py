@@ -40,9 +40,9 @@ def test_can_multiply_prefixes_with_same_base() -> None:
 def test_can_multiply_prefixes_with_different_bases() -> None:
     iec_first = 5 * (Kibi * Mega) * Meter
     si_first = 5 * (Mega * Kibi) * Meter
-    assert iec_first.approximates(si_first, within=1e-3)
-    assert iec_first.approximates(5120000000 * Meter, within=1e-3)
-    assert si_first.approximates(5120000000 * Meter, within=1e-3)
+    iec_first.assert_approximates(si_first, within=1e-3)
+    iec_first.assert_approximates(5120000000 * Meter, within=1e-3)
+    si_first.assert_approximates(5120000000 * Meter, within=1e-3)
 
 
 def test_can_divide_prefixes_with_same_base() -> None:
@@ -50,8 +50,8 @@ def test_can_divide_prefixes_with_same_base() -> None:
 
 
 def test_can_divide_prefixes_with_different_bases() -> None:
-    assert (5 * (Mebi / Kilo) * Meter).approximates(5242.88 * Meter, within=1e-6)
-    assert (5 * (Mega / Kibi) * Meter).approximates(4882.8125 * Meter, within=1e-6)
+    (5 * (Mebi / Kilo) * Meter).assert_approximates(5242.88 * Meter, within=1e-6)
+    (5 * (Mega / Kibi) * Meter).assert_approximates(4882.8125 * Meter, within=1e-6)
 
 
 def test_multiplying_produces_number_quantities() -> None:

@@ -1214,6 +1214,31 @@ class Quantity:
 
         return abs(difference) <= tolerance
 
+    def assert_approximates(self, other: "Quantity", within: Numeric = 1e-6) -> None:
+        """Asserts whether this Quantity and another Quantity are close enough to
+        each other to be considered equal, with a helpful assertion message
+
+        Parameters:
+            other (Quantity): the other quantity to compare this quantity to
+            within (int | float): the tolerance
+
+        Examples:
+
+            >>> from measured.si import Meter
+            >>> (0.001 * Meter).assert_approximates(0.002 * Meter, within=0.01)
+        """
+        left = self.in_base_units()
+        right = other.in_base_units()
+
+        message = " or ".join(
+            [
+                f"{left} !~ {right.in_unit(left.unit)}",
+                f"{right} !~ {left.in_unit(right.unit)}",
+            ]
+        )
+
+        assert self.approximates(other, within=within), message
+
 
 class ConversionTable:
     _known: Dict[Unit, Dict[Unit, Numeric]]
@@ -1228,16 +1253,28 @@ class ConversionTable:
         self._known[a.unit][b.unit] = b.magnitude / a.magnitude
         self._known[b.unit][a.unit] = a.magnitude / b.magnitude
 
+        self.find.cache_clear()
+
+    @lru_cache(maxsize=None)
     def find(
+        self,
+        start: Unit,
+        end: Unit,
+    ) -> Optional[Iterable[Tuple[Numeric, Unit]]]:
+        return self._find(start, end)
+
+    def _find(
         self,
         start: Unit,
         end: Unit,
         visited: Optional[Set[Unit]] = None,
         depth: int = 0,
-        tracer: Callable[..., None] = print,
+        tracer: Callable[..., None] = lambda *args: None,
     ) -> Optional[Iterable[Tuple[Numeric, Unit]]]:
+
         indent = "  " * depth
         tracer(indent, f"finding conversion from {start} -> {end}")
+
         if start is end:
             tracer(indent, f"{start} == {end}")
             return [(1, end)]
@@ -1260,26 +1297,38 @@ class ConversionTable:
                 f"reduced exponent by {exponent}, now finding {start} -> {end}",
             )
 
-        if end in self._known[start]:
-            tracer(indent, f"found direct conversion {self._known[start][end]}")
-            return [(self._known[start][end] ** exponent, end**exponent)]
+        if sum(start.factors.values()) > sum(end.factors.values()):
+            # This is a conversion like m² -> acre, where the end dimension is defined
+            # directly in the higher exponent and there isn't a lower-power unit (e.g.
+            # there's no unit that represents the square root of an acre that we can
+            # compare the meter to); in this case, perform the search in reverse and it
+            # should be able to find available conversions
+            tracer(indent, f"backtracking from {end} -> {start}")
+            backtracked = self._backtrack(self._find(end, start), exponent, end)
+            tracer(indent, f"backtracked: {self.format_path(backtracked)}")
+            return backtracked
 
         best_path = None
 
         for intermediate, scale in self._known[start].items():
-            path = self.find(intermediate, end, visited=visited, depth=depth + 1)
-            if path:
-                path = [(scale, intermediate)] + list(path)
-                path = [(scale**exponent, unit**exponent) for scale, unit in path]
-                if not best_path or len(path) < len(best_path):
-                    best_path = path
+            if intermediate == end:
+                tracer(indent, f"found direct conversion {scale}")
+                return [(scale**exponent, end**exponent)]
 
+            path = self._find(intermediate, end, visited=visited, depth=depth + 1)
+            if not path:
+                continue
+
+            path = [(scale, intermediate)] + list(path)
+            path = [(scale**exponent, unit**exponent) for scale, unit in path]
+            if not best_path or len(path) < len(best_path):
+                best_path = path
+
+        tracer(indent, f"best path: {self.format_path(best_path)}")
         if best_path:
-            tracer(indent, f"best path {[f'* {s} -> {u}' for s, u in best_path]}")
-        else:
-            tracer(indent, "no path found")
+            return best_path
 
-        return best_path
+        return None
 
     @classmethod
     def _reduce_dimension(cls, start: Unit, end: Unit) -> Tuple[int, Unit, Unit]:
@@ -1291,14 +1340,43 @@ class ConversionTable:
         exponent = gcd(*start.dimension.exponents)
 
         try:
-            start = start.root(exponent)
-            end = end.root(exponent)
-        except ValueError:
+            start_root = start.root(exponent)
+            end_root = end.root(exponent)
+        except FractionalDimensionError:
             return 1, start, end
 
-        assert start.dimension == end.dimension
+        assert start_root.dimension == end_root.dimension
 
-        return exponent, start, end
+        return exponent, start_root, end_root
+
+    @classmethod
+    def _backtrack(
+        cls,
+        path: Optional[Iterable[Tuple[Numeric, Unit]]],
+        exponent: int,
+        end: Unit,
+    ) -> Optional[Iterable[Tuple[Numeric, Unit]]]:
+        """Given a path to convert a start unit to an end unit, produce the reverse
+        path, which would convert the end unit to the start unit"""
+        if path is None:
+            return None
+
+        path = list(reversed(list(path)))
+
+        units = [u for _, u in path[1:]] + [end]
+        scales = [s for s, _ in path]
+
+        backtracked = [
+            (1 / (scale**exponent), unit**exponent)
+            for scale, unit in zip(scales, units)
+        ]
+        return backtracked
+
+    @classmethod
+    def format_path(cls, path: Optional[Iterable[Tuple[Numeric, Unit]]]) -> str:
+        if path is None:
+            return "None"
+        return str([f"* {s} -> {u}" for s, u in path])
 
 
 conversions = ConversionTable()
