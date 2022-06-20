@@ -4,8 +4,8 @@ Defines the [United States customary units][1] and their conversions to SI
 [1]: https://en.wikipedia.org/wiki/United_States_customary_units
 """
 
-from . import Area, Length, Volume
-from .si import Kilo, Liter, Meter, Micro, Milli
+from . import Area, Length, Mass, Volume, avoirdupois
+from .si import Gram, Kilo, Liter, Meter, Micro, Milli
 
 # Length
 # https://en.wikipedia.org/wiki/United_States_customary_units#Length
@@ -192,3 +192,21 @@ Bushel.equals(35.23907016688 * Liter)
 
 DryBarrel = Volume.unit(name="dry barrel", symbol="dry barrel")
 DryBarrel.equals(7056 * Inch**3)
+
+
+# Mass
+# https://en.wikipedia.org/wiki/United_States_customary_units#Mass_and_weight
+
+# The US uses the avoirdupois system of masses, with some adjustments
+Dram = avoirdupois.Dram
+Grain = avoirdupois.Grain
+Ounce = avoirdupois.Ounce
+Pound = avoirdupois.Pound
+
+Hundredweight = Mass.unit("US hundredweight", "cwt.")
+Hundredweight.equals(100 * Pound)
+Hundredweight.equals(45.359237 * Kilo * Gram)
+
+Ton = Mass.unit("short ton", "ton")
+Ton.equals(20 * Hundredweight)
+Ton.equals(907.18474 * Kilo * Gram)
