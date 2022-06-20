@@ -446,6 +446,7 @@ class Dimension:
         return Dimension(tuple(s * power for s in self.exponents))
 
     def root(self, degree: int) -> "Dimension":
+        """Returns the nth root of this Dimension"""
         if not isinstance(degree, int):
             raise TypeError(f"degree should be an integer, not {type(degree)}")
 
@@ -454,7 +455,8 @@ class Dimension:
 
         return Dimension(tuple(s // degree for s in self.exponents))
 
-    def fractionate(self) -> Tuple["Dimension", "Dimension"]:
+    def as_ratio(self) -> Tuple["Dimension", "Dimension"]:
+        """Returns this dimension, split into a numerator and denominator"""
         numerator = tuple(e if e > 0 else 0 for e in self.exponents)
         denominator = tuple(-e if e < 0 else 0 for e in self.exponents)
         return Dimension(numerator), Dimension(denominator)
@@ -663,6 +665,7 @@ class Prefix:
         return Prefix(self.base, self.exponent * power)
 
     def root(self, degree: int) -> "Prefix":
+        """Returns the nth root of this Prefix"""
         if not isinstance(degree, int):
             raise TypeError(f"degree should be an integer, not {type(degree)}")
 
@@ -883,21 +886,6 @@ class Unit:
             IdentityPrefix, self.factors, self.dimension
         )
 
-    def fractionate(self) -> Tuple["Unit", "Unit"]:
-        numerator, denominator = self.dimension.fractionate()
-        return (
-            Unit(
-                self.prefix,
-                {u: e for u, e in self.factors.items() if e > 0},
-                numerator,
-            ),
-            Unit(
-                IdentityPrefix,
-                {u: -e for u, e in self.factors.items() if e < 0},
-                denominator,
-            ),
-        )
-
     def __repr__(self) -> str:
         return (
             "<Unit("
@@ -1001,6 +989,7 @@ class Unit:
         return Unit(prefix, factors, dimension)
 
     def root(self, degree: int) -> "Unit":
+        """Returns the nth root of this Unit"""
         if not isinstance(degree, int):
             raise TypeError(f"degree should be an integer, not {type(degree)}")
 
@@ -1018,6 +1007,22 @@ class Unit:
             {unit: int(exponent // degree) for unit, exponent in self.factors.items()}
         )
         return Unit(prefix, factors, dimension)
+
+    def as_ratio(self) -> Tuple["Unit", "Unit"]:
+        """Returns this unit, split into a numerator and denominator"""
+        numerator, denominator = self.dimension.as_ratio()
+        return (
+            Unit(
+                self.prefix,
+                {u: e for u, e in self.factors.items() if e > 0},
+                numerator,
+            ),
+            Unit(
+                IdentityPrefix,
+                {u: -e for u, e in self.factors.items() if e < 0},
+                denominator,
+            ),
+        )
 
 
 class ConversionNotFound(ValueError):
@@ -1085,36 +1090,7 @@ class Quantity:
                 f"to {other.dimension}"
             )
 
-        this = self.in_base_units()
-        other_quantity = (1 * other).in_base_units()
-
-        this_numerator, this_denominator = this.unit.fractionate()
-        other_numerator, other_denominator = other.fractionate()
-
-        numerator_path = conversions.find(this_numerator, other_numerator)
-        if not numerator_path:
-            raise ConversionNotFound(
-                f"No conversion from {this_numerator} to {other_numerator}"
-            )
-
-        magnitude = this.magnitude / other_quantity.magnitude
-
-        for scale, _ in numerator_path:
-            magnitude *= scale
-
-        if this_denominator.dimension == Number:
-            return Quantity(magnitude, other)
-
-        denominator_path = conversions.find(this_denominator, other_denominator)
-        if not denominator_path:
-            raise ConversionNotFound(
-                f"No conversion from {this_denominator} to {other_denominator}"
-            )
-
-        for scale, _ in denominator_path:
-            magnitude /= scale
-
-        return Quantity(magnitude, other)
+        return conversions.convert(self, other)
 
     # JSON support
 
@@ -1191,6 +1167,7 @@ class Quantity:
         return Quantity(self.magnitude**power, self.unit**power)
 
     def root(self, degree: int) -> "Quantity":
+        """Returns the nth root of this Quantity"""
         return Quantity(self.magnitude ** (1 / degree), self.unit.root(degree))
 
     def __neg__(self) -> "Quantity":
@@ -1310,15 +1287,42 @@ class ConversionTable:
         self._known[a.unit][b.unit] = b.magnitude / a.magnitude
         self._known[b.unit][a.unit] = a.magnitude / b.magnitude
 
-        self.find.cache_clear()
-
     @classmethod
     def format_path(cls, path: Optional[Iterable[Tuple[Numeric, Unit]]]) -> str:
         if path is None:
             return "None"
         return str([f"* {s} -> {u}" for s, u in path])
 
-    @lru_cache(maxsize=None)
+    def convert(self, quantity: Quantity, other_unit: Unit) -> Quantity:
+        """Converts the given quantity into another unit, if possible"""
+        this = quantity.in_base_units()
+        other = (1 * other_unit).in_base_units()
+
+        this_numerator, this_denominator = this.unit.as_ratio()
+        other_numerator, other_denominator = other.unit.as_ratio()
+
+        numerator_path = conversions.find(this_numerator, other_numerator)
+        if not numerator_path:
+            raise ConversionNotFound(
+                f"No conversion from {this_numerator} to {other_numerator}"
+            )
+
+        denominator_path = conversions.find(this_denominator, other_denominator)
+        if not denominator_path:
+            raise ConversionNotFound(
+                f"No conversion from {this_denominator} to {other_denominator}"
+            )
+
+        magnitude = this.magnitude / other.magnitude
+
+        for scale, _ in numerator_path:
+            magnitude *= scale
+
+        for scale, _ in denominator_path:
+            magnitude /= scale
+
+        return Quantity(magnitude, other_unit)
+
     def find(
         self,
         start: Unit,
@@ -1330,6 +1334,9 @@ class ConversionTable:
         if start.dimension != end.dimension:
             tracer(f"{start.dimension} != {end.dimension}")
             return None
+
+        if start.dimension == Number:
+            return [(1, end)]
 
         start_terms = self._terms_by_dimension(start)
         end_terms = self._terms_by_dimension(end)
@@ -1406,7 +1413,6 @@ class ConversionTable:
                 continue
 
             path = [(scale, intermediate)] + list(path)
-            print(indent, [(scale, exponent) for scale, _ in path])
             path = [(scale**exponent, unit**exponent) for scale, unit in path]
             if not best_path or len(path) < len(best_path):
                 best_path = path
