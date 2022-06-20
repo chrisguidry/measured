@@ -115,10 +115,11 @@ Attributes: Base Units
 
 """
 
-
+import math
+import sys
 from collections import defaultdict
 from functools import lru_cache, total_ordering
-from math import gcd, log
+from math import log
 from typing import (
     Any,
     Callable,
@@ -137,6 +138,21 @@ from typing import (
 )
 
 from .formatting import superscript
+
+if sys.version_info < (3, 9):
+    # math.gcd changed in Python 3.8 from a two-argument for to a variable argument form
+    from typing_extensions import SupportsIndex
+
+    def recursive_gcd(*integers: SupportsIndex) -> int:
+        if len(integers) <= 2:
+            return math.gcd(*integers)
+        return math.gcd(integers[0], gcd(*integers[1:]))
+
+    gcd = recursive_gcd
+
+else:
+    gcd = math.gcd
+
 
 __version__ = "0.2.0"
 
