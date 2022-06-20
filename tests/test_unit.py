@@ -2,7 +2,7 @@ from fractions import Fraction
 
 import pytest
 
-from measured import Number, One, Unit
+from measured import Length, Number, One, Unit
 from measured.si import Meter, Second
 
 
@@ -124,3 +124,13 @@ def test_only_integer_roots() -> None:
 def test_whole_power_roots_only() -> None:
     with pytest.raises(ValueError):
         (Meter**3).root(2)
+
+
+def test_names_unique() -> None:
+    with pytest.raises(ValueError, match="already defined"):
+        Length.unit("meter", "totally unique")
+
+
+def test_symbols_unique() -> None:
+    with pytest.raises(ValueError, match="already defined"):
+        Length.unit("totally unique", "m")

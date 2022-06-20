@@ -2,7 +2,7 @@ from typing import Iterable, Tuple
 
 import pytest
 
-from measured import Area, Length, Numeric, Unit, conversions
+from measured import Area, ConversionNotFound, Length, Mass, Numeric, Unit, conversions
 from measured.si import Meter, Second
 from measured.us import Acre, Foot, Inch
 
@@ -13,7 +13,7 @@ def test_disallow_self_conversion() -> None:
 
 
 def test_approximating_requires_units_with_conversion() -> None:
-    Bogus = Unit.define(Length, name="bogus", symbol="bog")
+    Bogus = Length.unit(name="bogus", symbol="bog")
 
     one = 1 * Meter
     other = 1 * Bogus
@@ -87,8 +87,26 @@ def test_conversion_can_navigate_exponents(
 
 def test_backtracking_conversions_with_no_path() -> None:
     # Set up some arbitrary units that don't convert to one another
-    Bogus = Unit.define(Length, "bogus", "bog")
-    Bangus = Unit.define(Area, "bangus", "bang")
+    Hiya = Length.unit("hello", "hello")
+    Mundo = Area.unit("world", "world")
 
-    assert conversions.find(Bogus**2, Bangus) is None
-    assert conversions.find(Bangus, Bogus**2) is None
+    assert conversions.find(Hiya**2, Mundo) is None
+    assert conversions.find(Mundo, Hiya**2) is None
+
+
+def test_failing_to_convert_numerator() -> None:
+    Gud = Length.unit("goodbye", "goodbye")
+    Mun = Length.unit("moon", "moon")
+
+    with pytest.raises(ConversionNotFound):
+        (1 * Gud).in_unit(Mun)
+
+
+def test_failing_to_convert_denominator() -> None:
+    Flib = Mass.unit("flibbidy", "flibbidy")
+    Flob = Mass.unit("flobbidy", "flobbidy")
+
+    assert (Meter / Flib).dimension == (Meter / Flob).dimension
+
+    with pytest.raises(ConversionNotFound):
+        (1 * Meter / Flib).in_unit(Meter / Flob)

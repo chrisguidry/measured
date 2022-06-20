@@ -131,10 +131,10 @@ def test_ordering_only_within_dimension() -> None:
 
 
 def test_ordering_requires_types_with_a_conversion() -> None:
-    Bogus = Unit.define(Length, name="bogus", symbol="bog")
+    Bogie = Unit.define(Length, name="bogie", symbol="bogie")
 
     one = 1 * Meter
-    other = 1 * Bogus
+    other = 1 * Bogie
 
     with pytest.raises(TypeError):
         one < other

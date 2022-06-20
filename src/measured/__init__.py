@@ -454,6 +454,11 @@ class Dimension:
 
         return Dimension(tuple(s // degree for s in self.exponents))
 
+    def fractionate(self) -> Tuple["Dimension", "Dimension"]:
+        numerator = tuple(e if e > 0 else 0 for e in self.exponents)
+        denominator = tuple(-e if e < 0 else 0 for e in self.exponents)
+        return Dimension(numerator), Dimension(denominator)
+
 
 class Prefix:
     """Prefixes scale a [`Unit`][measured.Unit] up or down by a constant factor.
@@ -716,6 +721,7 @@ class Unit:
 
     _base: ClassVar[Set["Unit"]] = set()
     _by_name: ClassVar[Dict[str, "Unit"]] = {}
+    _by_symbol: ClassVar[Dict[str, "Unit"]] = {}
 
     prefix: Prefix
     factors: Mapping["Unit", int]
@@ -764,6 +770,8 @@ class Unit:
 
         if name:
             self._by_name[name] = self
+        if symbol:
+            self._by_symbol[symbol] = self
 
     @classmethod
     def _build_key(cls, prefix: Prefix, factors: Mapping["Unit", int]) -> UnitKey:
@@ -777,6 +785,11 @@ class Unit:
     @classmethod
     def define(cls, dimension: Dimension, name: str, symbol: str) -> "Unit":
         """Defines a new base unit"""
+        if name and name in cls._by_name:
+            raise ValueError(f"A unit named {name} is already defined")
+        if symbol and symbol in cls._by_symbol:
+            raise ValueError(f"A unit with symbol {symbol} is already defined")
+
         unit = cls(IdentityPrefix, {}, dimension, name, symbol)
         cls._base.add(unit)
         return unit
@@ -868,6 +881,21 @@ class Unit:
         """
         return self.prefix.quantify() * Unit(
             IdentityPrefix, self.factors, self.dimension
+        )
+
+    def fractionate(self) -> Tuple["Unit", "Unit"]:
+        numerator, denominator = self.dimension.fractionate()
+        return (
+            Unit(
+                self.prefix,
+                {u: e for u, e in self.factors.items() if e > 0},
+                numerator,
+            ),
+            Unit(
+                IdentityPrefix,
+                {u: -e for u, e in self.factors.items() if e < 0},
+                denominator,
+            ),
         )
 
     def __repr__(self) -> str:
@@ -1059,13 +1087,32 @@ class Quantity:
 
         this = self.in_base_units()
         other_quantity = (1 * other).in_base_units()
-        path = conversions.find(this.unit, other_quantity.unit)
-        if not path:
-            raise ConversionNotFound(f"No conversion from {this.unit} to {other}")
+
+        this_numerator, this_denominator = this.unit.fractionate()
+        other_numerator, other_denominator = other.fractionate()
+
+        numerator_path = conversions.find(this_numerator, other_numerator)
+        if not numerator_path:
+            raise ConversionNotFound(
+                f"No conversion from {this_numerator} to {other_numerator}"
+            )
 
         magnitude = this.magnitude / other_quantity.magnitude
-        for scale, _ in path:
+
+        for scale, _ in numerator_path:
             magnitude *= scale
+
+        if this_denominator.dimension == Number:
+            return Quantity(magnitude, other)
+
+        denominator_path = conversions.find(this_denominator, other_denominator)
+        if not denominator_path:
+            raise ConversionNotFound(
+                f"No conversion from {this_denominator} to {other_denominator}"
+            )
+
+        for scale, _ in denominator_path:
+            magnitude /= scale
 
         return Quantity(magnitude, other)
 
@@ -1265,25 +1312,58 @@ class ConversionTable:
 
         self.find.cache_clear()
 
+    @classmethod
+    def format_path(cls, path: Optional[Iterable[Tuple[Numeric, Unit]]]) -> str:
+        if path is None:
+            return "None"
+        return str([f"* {s} -> {u}" for s, u in path])
+
     @lru_cache(maxsize=None)
     def find(
         self,
         start: Unit,
         end: Unit,
     ) -> Optional[Iterable[Tuple[Numeric, Unit]]]:
-        return self._find(start, end)
+        tracer: Callable[..., None] = lambda *args: None
+        tracer(f"finding conversion from {start} -> {end}")
 
-    def _find(
+        if start.dimension != end.dimension:
+            tracer(f"{start.dimension} != {end.dimension}")
+            return None
+
+        start_terms = self._terms_by_dimension(start)
+        end_terms = self._terms_by_dimension(end)
+
+        assert start_terms.keys() == end_terms.keys()
+
+        path: List[Tuple[Numeric, Unit]] = []
+        for dimension in start_terms:
+            for s, e in zip(start_terms[dimension], end_terms[dimension]):
+                this_path = self._find_path(s, e, tracer=tracer)
+                if not this_path:
+                    return None
+                path += this_path
+        return path
+
+    @classmethod
+    def _terms_by_dimension(cls, unit: Unit) -> Dict[Dimension, List[Unit]]:
+        terms = defaultdict(list)
+        for factor, exponent in unit.factors.items():
+            factor = factor**exponent
+            terms[factor.dimension].append(factor)
+        return terms
+
+    def _find_path(
         self,
         start: Unit,
         end: Unit,
         visited: Optional[Set[Unit]] = None,
-        depth: int = 0,
+        depth: int = 1,
         tracer: Callable[..., None] = lambda *args: None,
-    ) -> Optional[Iterable[Tuple[Numeric, Unit]]]:
+    ) -> Optional[List[Tuple[Numeric, Unit]]]:
 
         indent = "  " * depth
-        tracer(indent, f"finding conversion from {start} -> {end}")
+        tracer(indent, f"finding path from {start} -> {end}")
 
         if start is end:
             tracer(indent, f"{start} == {end}")
@@ -1295,10 +1375,6 @@ class ConversionTable:
             return None
         else:
             visited.add(start)
-
-        if start.dimension != end.dimension:
-            tracer(indent, f"{start.dimension} != {end.dimension}")
-            return None
 
         exponent, start, end = self._reduce_dimension(start, end)
         if exponent > 1:
@@ -1314,7 +1390,7 @@ class ConversionTable:
             # compare the meter to); in this case, perform the search in reverse and it
             # should be able to find available conversions
             tracer(indent, f"backtracking from {end} -> {start}")
-            backtracked = self._backtrack(self._find(end, start), exponent, end)
+            backtracked = self._backtrack(self._find_path(end, start), exponent, end)
             tracer(indent, f"backtracked: {self.format_path(backtracked)}")
             return backtracked
 
@@ -1325,11 +1401,12 @@ class ConversionTable:
                 tracer(indent, f"found direct conversion {scale}")
                 return [(scale**exponent, end**exponent)]
 
-            path = self._find(intermediate, end, visited=visited, depth=depth + 1)
+            path = self._find_path(intermediate, end, visited=visited, depth=depth + 1)
             if not path:
                 continue
 
             path = [(scale, intermediate)] + list(path)
+            print(indent, [(scale, exponent) for scale, _ in path])
             path = [(scale**exponent, unit**exponent) for scale, unit in path]
             if not best_path or len(path) < len(best_path):
                 best_path = path
@@ -1355,8 +1432,6 @@ class ConversionTable:
         except FractionalDimensionError:
             return 1, start, end
 
-        assert start_root.dimension == end_root.dimension
-
         return exponent, start_root, end_root
 
     @classmethod
@@ -1365,7 +1440,7 @@ class ConversionTable:
         path: Optional[Iterable[Tuple[Numeric, Unit]]],
         exponent: int,
         end: Unit,
-    ) -> Optional[Iterable[Tuple[Numeric, Unit]]]:
+    ) -> Optional[List[Tuple[Numeric, Unit]]]:
         """Given a path to convert a start unit to an end unit, produce the reverse
         path, which would convert the end unit to the start unit"""
         if path is None:
@@ -1381,12 +1456,6 @@ class ConversionTable:
             for scale, unit in zip(scales, units)
         ]
         return backtracked
-
-    @classmethod
-    def format_path(cls, path: Optional[Iterable[Tuple[Numeric, Unit]]]) -> str:
-        if path is None:
-            return "None"
-        return str([f"* {s} -> {u}" for s, u in path])
 
 
 conversions = ConversionTable()
