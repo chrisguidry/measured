@@ -115,7 +115,6 @@ Attributes: Base Units
 
 """
 
-import math
 import sys
 from collections import defaultdict
 from functools import lru_cache, total_ordering
@@ -141,6 +140,8 @@ from .formatting import superscript
 
 if sys.version_info < (3, 9):  # pragma: no cover
     # math.gcd changed in Python 3.8 from a two-argument for to a variable argument form
+    import math
+
     from typing_extensions import SupportsIndex
 
     def recursive_gcd(*integers: SupportsIndex) -> int:
@@ -151,7 +152,7 @@ if sys.version_info < (3, 9):  # pragma: no cover
     gcd = recursive_gcd
 
 else:  # pragma: no cover
-    gcd = math.gcd
+    from math import gcd
 
 
 __version__ = "0.2.0"
