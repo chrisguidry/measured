@@ -2,16 +2,22 @@ from fractions import Fraction
 
 import pytest
 
-from measured import Number, One, Unit
+from measured import Length, Number, One, Unit
+from measured.si import Meter, Second
 
 
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     base = sorted(Unit.base(), key=lambda u: u.name or "")
     ids = [d.name for d in base]
 
-    for exemplar in ["a", "b", "c"]:
-        if exemplar in metafunc.fixturenames:
-            metafunc.parametrize(exemplar, base, ids=ids)
+    # just take a sample of units (with overlaps) to prevent the tests from
+    # growing exponentially
+    if "a" in metafunc.fixturenames:
+        metafunc.parametrize("a", base[:10], ids=ids[:10])
+    if "b" in metafunc.fixturenames:
+        metafunc.parametrize("b", base[5:15], ids=ids[5:15])
+    if "c" in metafunc.fixturenames:
+        metafunc.parametrize("c", base[-10:], ids=ids[-10:])
 
     if "base" in metafunc.fixturenames:
         metafunc.parametrize("base", base, ids=ids)
@@ -23,7 +29,7 @@ def identity() -> Unit:
 
 
 def test_homogenous_under_addition(a: Unit, b: Unit) -> None:
-    # https://en.wikipedia.org/wiki/Oneional_analysis#Dimensional_homogeneity
+    # https://en.wikipedia.org/wiki/Dimensional_analysis#Dimensional_homogeneity
     #
     # Only commensurable quantities (physical quantities having the same dimension) may
     # be compared, equated, added, or subtracted.
@@ -99,3 +105,32 @@ def test_one() -> None:
     assert One.dimension is Number
     assert One.name == "one"
     assert One.symbol == "1"
+
+
+def test_roots() -> None:
+    assert One.root(2) == One
+    assert One.root(3) == One
+    assert One.root(100) == One
+    assert (Meter**2).root(2) == Meter
+    assert (Meter**4).root(2) == Meter**2
+    assert (Meter**16 / Second**12).root(4) == Meter**4 / Second**3
+
+
+def test_only_integer_roots() -> None:
+    with pytest.raises(TypeError):
+        (Meter**2).root(0.5)  # type: ignore
+
+
+def test_whole_power_roots_only() -> None:
+    with pytest.raises(ValueError):
+        (Meter**3).root(2)
+
+
+def test_names_unique() -> None:
+    with pytest.raises(ValueError, match="already defined"):
+        Length.unit("meter", "totally unique")
+
+
+def test_symbols_unique() -> None:
+    with pytest.raises(ValueError, match="already defined"):
+        Length.unit("totally unique", "m")

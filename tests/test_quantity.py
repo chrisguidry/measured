@@ -69,6 +69,12 @@ def test_exponentation_by_scalar() -> None:
     assert (5 * Meter) ** 2 == 25 * Meter**2
 
 
+def test_roots() -> None:
+    assert ((10 * Meter) ** 2).root(2) == 10 * Meter
+    assert (100 * Meter**2).root(2) == 10 * Meter
+    (64 * Meter**3).root(3).assert_approximates(4 * Meter)
+
+
 def test_cannot_multiply_by_random_types() -> None:
     with pytest.raises(TypeError):
         "hi" * (5 * Meter)  # type: ignore
@@ -124,11 +130,28 @@ def test_ordering_only_within_dimension() -> None:
         1 * Meter >= 1 * Second
 
 
-def test_ordering_requires_compatible_types() -> None:
-    Bogus = Unit.define(Length, name="bogus", symbol="bog")
+def test_ordering_requires_types_with_a_conversion() -> None:
+    Bogie = Unit.define(Length, name="bogie", symbol="bogie")
 
     one = 1 * Meter
-    other = 1 * Bogus
+    other = 1 * Bogie
+
+    with pytest.raises(TypeError):
+        one < other
+
+    with pytest.raises(TypeError):
+        one <= other
+
+    with pytest.raises(TypeError):
+        one > other
+
+    with pytest.raises(TypeError):
+        one >= other
+
+
+def test_ordering_requires_types_in_the_same_dimension() -> None:
+    one = 1 * Meter
+    other = 1 * Second
 
     with pytest.raises(TypeError):
         one < other
@@ -149,18 +172,9 @@ def test_sorting() -> None:
 
 
 def test_approximating() -> None:
-    assert (1 * Meter).approximates(1.0 * Meter)
-    assert (1 * Meter).approximates(1 * Meter)
-    assert (1.0 * Meter).approximates(1.0 * Meter)
-    assert (1 * Meter).approximates(1.0000000001 * Meter)
+    (1 * Meter).assert_approximates(1.0 * Meter)
+    (1 * Meter).assert_approximates(1 * Meter)
+    (1.0 * Meter).assert_approximates(1.0 * Meter)
+    (1 * Meter).assert_approximates(1.0000000001 * Meter)
     assert not (1 * Meter).approximates(1.01 * Meter)
     assert not (1 * Meter).approximates(1.0 * Second)
-
-
-def test_approximating_requires_units_with_conversion() -> None:
-    Bogus = Unit.define(Length, name="bogus", symbol="bog")
-
-    one = 1 * Meter
-    other = 1 * Bogus
-
-    assert not one.approximates(other, within=1e100)

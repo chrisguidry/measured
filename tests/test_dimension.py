@@ -12,6 +12,7 @@ from measured import (
     LuminousIntensity,
     Mass,
     Number,
+    Speed,
     Temperature,
     Time,
     Volume,
@@ -189,3 +190,20 @@ def test_luminous_intensity() -> None:
     assert LuminousIntensity.name == "luminous intensity"
     assert LuminousIntensity.symbol == "J"
     assert LuminousIntensity is Number * LuminousIntensity
+
+
+def test_roots() -> None:
+    assert Number.root(100) == Number
+    assert Area.root(2) == Length
+    assert Volume.root(3) == Length
+    assert (Area / Time**2).root(2) == Speed
+
+
+def test_only_integer_roots() -> None:
+    with pytest.raises(TypeError):
+        Area.root(0.5)  # type: ignore
+
+
+def test_whole_power_roots_only() -> None:
+    with pytest.raises(ValueError):
+        Volume.root(2)

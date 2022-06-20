@@ -115,7 +115,8 @@ Attributes: Base Units
 
 """
 
-
+import math
+import sys
 from collections import defaultdict
 from functools import lru_cache, total_ordering
 from math import log
@@ -138,10 +139,36 @@ from typing import (
 
 from .formatting import superscript
 
-__version__ = "0.1.0"
+if sys.version_info < (3, 9):  # pragma: no cover
+    # math.gcd changed in Python 3.8 from a two-argument for to a variable argument form
+    from typing_extensions import SupportsIndex
+
+    def recursive_gcd(*integers: SupportsIndex) -> int:
+        if len(integers) <= 2:
+            return math.gcd(*integers)
+        return math.gcd(integers[0], gcd(*integers[1:]))
+
+    gcd = recursive_gcd
+
+else:  # pragma: no cover
+    gcd = math.gcd
+
+
+__version__ = "0.2.0"
 
 NUMERIC_CLASSES = (int, float)
 Numeric = Union[int, float]
+
+
+class FractionalDimensionError(ValueError):
+    """Raised when computing the nth root of a Dimension, Prefix, or Unit would result
+    in a non-integer dimesion"""
+
+    def __init__(self, degree: int, value: Union["Dimension", "Prefix", "Unit"]):
+        super().__init__(
+            f"Taking the root of degree {degree} of {value} would "
+            "result in a fractional exponent"
+        )
 
 
 class Dimension:
@@ -318,6 +345,10 @@ class Dimension:
         cls._by_name[name] = dimension
         return dimension
 
+    def unit(self, name: str, symbol: str) -> "Unit":
+        """Define a new unit of this dimension"""
+        return Unit.define(self, name, symbol)
+
     # Pickle support
 
     def __getnewargs_ex__(self) -> Tuple[Tuple[Tuple[int, ...]], Dict[str, Any]]:
@@ -429,6 +460,22 @@ class Dimension:
             return NotImplemented
 
         return Dimension(tuple(s * power for s in self.exponents))
+
+    def root(self, degree: int) -> "Dimension":
+        """Returns the nth root of this Dimension"""
+        if not isinstance(degree, int):
+            raise TypeError(f"degree should be an integer, not {type(degree)}")
+
+        if any(s // degree != s / degree for s in self.exponents):
+            raise FractionalDimensionError(degree, self)
+
+        return Dimension(tuple(s // degree for s in self.exponents))
+
+    def as_ratio(self) -> Tuple["Dimension", "Dimension"]:
+        """Returns this dimension, split into a numerator and denominator"""
+        numerator = tuple(e if e > 0 else 0 for e in self.exponents)
+        denominator = tuple(-e if e < 0 else 0 for e in self.exponents)
+        return Dimension(numerator), Dimension(denominator)
 
 
 class Prefix:
@@ -633,6 +680,16 @@ class Prefix:
     def __pow__(self, power: int) -> "Prefix":
         return Prefix(self.base, self.exponent * power)
 
+    def root(self, degree: int) -> "Prefix":
+        """Returns the nth root of this Prefix"""
+        if not isinstance(degree, int):
+            raise TypeError(f"degree should be an integer, not {type(degree)}")
+
+        if self.exponent // degree != self.exponent / degree:
+            raise FractionalDimensionError(degree, self)
+
+        return Prefix(self.base, int(self.exponent // degree))
+
 
 class Unit:
     """Unit is a predetermined reference amount or definition for a measurable quantity
@@ -683,6 +740,7 @@ class Unit:
 
     _base: ClassVar[Set["Unit"]] = set()
     _by_name: ClassVar[Dict[str, "Unit"]] = {}
+    _by_symbol: ClassVar[Dict[str, "Unit"]] = {}
 
     prefix: Prefix
     factors: Mapping["Unit", int]
@@ -731,6 +789,8 @@ class Unit:
 
         if name:
             self._by_name[name] = self
+        if symbol:
+            self._by_symbol[symbol] = self
 
     @classmethod
     def _build_key(cls, prefix: Prefix, factors: Mapping["Unit", int]) -> UnitKey:
@@ -744,6 +804,11 @@ class Unit:
     @classmethod
     def define(cls, dimension: Dimension, name: str, symbol: str) -> "Unit":
         """Defines a new base unit"""
+        if name and name in cls._by_name:
+            raise ValueError(f"A unit named {name} is already defined")
+        if symbol and symbol in cls._by_symbol:
+            raise ValueError(f"A unit with symbol {symbol} is already defined")
+
         unit = cls(IdentityPrefix, {}, dimension, name, symbol)
         cls._base.add(unit)
         return unit
@@ -759,6 +824,12 @@ class Unit:
         unit.name = name
         unit.symbol = symbol
         return unit
+
+    def equals(self, other: "Quantity") -> None:
+        """Defines a conversion between this Unit and another"""
+        if other.unit == self:
+            raise ValueError("No need to define conversions for a unit and itself")
+        return conversions.equate(1 * self, other)
 
     # Pickle support
 
@@ -933,6 +1004,46 @@ class Unit:
         )
         return Unit(prefix, factors, dimension)
 
+    def root(self, degree: int) -> "Unit":
+        """Returns the nth root of this Unit"""
+        if not isinstance(degree, int):
+            raise TypeError(f"degree should be an integer, not {type(degree)}")
+
+        dimension = self.dimension.root(degree)
+        prefix = self.prefix.root(degree)
+
+        if any(
+            exponent // degree != exponent / degree
+            for unit, exponent in self.factors.items()
+            if exponent > 0 and unit != One
+        ):
+            raise FractionalDimensionError(degree, self)
+
+        factors = self._simplify(
+            {unit: int(exponent // degree) for unit, exponent in self.factors.items()}
+        )
+        return Unit(prefix, factors, dimension)
+
+    def as_ratio(self) -> Tuple["Unit", "Unit"]:
+        """Returns this unit, split into a numerator and denominator"""
+        numerator, denominator = self.dimension.as_ratio()
+        return (
+            Unit(
+                self.prefix,
+                {u: e for u, e in self.factors.items() if e > 0},
+                numerator,
+            ),
+            Unit(
+                IdentityPrefix,
+                {u: -e for u, e in self.factors.items() if e < 0},
+                denominator,
+            ),
+        )
+
+
+class ConversionNotFound(ValueError):
+    pass
+
 
 @total_ordering
 class Quantity:
@@ -986,6 +1097,16 @@ class Quantity:
         """Reduces this Quantity into a new Quantity expressed only in base units
         without any Prefixes"""
         return self.magnitude * self.unit.quantify()
+
+    def in_unit(self, other: Unit) -> "Quantity":
+        """Convert this Quantity into another unit"""
+        if self.unit.dimension != other.dimension:
+            raise TypeError(
+                f"Cannot convert between dimensions {self.unit.dimension} "
+                f"to {other.dimension}"
+            )
+
+        return conversions.convert(self, other)
 
     # JSON support
 
@@ -1061,6 +1182,10 @@ class Quantity:
     def __pow__(self, power: int) -> "Quantity":
         return Quantity(self.magnitude**power, self.unit**power)
 
+    def root(self, degree: int) -> "Quantity":
+        """Returns the nth root of this Quantity"""
+        return Quantity(self.magnitude ** (1 / degree), self.unit.root(degree))
+
     def __neg__(self) -> "Quantity":
         return Quantity(-self.magnitude, self.unit)
 
@@ -1080,7 +1205,13 @@ class Quantity:
         this = self.in_base_units()
         other = other.in_base_units()
 
-        return this.magnitude == other.magnitude and this.unit == other.unit
+        if this.unit == other.unit:
+            return this.magnitude == other.magnitude
+
+        try:
+            return this.in_unit(other.unit) == other
+        except ConversionNotFound:
+            return NotImplemented
 
     def __lt__(self, other: Any) -> bool:
         if not isinstance(other, Quantity):
@@ -1092,12 +1223,15 @@ class Quantity:
         this = self.in_base_units()
         other = other.in_base_units()
 
-        if this.unit != other.unit:
+        if this.unit == other.unit:
+            return this.magnitude < other.magnitude
+
+        try:
+            return this.in_unit(other.unit) < other
+        except ConversionNotFound:
             return NotImplemented
 
-        return this.magnitude < other.magnitude
-
-    def approximates(self, other: "Quantity", within: Numeric = 1e-9) -> bool:
+    def approximates(self, other: "Quantity", within: Numeric = 1e-6) -> bool:
         """Indicates whether this Quantity and another Quantity are close enough to
         each other to be considered equal.
 
@@ -1120,12 +1254,233 @@ class Quantity:
         other = other.in_base_units()
 
         if this.unit != other.unit:
-            return False
+            try:
+                this = this.in_unit(other.unit)
+            except ConversionNotFound:
+                return False
 
         difference = this - other
         tolerance = Quantity(within, this.unit)
 
         return abs(difference) <= tolerance
+
+    def assert_approximates(self, other: "Quantity", within: Numeric = 1e-6) -> None:
+        """Asserts whether this Quantity and another Quantity are close enough to
+        each other to be considered equal, with a helpful assertion message
+
+        Parameters:
+            other (Quantity): the other quantity to compare this quantity to
+            within (int | float): the tolerance
+
+        Examples:
+
+            >>> from measured.si import Meter
+            >>> (0.001 * Meter).assert_approximates(0.002 * Meter, within=0.01)
+        """
+        left = self.in_base_units()
+        right = other.in_base_units()
+
+        message = " or ".join(
+            [
+                f"{left} !~ {right.in_unit(left.unit)}",
+                f"{right} !~ {left.in_unit(right.unit)}",
+            ]
+        )
+
+        assert self.approximates(other, within=within), message
+
+
+class ConversionTable:
+    _known: Dict[Unit, Dict[Unit, Numeric]]
+
+    def __init__(self) -> None:
+        self._known = defaultdict(dict)
+
+    def equate(self, a: Quantity, b: Quantity) -> None:
+        a = a.in_base_units()
+        b = b.in_base_units()
+
+        self._known[a.unit][b.unit] = b.magnitude / a.magnitude
+        self._known[b.unit][a.unit] = a.magnitude / b.magnitude
+
+    @classmethod
+    def format_path(cls, path: Optional[Iterable[Tuple[Numeric, Unit]]]) -> str:
+        if path is None:
+            return "None"
+        return str([f"* {s} -> {u}" for s, u in path])
+
+    def convert(self, quantity: Quantity, other_unit: Unit) -> Quantity:
+        """Converts the given quantity into another unit, if possible"""
+        this = quantity.in_base_units()
+        other = (1 * other_unit).in_base_units()
+
+        this_numerator, this_denominator = this.unit.as_ratio()
+        other_numerator, other_denominator = other.unit.as_ratio()
+
+        numerator_path = conversions.find(this_numerator, other_numerator)
+        if not numerator_path:
+            raise ConversionNotFound(
+                f"No conversion from {this_numerator} to {other_numerator}"
+            )
+
+        denominator_path = conversions.find(this_denominator, other_denominator)
+        if not denominator_path:
+            raise ConversionNotFound(
+                f"No conversion from {this_denominator} to {other_denominator}"
+            )
+
+        magnitude = this.magnitude / other.magnitude
+
+        for scale, _ in numerator_path:
+            magnitude *= scale
+
+        for scale, _ in denominator_path:
+            magnitude /= scale
+
+        return Quantity(magnitude, other_unit)
+
+    def find(
+        self,
+        start: Unit,
+        end: Unit,
+    ) -> Optional[Iterable[Tuple[Numeric, Unit]]]:
+        tracer: Callable[..., None] = lambda *args: None
+        tracer(f"finding conversion from {start} -> {end}")
+
+        if start.dimension != end.dimension:
+            tracer(f"{start.dimension} != {end.dimension}")
+            return None
+
+        if start.dimension == Number:
+            return [(1, end)]
+
+        start_terms = self._terms_by_dimension(start)
+        end_terms = self._terms_by_dimension(end)
+
+        assert start_terms.keys() == end_terms.keys()
+
+        path: List[Tuple[Numeric, Unit]] = []
+        for dimension in start_terms:
+            for s, e in zip(start_terms[dimension], end_terms[dimension]):
+                this_path = self._find_path(s, e, tracer=tracer)
+                if not this_path:
+                    return None
+                path += this_path
+        return path
+
+    @classmethod
+    def _terms_by_dimension(cls, unit: Unit) -> Dict[Dimension, List[Unit]]:
+        terms = defaultdict(list)
+        for factor, exponent in unit.factors.items():
+            factor = factor**exponent
+            terms[factor.dimension].append(factor)
+        return terms
+
+    def _find_path(
+        self,
+        start: Unit,
+        end: Unit,
+        visited: Optional[Set[Unit]] = None,
+        depth: int = 1,
+        tracer: Callable[..., None] = lambda *args: None,
+    ) -> Optional[List[Tuple[Numeric, Unit]]]:
+
+        indent = "  " * depth
+        tracer(indent, f"finding path from {start} -> {end}")
+
+        if start is end:
+            tracer(indent, f"{start} == {end}")
+            return [(1, end)]
+
+        if visited is None:
+            visited = {start}
+        elif start in visited:
+            return None
+        else:
+            visited.add(start)
+
+        exponent, start, end = self._reduce_dimension(start, end)
+        if exponent > 1:
+            tracer(
+                indent,
+                f"reduced exponent by {exponent}, now finding {start} -> {end}",
+            )
+
+        if sum(start.factors.values()) > sum(end.factors.values()):
+            # This is a conversion like m² -> acre, where the end dimension is defined
+            # directly in the higher exponent and there isn't a lower-power unit (e.g.
+            # there's no unit that represents the square root of an acre that we can
+            # compare the meter to); in this case, perform the search in reverse and it
+            # should be able to find available conversions
+            tracer(indent, f"backtracking from {end} -> {start}")
+            backtracked = self._backtrack(self._find_path(end, start), exponent, end)
+            tracer(indent, f"backtracked: {self.format_path(backtracked)}")
+            return backtracked
+
+        best_path = None
+
+        for intermediate, scale in self._known[start].items():
+            if intermediate == end:
+                tracer(indent, f"found direct conversion {scale}")
+                return [(scale**exponent, end**exponent)]
+
+            path = self._find_path(intermediate, end, visited=visited, depth=depth + 1)
+            if not path:
+                continue
+
+            path = [(scale, intermediate)] + list(path)
+            path = [(scale**exponent, unit**exponent) for scale, unit in path]
+            if not best_path or len(path) < len(best_path):
+                best_path = path
+
+        tracer(indent, f"best path: {self.format_path(best_path)}")
+        if best_path:
+            return best_path
+
+        return None
+
+    @classmethod
+    def _reduce_dimension(cls, start: Unit, end: Unit) -> Tuple[int, Unit, Unit]:
+        """Reduce the dimension of the given units to their lowest common exponents"""
+        assert (
+            start.dimension == end.dimension
+        ), f"{start} and {end} measure different dimensions"
+
+        exponent = gcd(*start.dimension.exponents)
+
+        try:
+            start_root = start.root(exponent)
+            end_root = end.root(exponent)
+        except FractionalDimensionError:
+            return 1, start, end
+
+        return exponent, start_root, end_root
+
+    @classmethod
+    def _backtrack(
+        cls,
+        path: Optional[Iterable[Tuple[Numeric, Unit]]],
+        exponent: int,
+        end: Unit,
+    ) -> Optional[List[Tuple[Numeric, Unit]]]:
+        """Given a path to convert a start unit to an end unit, produce the reverse
+        path, which would convert the end unit to the start unit"""
+        if path is None:
+            return None
+
+        path = list(reversed(list(path)))
+
+        units = [u for _, u in path[1:]] + [end]
+        scales = [s for s, _ in path]
+
+        backtracked = [
+            (1 / (scale**exponent), unit**exponent)
+            for scale, unit in zip(scales, units)
+        ]
+        return backtracked
+
+
+conversions = ConversionTable()
 
 
 # https://en.wikipedia.org/wiki/Dimensional_analysis#Definition

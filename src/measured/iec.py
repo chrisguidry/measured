@@ -40,5 +40,5 @@ Exbi = Prefix(2, 60, name="exbi", symbol="Ei")
 Zebi = Prefix(2, 70, name="zebi", symbol="Zi")
 Yobi = Prefix(2, 80, name="yobi", symbol="Yi")
 
-Bit = Unit.define(Information, name="bit", symbol="b")
+Bit = Information.unit(name="bit", symbol="b")
 Byte = Unit.derive(Bit.scale(Prefix(2, 3)), name="byte", symbol="B")
