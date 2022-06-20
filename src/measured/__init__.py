@@ -1297,6 +1297,11 @@ class ConversionTable:
         self._known = defaultdict(dict)
 
     def equate(self, a: Quantity, b: Quantity) -> None:
+        """Defines a conversion between one Unit and another, expressed as a ratio
+        between the two."""
+        if a.unit == b.unit:
+            raise ValueError("No need to define conversions for a unit and itself")
+
         a = a.in_base_units()
         b = b.in_base_units()
 
