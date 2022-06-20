@@ -139,7 +139,7 @@ from typing import (
 
 from .formatting import superscript
 
-if sys.version_info < (3, 9):
+if sys.version_info < (3, 9):  # pragma: no cover
     # math.gcd changed in Python 3.8 from a two-argument for to a variable argument form
     from typing_extensions import SupportsIndex
 
@@ -150,7 +150,7 @@ if sys.version_info < (3, 9):
 
     gcd = recursive_gcd
 
-else:
+else:  # pragma: no cover
     gcd = math.gcd
 
 
