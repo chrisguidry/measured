@@ -1100,12 +1100,6 @@ class Quantity:
 
     def in_unit(self, other: Unit) -> "Quantity":
         """Convert this Quantity into another unit"""
-        if self.unit.dimension != other.dimension:
-            raise TypeError(
-                f"Cannot convert between dimensions {self.unit.dimension} "
-                f"to {other.dimension}"
-            )
-
         return conversions.convert(self, other)
 
     # JSON support
@@ -1316,19 +1310,26 @@ class ConversionTable:
 
     def convert(self, quantity: Quantity, other_unit: Unit) -> Quantity:
         """Converts the given quantity into another unit, if possible"""
+        if quantity.unit.dimension != other_unit.dimension:
+            raise ConversionNotFound(
+                "No conversion from "
+                f"{quantity.unit} ({quantity.unit.dimension}) to "
+                f"{other_unit} ({other_unit.dimension})"
+            )
+
         this = quantity.in_base_units()
         other = (1 * other_unit).in_base_units()
 
         this_numerator, this_denominator = this.unit.as_ratio()
         other_numerator, other_denominator = other.unit.as_ratio()
 
-        numerator_path = conversions.find(this_numerator, other_numerator)
+        numerator_path = self._find(this_numerator, other_numerator)
         if not numerator_path:
             raise ConversionNotFound(
                 f"No conversion from {this_numerator} to {other_numerator}"
             )
 
-        denominator_path = conversions.find(this_denominator, other_denominator)
+        denominator_path = self._find(this_denominator, other_denominator)
         if not denominator_path:
             raise ConversionNotFound(
                 f"No conversion from {this_denominator} to {other_denominator}"
@@ -1344,18 +1345,13 @@ class ConversionTable:
 
         return Quantity(magnitude, other_unit)
 
-    def find(
+    def _find(
         self,
         start: Unit,
         end: Unit,
     ) -> Optional[Iterable[Tuple[Numeric, Unit]]]:
         tracer: Callable[..., None] = lambda *args: None
         tracer(f"finding conversion from {start} -> {end}")
-
-        if start.dimension != end.dimension:
-            tracer(f"{start.dimension} != {end.dimension}")
-            return None
-
         if start.dimension == Number:
             return [(1, end)]
 

@@ -1,5 +1,3 @@
-from typing import Iterable, Tuple
-
 import pytest
 
 from measured import Area, ConversionNotFound, Length, Mass, Numeric, Unit, conversions
@@ -28,12 +26,8 @@ def test_approximating_requires_units_with_conversion() -> None:
 
 
 def test_unit_conversion_must_be_in_same_dimension() -> None:
-    with pytest.raises(TypeError):
+    with pytest.raises(ConversionNotFound):
         (1 * Meter).in_unit(Second)
-
-
-def test_finding_conversions_in_different_dimensions_returns_none() -> None:
-    assert conversions.find(Meter, Second) is None
 
 
 def test_unit_always_converts_to_itself() -> None:
@@ -51,44 +45,26 @@ def test_conversion_with_exponents() -> None:
 
 
 @pytest.mark.parametrize(
-    "start, end, path",
+    "start, end, magnitude",
     [
-        (Foot, Inch, [(12.0, Inch)]),
-        (Foot**2, Meter**2, [(0.09290304, Meter**2)]),
-        (Meter**2, Foot**2, [(10.76391041670972, Foot**2)]),
-        (Acre, Foot**2, [(43560.0, Foot**2)]),
-        (Foot**2, Inch**2, [(144.0, Inch**2)]),
-        (
-            Acre,
-            Inch**2,
-            [
-                (43560.0, Foot**2),
-                (144.0, Inch**2),
-            ],
-        ),
-        (Inch**2, Foot**2, [(0.006944444444444444, Foot**2)]),
-        (Foot**2, Acre, [(0.00002295684113865932, Acre)]),
-        (
-            Inch**2,
-            Acre,
-            [
-                (0.006944444444444444, Foot**2),
-                (0.00002295684113865932, Acre),
-            ],
-        ),
+        (Foot, Inch, 12.0),
+        (Foot**2, Meter**2, 0.09290304),
+        (Meter**2, Foot**2, 10.76391041670972),
+        (Acre, Foot**2, 43560.0),
+        (Foot**2, Inch**2, 144.0),
+        (Acre, Inch**2, 43560.0 * 144.0),
+        (Inch**2, Foot**2, 0.006944444444444444),
+        (Foot**2, Acre, 0.00002295684113865932),
+        (Inch**2, Acre, 0.006944444444444444 * 0.00002295684113865932),
     ],
 )
 def test_conversion_can_navigate_exponents(
-    start: Unit, end: Unit, path: Iterable[Tuple[Numeric, Unit]]
+    start: Unit, end: Unit, magnitude: Numeric
 ) -> None:
-    message = " != ".join(
-        [
-            conversions.format_path(conversions.find(start, end)),
-            conversions.format_path(path),
-        ]
-    )
-
-    assert conversions.find(start, end) == path, message
+    converted = conversions.convert(1 * start, end)
+    assert converted == magnitude * end
+    assert converted.unit == end
+    assert converted.magnitude == magnitude
 
 
 def test_backtracking_conversions_with_no_path() -> None:
@@ -96,8 +72,11 @@ def test_backtracking_conversions_with_no_path() -> None:
     Hiya = Length.unit("hello", "hello")
     Mundo = Area.unit("world", "world")
 
-    assert conversions.find(Hiya**2, Mundo) is None
-    assert conversions.find(Mundo, Hiya**2) is None
+    with pytest.raises(ConversionNotFound):
+        conversions.convert(1 * Hiya**2, Mundo)
+
+    with pytest.raises(ConversionNotFound):
+        conversions.convert(1 * Mundo, Hiya**2)
 
 
 def test_failing_to_convert_numerator() -> None:
