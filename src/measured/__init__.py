@@ -1294,6 +1294,7 @@ class ConversionTable:
     def equate(self, a: Quantity, b: Quantity) -> None:
         """Defines a conversion between one Unit and another, expressed as a ratio
         between the two."""
+
         if a.unit == b.unit:
             raise ValueError("No need to define conversions for a unit and itself")
 
@@ -1302,12 +1303,6 @@ class ConversionTable:
 
         self._known[a.unit][b.unit] = b.magnitude / a.magnitude
         self._known[b.unit][a.unit] = a.magnitude / b.magnitude
-
-    @classmethod
-    def format_path(cls, path: Optional[Iterable[Tuple[Numeric, Unit]]]) -> str:
-        if path is None:
-            return "None"
-        return str([f"* {s} -> {u}" for s, u in path])
 
     def convert(self, quantity: Quantity, other_unit: Unit) -> Quantity:
         """Converts the given quantity into another unit, if possible"""
@@ -1345,6 +1340,12 @@ class ConversionTable:
             magnitude /= scale
 
         return Quantity(magnitude, other_unit)
+
+    @classmethod
+    def _format_path(cls, path: Optional[Iterable[Tuple[Numeric, Unit]]]) -> str:
+        if path is None:
+            return "None"
+        return str([f"* {s} -> {u}" for s, u in path])
 
     def _find(
         self,
@@ -1416,7 +1417,7 @@ class ConversionTable:
             # should be able to find available conversions
             tracer(indent, f"backtracking from {end} -> {start}")
             backtracked = self._backtrack(self._find_path(end, start), exponent, end)
-            tracer(indent, f"backtracked: {self.format_path(backtracked)}")
+            tracer(indent, f"backtracked: {self._format_path(backtracked)}")
             return backtracked
 
         best_path = None
@@ -1435,7 +1436,7 @@ class ConversionTable:
             if not best_path or len(path) < len(best_path):
                 best_path = path
 
-        tracer(indent, f"best path: {self.format_path(best_path)}")
+        tracer(indent, f"best path: {self._format_path(best_path)}")
         if best_path:
             return best_path
 
