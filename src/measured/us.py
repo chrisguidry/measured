@@ -108,7 +108,7 @@ AcreFoot.equals(43560 * Foot**3)
 # Fluid Volumes
 # https://en.wikipedia.org/wiki/United_States_customary_units#Fluid_volume
 
-Minim = Volume.unit(name="minim", symbol="min")
+Minim = Volume.unit(name="minim", symbol="min.")
 Minim.equals(61.611519921875 * Micro * Liter)
 
 FluidDram = Volume.unit(name="fluid dram", symbol="fl. dr.")

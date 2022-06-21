@@ -149,6 +149,20 @@ Liter = Unit.derive((Deci * Meter) ** 3, name="Liter", symbol="L")
 
 Hertz = Unit.derive(One / Second, name="hertz", symbol="Hz")
 
+Minute = Time.unit("minute", "min")
+Minute.equals(60 * Second)
+
+Hour = Time.unit("hour", "h")
+Hour.equals(3600 * Second)
+Hour.equals(60 * Minute)
+
+# This is the SI-compatible "day" as a unit of measure, defined as 86,400 seconds.
+# https://en.wikipedia.org/wiki/Day#International_System_of_Units_(SI)
+Day = Time.unit("day", "d")
+Day.equals(86400 * Second)
+Day.equals(1440 * Minute)
+Day.equals(24 * Hour)
+
 Radian = Unit.derive(Meter / Meter, name="radian", symbol="rad")
 Steradian = Unit.derive(Meter**2 / Meter**2, name="steradian", symbol="sr")
 
