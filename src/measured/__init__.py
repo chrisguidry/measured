@@ -155,7 +155,7 @@ else:  # pragma: no cover
     from math import gcd
 
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 NUMERIC_CLASSES = (int, float)
 Numeric = Union[int, float]
