@@ -4,8 +4,8 @@ Defines the [United States customary units][1] and their conversions to SI
 [1]: https://en.wikipedia.org/wiki/United_States_customary_units
 """
 
-from . import Area, Length, Mass, Volume, avoirdupois
-from .si import Gram, Kilo, Liter, Meter, Micro, Milli
+from . import Area, Length, Mass, Temperature, Volume, avoirdupois
+from .si import Gram, Kelvin, Kilo, Liter, Meter, Micro, Milli
 
 # Length
 # https://en.wikipedia.org/wiki/United_States_customary_units#Length
@@ -210,3 +210,14 @@ Hundredweight.equals(45.359237 * Kilo * Gram)
 Ton = Mass.unit("short ton", "ton")
 Ton.equals(20 * Hundredweight)
 Ton.equals(907.18474 * Kilo * Gram)
+
+
+# Temperature
+# https://en.wikipedia.org/wiki/Rankine_scale
+# https://en.wikipedia.org/wiki/Fahrenheit
+
+Rankine = Temperature.unit("Rankine", "R")
+Rankine.equals(5 / 9 * Kelvin)
+
+Fahrenheit = Temperature.unit(name="fahrenheit", symbol="°F")
+Fahrenheit.zero(+459.67 * Rankine)
