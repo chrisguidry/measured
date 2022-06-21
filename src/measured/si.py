@@ -35,7 +35,7 @@ Attributes: Derived Units
 
     Hertz (Unit): measures `Frequency`
 
-    Radian (Unit): measures `Angle`, a dimensionless `Number`
+    Radian (Unit): measures `PlaneAngle`, a dimensionless `Number`
 
     Steradian (Unit): measures `SolidAngle`, a dimensionless `Number`
 

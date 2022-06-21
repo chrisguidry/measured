@@ -69,7 +69,7 @@ Attributes: Derived dimensions
     Area (Dimension):
     Volume (Dimension):
 
-    Angle (Dimension):
+    PlaneAngle (Dimension):
     SolidAngle (Dimension):
 
     Speed (Dimension):
@@ -1540,7 +1540,7 @@ Information = Dimension.define(name="information", symbol="B")  # TODO
 Area = Dimension.derive(Length * Length, name="area")
 Volume = Dimension.derive(Area * Length, name="volume")
 
-Angle = Length / Length
+PlaneAngle = Length / Length
 SolidAngle = Area / Area
 
 # https://en.wikipedia.org/wiki/Fourth,_fifth,_and_sixth_derivatives_of_position
