@@ -214,6 +214,10 @@ Ton.equals(907.18474 * Kilo * Gram)
 
 # Temperature
 # https://en.wikipedia.org/wiki/Rankine_scale
+# https://en.wikipedia.org/wiki/Fahrenheit
 
 Rankine = Temperature.unit("Rankine", "R")
 Rankine.equals(5 / 9 * Kelvin)
+
+Fahrenheit = Temperature.unit(name="fahrenheit", symbol="°F")
+Fahrenheit.zero(+459.67 * Rankine)

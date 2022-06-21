@@ -2,7 +2,7 @@ import pytest
 
 from measured import Quantity
 from measured.si import Kelvin, Kilo, Milli
-from measured.us import Rankine
+from measured.us import Fahrenheit, Rankine
 
 
 @pytest.mark.parametrize(
@@ -39,3 +39,30 @@ def test_kelvin_and_rankine(kelvin: Quantity, rankine: Quantity) -> None:
 def test_kelvin_approximates_rankine(kelvin: Quantity, rankine: Quantity) -> None:
     kelvin.assert_approximates(rankine)
     rankine.assert_approximates(kelvin)
+
+
+@pytest.mark.parametrize(
+    "rankine, fahrenheit",
+    [
+        (0 * Rankine, -459.67 * Fahrenheit),
+        (459.67 * Rankine, 0 * Fahrenheit),
+    ],
+)
+def test_rankine_equals_fahrenheit(rankine: Quantity, fahrenheit: Quantity) -> None:
+    assert rankine == fahrenheit
+    assert fahrenheit == rankine
+
+
+@pytest.mark.parametrize(
+    "rankine, fahrenheit",
+    [
+        (459.68 * Rankine, 10 * Milli * Fahrenheit),
+        (559.67 * Rankine, 100 * Fahrenheit),
+        (559670.0 * Milli * Rankine, 100 * Fahrenheit),
+    ],
+)
+def test_rankine_approximates_fahrenheit(
+    rankine: Quantity, fahrenheit: Quantity
+) -> None:
+    rankine.assert_approximates(fahrenheit)
+    fahrenheit.assert_approximates(rankine)

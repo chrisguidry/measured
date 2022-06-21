@@ -166,7 +166,8 @@ Henry = Unit.derive(Ohm * Second, name="henry", symbol="H")
 Weber = Unit.derive(Joule / Ampere, name="weber", symbol="Wb")
 Tesla = Unit.derive(Weber / Meter**2, name="tesla", symbol="T")
 
-# Celsius = Scale(Kelvin, +273.15, name="celsius", symbol="C")
+Celsius = Temperature.unit(name="celsius", symbol="°C")
+Celsius.zero(273.15 * Kelvin)
 
 Lumen = Unit.derive(Candela * Steradian, name="lumen", symbol="lm")
 Lux = Unit.derive(Lumen / Meter**2, name="lux", symbol="lux")

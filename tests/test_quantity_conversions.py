@@ -16,6 +16,14 @@ def test_disallow_self_conversion() -> None:
         conversions.equate(1 * Meter, 2 * Meter)
 
 
+def test_disallow_self_zeroing() -> None:
+    with pytest.raises(ValueError, match="unit and itself"):
+        Meter.zero(1 * Meter)
+
+    with pytest.raises(ValueError, match="unit and itself"):
+        conversions.translate(Meter, 1 * Meter)
+
+
 def test_approximating_requires_units_with_conversion() -> None:
     Bogus = Length.unit(name="bogus", symbol="bog")
 

@@ -830,7 +830,13 @@ class Unit:
         """Defines a conversion between this Unit and another"""
         if other.unit == self:
             raise ValueError("No need to define conversions for a unit and itself")
-        return conversions.equate(1 * self, other)
+        conversions.equate(1 * self, other)
+
+    def zero(self, zero: "Quantity") -> None:
+        """Defines this unit as a scale with a zero point at another Quantity"""
+        if zero.unit == self:
+            raise ValueError("No need to define conversions for a unit and itself")
+        conversions.translate(self, zero)
 
     # Pickle support
 
@@ -1285,11 +1291,17 @@ class Quantity:
         assert self.approximates(other, within=within), message
 
 
+Ratio = Numeric
+Offset = Numeric
+
+
 class ConversionTable:
-    _known: Dict[Unit, Dict[Unit, Numeric]]
+    _ratios: Dict[Unit, Dict[Unit, Ratio]]
+    _offsets: Dict[Unit, Dict[Unit, Offset]]
 
     def __init__(self) -> None:
-        self._known = defaultdict(dict)
+        self._ratios = defaultdict(dict)
+        self._offsets = defaultdict(dict)
 
     def equate(self, a: Quantity, b: Quantity) -> None:
         """Defines a conversion between one Unit and another, expressed as a ratio
@@ -1301,8 +1313,23 @@ class ConversionTable:
         a = a.in_base_units()
         b = b.in_base_units()
 
-        self._known[a.unit][b.unit] = b.magnitude / a.magnitude
-        self._known[b.unit][a.unit] = a.magnitude / b.magnitude
+        self._ratios[a.unit][b.unit] = b.magnitude / a.magnitude
+        self._ratios[b.unit][a.unit] = a.magnitude / b.magnitude
+
+    def translate(self, scale: Unit, zero: Quantity) -> None:
+        """Defines a unit as a scale starting from the given zero point in another
+        unit"""
+        if scale == zero.unit:
+            raise ValueError("No need to define conversions for a unit and itself")
+
+        degree = zero.unit
+        offset = zero.magnitude
+
+        self._ratios[degree][scale] = 1
+        self._ratios[scale][degree] = 1
+
+        self._offsets[degree][scale] = -offset
+        self._offsets[scale][degree] = +offset
 
     def convert(self, quantity: Quantity, other_unit: Unit) -> Quantity:
         """Converts the given quantity into another unit, if possible"""
@@ -1331,38 +1358,41 @@ class ConversionTable:
                 f"No conversion from {this_denominator} to {other_denominator}"
             )
 
-        magnitude = this.magnitude / other.magnitude
+        numerator = this.magnitude / other.magnitude
 
-        for scale, _ in numerator_path:
-            magnitude *= scale
+        for scale, offset, _ in numerator_path:
+            numerator *= scale
+            numerator += offset
 
-        for scale, _ in denominator_path:
-            magnitude /= scale
+        denominator = 1.0
+        for scale, offset, _ in denominator_path:
+            denominator *= scale
+            denominator += offset
 
-        return Quantity(magnitude, other_unit)
+        return Quantity(numerator / denominator, other_unit)
 
     @classmethod
-    def _format_path(cls, path: Optional[Iterable[Tuple[Numeric, Unit]]]) -> str:
+    def _format_path(cls, path: Optional[Iterable[Tuple[Ratio, Offset, Unit]]]) -> str:
         if path is None:
             return "None"
-        return str([f"* {s} -> {u}" for s, u in path])
+        return str([f"* {r} + {o} -> {u}" for r, o, u in path])
 
     def _find(
         self,
         start: Unit,
         end: Unit,
-    ) -> Optional[Iterable[Tuple[Numeric, Unit]]]:
+    ) -> Optional[Iterable[Tuple[Ratio, Offset, Unit]]]:
         tracer: Callable[..., None] = lambda *args: None
         tracer(f"finding conversion from {start} -> {end}")
         if start.dimension == Number:
-            return [(1, end)]
+            return [(1, 0, end)]
 
         start_terms = self._terms_by_dimension(start)
         end_terms = self._terms_by_dimension(end)
 
         assert start_terms.keys() == end_terms.keys()
 
-        path: List[Tuple[Numeric, Unit]] = []
+        path: List[Tuple[Ratio, Offset, Unit]] = []
         for dimension in start_terms:
             for s, e in zip(start_terms[dimension], end_terms[dimension]):
                 this_path = self._find_path(s, e, tracer=tracer)
@@ -1386,14 +1416,14 @@ class ConversionTable:
         visited: Optional[Set[Unit]] = None,
         depth: int = 1,
         tracer: Callable[..., None] = lambda *args: None,
-    ) -> Optional[List[Tuple[Numeric, Unit]]]:
+    ) -> Optional[List[Tuple[Ratio, Offset, Unit]]]:
 
         indent = "  " * depth
         tracer(indent, f"finding path from {start} -> {end}")
 
         if start is end:
             tracer(indent, f"{start} == {end}")
-            return [(1, end)]
+            return [(1, 0, end)]
 
         if visited is None:
             visited = {start}
@@ -1422,17 +1452,21 @@ class ConversionTable:
 
         best_path = None
 
-        for intermediate, scale in self._known[start].items():
+        for intermediate, scale in self._ratios[start].items():
+            offset = self._offsets[start].get(intermediate, 0)
             if intermediate == end:
-                tracer(indent, f"found direct conversion {scale}")
-                return [(scale**exponent, end**exponent)]
+                tracer(indent, f"found direct conversion * {scale} + {offset}")
+                return [(scale**exponent, offset**exponent, end**exponent)]
 
             path = self._find_path(intermediate, end, visited=visited, depth=depth + 1)
             if not path:
                 continue
 
-            path = [(scale, intermediate)] + list(path)
-            path = [(scale**exponent, unit**exponent) for scale, unit in path]
+            path = [(scale, offset, intermediate)] + list(path)
+            path = [
+                (scale**exponent, offset**exponent, unit**exponent)
+                for scale, offset, unit in path
+            ]
             if not best_path or len(path) < len(best_path):
                 best_path = path
 
@@ -1462,10 +1496,10 @@ class ConversionTable:
     @classmethod
     def _backtrack(
         cls,
-        path: Optional[Iterable[Tuple[Numeric, Unit]]],
+        path: Optional[Iterable[Tuple[Ratio, Offset, Unit]]],
         exponent: int,
         end: Unit,
-    ) -> Optional[List[Tuple[Numeric, Unit]]]:
+    ) -> Optional[List[Tuple[Ratio, Offset, Unit]]]:
         """Given a path to convert a start unit to an end unit, produce the reverse
         path, which would convert the end unit to the start unit"""
         if path is None:
@@ -1473,12 +1507,12 @@ class ConversionTable:
 
         path = list(reversed(list(path)))
 
-        units = [u for _, u in path[1:]] + [end]
-        scales = [s for s, _ in path]
+        units = [u for _, _, u in path[1:]] + [end]
+        scales_and_offsets = [(s, o) for s, o, _ in path]
 
         backtracked = [
-            (1 / (scale**exponent), unit**exponent)
-            for scale, unit in zip(scales, units)
+            (1 / (scale**exponent), -(offset**exponent), unit**exponent)
+            for (scale, offset), unit in zip(scales_and_offsets, units)
         ]
         return backtracked
 
