@@ -45,7 +45,7 @@ def test_formatting_units() -> None:
     assert str(Meter) == "m"
     assert str(Meter**2) == "m²"
     assert str(Meter**3) == "m³"
-    assert str(Meter**3 / Second**2) == "m³s⁻²"
+    assert str(Meter**3 / Second**2) == "m³⋅s⁻²"
     assert str(Hertz) == "Hz"
     assert str(Hertz**2) == "s⁻²"
 
@@ -57,13 +57,13 @@ def test_formatting_quantities() -> None:
 
 def test_formatting_prefixes() -> None:
     assert str(5 * (Kilo * Meter)) == "5 km"
-    assert str(5.1 * (Kilo * Meter**2) / Second) == "5.1 km²s⁻¹"
+    assert str(5.1 * (Kilo * Meter**2) / Second) == "5.1 km²⋅s⁻¹"
 
 
 def test_formatting_prefixes_simplifies() -> None:
     # This is a little surprising, but what's happening here is that
     # 5 meter per kilosecond is getting reduced to 5 millimeter per second
-    assert str((5 * Meter) / (Kilo * Second)) == "5 mms⁻¹"
+    assert str((5 * Meter) / (Kilo * Second)) == "5 mm⋅s⁻¹"
 
 
 def test_do_the_best_we_can_with_odd_prefixes() -> None:

@@ -402,7 +402,7 @@ class Dimension:
             return self.symbol
 
         return (
-            "".join(
+            "⋅".join(
                 f"{dimension.symbol}{superscript(self.exponents[i])}"
                 for i, dimension in enumerate(self._fundamental)
                 if self.exponents[i] != 0
@@ -944,9 +944,9 @@ class Unit:
 
     def __str__(self) -> str:
         if self.symbol:
-            return self.symbol
+            return f"{self.prefix}{self.symbol}"
 
-        return str(self.prefix) + "".join(
+        return str(self.prefix) + "⋅".join(
             f"{unit.prefix}{unit.symbol}{superscript(exponent)}"
             for unit, exponent in self.factors.items()
         )
