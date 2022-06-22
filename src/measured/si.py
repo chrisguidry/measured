@@ -88,6 +88,8 @@ Attributes: Prefixes (base 10)
 
 """
 
+from math import pi as π
+
 from . import (
     AmountOfSubstance,
     Current,
@@ -95,6 +97,7 @@ from . import (
     LuminousIntensity,
     Mass,
     One,
+    PlaneAngle,
     Prefix,
     Temperature,
     Time,
@@ -145,26 +148,10 @@ Candela = LuminousIntensity.unit(name="candela", symbol="cd")
 # Derived Units
 # https://en.wikipedia.org/wiki/SI_derived_unit
 
-Liter = Unit.derive((Deci * Meter) ** 3, name="Liter", symbol="L")
-
 Hertz = Unit.derive(One / Second, name="hertz", symbol="Hz")
 
-Minute = Time.unit("minute", "min")
-Minute.equals(60 * Second)
-
-Hour = Time.unit("hour", "h")
-Hour.equals(3600 * Second)
-Hour.equals(60 * Minute)
-
-# This is the SI-compatible "day" as a unit of measure, defined as 86,400 seconds.
-# https://en.wikipedia.org/wiki/Day#International_System_of_Units_(SI)
-Day = Time.unit("day", "d")
-Day.equals(86400 * Second)
-Day.equals(1440 * Minute)
-Day.equals(24 * Hour)
-
-Radian = Unit.derive(Meter / Meter, name="radian", symbol="rad")
-Steradian = Unit.derive(Meter**2 / Meter**2, name="steradian", symbol="sr")
+Radian = PlaneAngle.unit(name="radian", symbol="rad")
+Steradian = PlaneAngle.unit(name="steradian", symbol="sr")
 
 Newton = Unit.derive((Kilo * Gram) * Meter / Second**2, name="newton", symbol="N")
 Joule = Unit.derive(Meter * Newton, name="joule", symbol="J")
@@ -191,3 +178,35 @@ Gray = Unit.derive(Joule / (Kilo * Gram), name="gray", symbol="Gy")
 Sievert = Unit.derive(Joule / (Kilo * Gram), name="sievert", symbol="Sv")
 
 Katal = Unit.derive(Mole / Second, name="katal", symbol="kat")
+
+
+# SI Accepted units
+# https://en.wikipedia.org/wiki/Non-SI_units_mentioned_in_the_SI
+
+Liter = Unit.derive((Deci * Meter) ** 3, name="Liter", symbol="L")
+
+Minute = Time.unit("minute", "min")
+Minute.equals(60 * Second)
+
+Hour = Time.unit("hour", "h")
+Hour.equals(3600 * Second)
+Hour.equals(60 * Minute)
+
+# This is the SI-compatible "day" as a unit of measure, defined as 86,400 seconds.
+# https://en.wikipedia.org/wiki/Day#International_System_of_Units_(SI)
+Day = Time.unit("day", "d")
+Day.equals(86400 * Second)
+Day.equals(1440 * Minute)
+Day.equals(24 * Hour)
+
+Degree = PlaneAngle.unit("degree", "°")
+Degree.equals(π / 180 * Radian)
+
+Arcminute = PlaneAngle.unit("arcminute", "'")
+Arcminute.equals(π / 10800 * Radian)
+Arcminute.equals(1 / 60 * Degree)
+
+Arcsecond = PlaneAngle.unit("arcsecond", '"')
+Arcsecond.equals(π / (180 * 3600) * Radian)
+Arcsecond.equals(1 / 3600 * Degree)
+Arcsecond.equals(1 / 60 * Arcminute)

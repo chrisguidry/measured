@@ -108,9 +108,12 @@ def test_one() -> None:
 
 
 def test_roots() -> None:
+    assert One.root(0) == One
     assert One.root(2) == One
     assert One.root(3) == One
     assert One.root(100) == One
+    assert Meter.root(0) == One
+    assert (Meter**2).root(0) == One
     assert (Meter**2).root(2) == Meter
     assert (Meter**4).root(2) == Meter**2
     assert (Meter**16 / Second**12).root(4) == Meter**4 / Second**3

@@ -12,6 +12,8 @@ from measured import (
     LuminousIntensity,
     Mass,
     Number,
+    PlaneAngle,
+    SolidAngle,
     Speed,
     Temperature,
     Time,
@@ -192,8 +194,21 @@ def test_luminous_intensity() -> None:
     assert LuminousIntensity is Number * LuminousIntensity
 
 
+def test_plane_angle_is_dimensionless() -> None:
+    assert isinstance(PlaneAngle, Dimension)
+    assert PlaneAngle == Number
+
+
+def test_solid_angle_is_dimensionless() -> None:
+    assert isinstance(SolidAngle, Dimension)
+    assert SolidAngle == Number
+
+
 def test_roots() -> None:
+    assert Number.root(0) == Number
     assert Number.root(100) == Number
+    assert Length.root(0) == Number
+    assert Length.root(1) == Length
     assert Area.root(2) == Length
     assert Volume.root(3) == Length
     assert (Area / Time**2).root(2) == Speed

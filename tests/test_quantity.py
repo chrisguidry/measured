@@ -70,6 +70,7 @@ def test_exponentation_by_scalar() -> None:
 
 
 def test_roots() -> None:
+    assert (10 * Meter).root(0) == 1 * One
     assert ((10 * Meter) ** 2).root(2) == 10 * Meter
     assert (100 * Meter**2).root(2) == 10 * Meter
     (64 * Meter**3).root(3).assert_approximates(4 * Meter)

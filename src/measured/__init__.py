@@ -467,6 +467,9 @@ class Dimension:
         if not isinstance(degree, int):
             raise TypeError(f"degree should be an integer, not {type(degree)}")
 
+        if degree == 0:
+            return Number
+
         if any(s // degree != s / degree for s in self.exponents):
             raise FractionalDimensionError(degree, self)
 
@@ -474,7 +477,7 @@ class Dimension:
 
     def as_ratio(self) -> Tuple["Dimension", "Dimension"]:
         """Returns this dimension, split into a numerator and denominator"""
-        numerator = tuple(e if e > 0 else 0 for e in self.exponents)
+        numerator = tuple(e if e >= 0 else 0 for e in self.exponents)
         denominator = tuple(-e if e < 0 else 0 for e in self.exponents)
         return Dimension(numerator), Dimension(denominator)
 
@@ -686,6 +689,9 @@ class Prefix:
         if not isinstance(degree, int):
             raise TypeError(f"degree should be an integer, not {type(degree)}")
 
+        if degree == 0:
+            return IdentityPrefix
+
         if self.exponent // degree != self.exponent / degree:
             raise FractionalDimensionError(degree, self)
 
@@ -828,7 +834,7 @@ class Unit:
 
     def equals(self, other: "Quantity") -> None:
         """Defines a conversion between this Unit and another"""
-        if other.unit == self:
+        if other.unit == self and self is not One:
             raise ValueError("No need to define conversions for a unit and itself")
         conversions.equate(1 * self, other)
 
@@ -1016,13 +1022,16 @@ class Unit:
         if not isinstance(degree, int):
             raise TypeError(f"degree should be an integer, not {type(degree)}")
 
+        if degree == 0:
+            return One
+
         dimension = self.dimension.root(degree)
         prefix = self.prefix.root(degree)
 
         if any(
             exponent // degree != exponent / degree
             for unit, exponent in self.factors.items()
-            if exponent > 0 and unit != One
+            if exponent > 0 and unit is not One
         ):
             raise FractionalDimensionError(degree, self)
 
@@ -1037,12 +1046,12 @@ class Unit:
         return (
             Unit(
                 self.prefix,
-                {u: e for u, e in self.factors.items() if e > 0},
+                {u: e for u, e in self.factors.items() if e >= 0} or {One: 1},
                 numerator,
             ),
             Unit(
                 IdentityPrefix,
-                {u: -e for u, e in self.factors.items() if e < 0},
+                {u: -e for u, e in self.factors.items() if e < 0} or {One: 1},
                 denominator,
             ),
         )
@@ -1185,6 +1194,8 @@ class Quantity:
 
     def root(self, degree: int) -> "Quantity":
         """Returns the nth root of this Quantity"""
+        if degree == 0:
+            return 1 * One
         return Quantity(self.magnitude ** (1 / degree), self.unit.root(degree))
 
     def __neg__(self) -> "Quantity":
@@ -1307,7 +1318,7 @@ class ConversionTable:
         """Defines a conversion between one Unit and another, expressed as a ratio
         between the two."""
 
-        if a.unit == b.unit:
+        if a.unit == b.unit and a.unit is not One:
             raise ValueError("No need to define conversions for a unit and itself")
 
         a = a.in_base_units()
@@ -1384,8 +1395,6 @@ class ConversionTable:
     ) -> Optional[Iterable[Tuple[Ratio, Offset, Unit]]]:
         tracer: Callable[..., None] = lambda *args: None
         tracer(f"finding conversion from {start} -> {end}")
-        if start.dimension == Number:
-            return [(1, 0, end)]
 
         start_terms = self._terms_by_dimension(start)
         end_terms = self._terms_by_dimension(end)
@@ -1482,6 +1491,9 @@ class ConversionTable:
         assert (
             start.dimension == end.dimension
         ), f"{start} and {end} measure different dimensions"
+
+        if start.dimension == Number:
+            return 1, start, end
 
         exponent = gcd(*start.dimension.exponents)
 
@@ -1585,4 +1597,5 @@ IdentityPrefix = Prefix(0, 0)
 
 # Fundamental units
 
-One = Unit.define(Number, name="one", symbol="1")
+One = Number.unit(name="one", symbol="1")
+One.equals(1 * One)

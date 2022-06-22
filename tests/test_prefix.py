@@ -1,6 +1,6 @@
 import pytest
 
-from measured import One
+from measured import IdentityPrefix, One
 from measured.iec import Bit, Kibi, Mebi
 from measured.si import Deci, Kilo, Mega, Meter, Micro, Milli, Second
 
@@ -84,6 +84,7 @@ def test_dividing_by_random_things() -> None:
 
 
 def test_roots() -> None:
+    assert Mega.root(0) == IdentityPrefix
     assert Mega.root(2) == Kilo
     assert Mebi.root(2) == Kibi
 
