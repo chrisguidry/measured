@@ -1153,13 +1153,15 @@ class Quantity:
 
     def __add__(self, other: "Quantity") -> "Quantity":
         if isinstance(other, Quantity):
-            return Quantity(self.magnitude + other.magnitude, self.unit + other.unit)
+            other = other.in_unit(self.unit)
+            return Quantity(self.magnitude + other.magnitude, self.unit)
 
         return NotImplemented
 
     def __sub__(self, other: "Quantity") -> "Quantity":
         if isinstance(other, Quantity):
-            return Quantity(self.magnitude - other.magnitude, self.unit - other.unit)
+            other = other.in_unit(self.unit)
+            return Quantity(self.magnitude - other.magnitude, self.unit)
 
         return NotImplemented
 

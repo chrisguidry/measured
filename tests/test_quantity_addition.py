@@ -2,8 +2,9 @@
 
 import pytest
 
-from measured import Quantity
-from measured.si import Hertz, Meter, Second
+from measured import ConversionNotFound, Quantity
+from measured.si import Hertz, Meter, Minute, Second
+from measured.us import Foot, Inch
 
 
 @pytest.mark.parametrize(
@@ -67,3 +68,37 @@ def test_abelian_addition_inverse(a: Quantity) -> None:
 )
 def test_abelian_addition_commutativity(a: Quantity, b: Quantity) -> None:
     assert a + b == b + a
+
+
+@pytest.mark.parametrize(
+    "a, b, c",
+    [
+        (1 * Meter, 2 * Foot, 1.6096 * Meter),
+        (1 * Meter, 2 * Inch, 1.0508 * Meter),
+        (2 * Meter / Second, 30 * Foot / Minute, 2.1524 * Meter / Second),
+    ],
+)
+def test_addition_of_different_units(a: Quantity, b: Quantity, c: Quantity) -> None:
+    assert a + b == c
+
+
+def test_addition_requires_same_dimension() -> None:
+    with pytest.raises(ConversionNotFound):
+        (1 * Meter) + (1 * Second)
+
+
+@pytest.mark.parametrize(
+    "a, b, c",
+    [
+        (1 * Meter, 2 * Foot, 0.39039999999999997 * Meter),
+        (1 * Meter, 2 * Inch, 0.9492 * Meter),
+        (2 * Meter / Second, 30 * Foot / Minute, 1.8476 * Meter / Second),
+    ],
+)
+def test_subtraction_of_different_units(a: Quantity, b: Quantity, c: Quantity) -> None:
+    assert a - b == c, str(a - b)
+
+
+def test_subtraction_requires_same_dimension() -> None:
+    with pytest.raises(ConversionNotFound):
+        (1 * Meter) - (1 * Second)
