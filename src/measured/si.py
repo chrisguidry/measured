@@ -183,7 +183,7 @@ Katal = Unit.derive(Mole / Second, name="katal", symbol="kat")
 # SI Accepted units
 # https://en.wikipedia.org/wiki/Non-SI_units_mentioned_in_the_SI
 
-Liter = Unit.derive((Deci * Meter) ** 3, name="Liter", symbol="L")
+Liter = Unit.derive((Deci * Meter) ** 3, name="liter", symbol="L")
 
 Minute = Time.unit("minute", "min")
 Minute.equals(60 * Second)

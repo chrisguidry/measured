@@ -2,8 +2,21 @@ from typing import Any
 
 import pytest
 
-from measured import Length, Numeric, One, Unit
-from measured.si import Meter, Second
+from measured import Length, Numeric, One, Quantity, Unit
+from measured.si import Meter, Ohm, Second
+
+
+def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
+    examples = [
+        5 * Meter,
+        10 * Meter / Second,
+        10.5 * Ohm,
+    ]
+
+    ids = [str(q) for q in examples]
+
+    if "quantity" in metafunc.fixturenames:
+        metafunc.parametrize("quantity", examples, ids=ids)
 
 
 @pytest.mark.parametrize("value", [-2, 5, 0.1, -0.3, 2.5])
@@ -89,8 +102,17 @@ def test_cannot_divide_by_random_types() -> None:
         (5 * Meter) / "hi"  # type: ignore
 
 
-def test_repr() -> None:
-    assert repr(5 * Meter) == f"<Quantity(magnitude=5, unit={Meter!r})>"
+def test_repr(quantity: Quantity) -> None:
+    assert (
+        repr(quantity)
+        == f"Quantity(magnitude={quantity.magnitude!r}, unit={quantity.unit!r})"
+    )
+
+
+def test_repr_roundtrips(quantity: Quantity) -> None:
+    from measured import Dimension, Prefix, Unit  # noqa: F401
+
+    assert eval(repr(quantity)) == quantity
 
 
 def test_negative() -> None:

@@ -115,10 +115,14 @@ def test_only_dimensional_division(dimension: Dimension) -> None:
 
 def test_repr(dimension: Dimension) -> None:
     r = repr(dimension)
-    assert r.startswith("<Dimension(exponents=(0,")
+    assert r.startswith("Dimension(exponents=(0,")
     assert dimension.name and dimension.name in r
     assert dimension.symbol and dimension.symbol in r
-    assert r.endswith(")>")
+    assert r.endswith(")")
+
+
+def test_repr_roundtrips(dimension: Dimension) -> None:
+    assert eval(repr(dimension)) is dimension
 
 
 def test_number() -> None:

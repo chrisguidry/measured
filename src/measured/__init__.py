@@ -243,7 +243,7 @@ class Dimension:
 
         >>> encoded = json.dumps(Length, cls=MeasuredJSONEncoder)
         >>> json.loads(encoded, cls=MeasuredJSONDecoder)
-        <Dimension(exponents=(0, 1, 0, 0, 0, 0, 0, 0, 0, 0), name='length', symbol='L')>
+        Dimension(exponents=(0, 1, 0, 0, 0, 0, 0, 0, 0, 0), name='length', symbol='L')
 
         With measured's JSON codecs installed, you can omit passing the encoder and
         decoder.
@@ -391,10 +391,10 @@ class Dimension:
 
     def __repr__(self) -> str:
         return (
-            "<Dimension("
+            "Dimension("
             f"exponents={self.exponents!r}, "
             f"name={self.name!r}, symbol={self.symbol!r}"
-            ")>"
+            ")"
         )
 
     def __str__(self) -> str:
@@ -615,7 +615,7 @@ class Prefix:
         raise ValueError(f"No conversion from {value!r} to Prefix")
 
     def __repr__(self) -> str:
-        return f"<Prefix(base={self.base!r}, exponent={self.exponent!r}>"
+        return f"Prefix(base={self.base!r}, exponent={self.exponent!r})"
 
     def __str__(self) -> str:
         if self.symbol:
@@ -823,14 +823,28 @@ class Unit:
     @classmethod
     def derive(cls, unit: "Unit", name: str, symbol: str) -> "Unit":
         """Registers a new named unit derived from other units"""
+        if name in cls._by_name:
+            raise ValueError(f"A unit named {name} is already defined")
+        if symbol in cls._by_symbol:
+            raise ValueError(f"A unit with symbol {symbol} is already defined")
+
         if unit.name:
             unit.names.append(name)
             unit.symbols.append(symbol)
             return unit
+        else:
+            unit.name = name
+            unit.symbol = symbol
 
-        unit.name = name
-        unit.symbol = symbol
+        cls._by_name[name] = unit
+        cls._by_symbol[symbol] = unit
+
         return unit
+
+    @classmethod
+    def named(cls, name: str) -> "Unit":
+        """Returns the unit with the given name"""
+        return cls._by_name[name]
 
     def equals(self, other: "Quantity") -> None:
         """Defines a conversion between this Unit and another"""
@@ -916,12 +930,16 @@ class Unit:
         )
 
     def __repr__(self) -> str:
+        if self.name:
+            return f"Unit.named({self.name!r})"
+
         return (
-            "<Unit("
-            f"dimension={self.dimension!r}, "
+            "Unit("
             f"prefix={self.prefix!r}, "
+            f"factors={self.factors!r}, "
+            f"dimension={self.dimension!r}, "
             f"name={self.name!r}, symbol={self.symbol!r}"
-            ")>"
+            ")"
         )
 
     def __str__(self) -> str:
@@ -1146,7 +1164,7 @@ class Quantity:
         return Quantity(json_object["magnitude"], json_object["unit"])
 
     def __repr__(self) -> str:
-        return f"<Quantity(magnitude={self.magnitude!r}, unit={self.unit!r})>"
+        return f"Quantity(magnitude={self.magnitude!r}, unit={self.unit!r})"
 
     def __str__(self) -> str:
         return f"{self.magnitude} {self.unit}"
