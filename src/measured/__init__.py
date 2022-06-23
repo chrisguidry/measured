@@ -365,7 +365,7 @@ class Dimension:
         }
 
     @classmethod
-    def from_json(cls, json_object: Dict[str, Any]) -> "Dimension":
+    def __from_json__(cls, json_object: Dict[str, Any]) -> "Dimension":
         return Dimension(tuple(json_object["exponents"]))
 
     # Pydantic support
@@ -590,7 +590,7 @@ class Prefix:
         }
 
     @classmethod
-    def from_json(cls, json_object: Dict[str, Any]) -> "Prefix":
+    def __from_json__(cls, json_object: Dict[str, Any]) -> "Prefix":
         return Prefix(json_object["base"], json_object["exponent"])
 
     # Pydantic support
@@ -881,7 +881,7 @@ class Unit:
         }
 
     @classmethod
-    def from_json(cls, json_object: Dict[str, Any]) -> "Unit":
+    def __from_json__(cls, json_object: Dict[str, Any]) -> "Unit":
         if not json_object["factors"]:
             return cls._by_name[json_object["name"]]
         prefix = json_object["prefix"] or Prefix(0, 0)
@@ -1156,6 +1156,10 @@ class Quantity:
             "unit": self.unit,
         }
 
+    @classmethod
+    def __from_json__(cls, json_object: Dict[str, Any]) -> "Quantity":
+        return Quantity(json_object["magnitude"], json_object["unit"])
+
     # Pydantic support
 
     @classmethod
@@ -1170,10 +1174,6 @@ class Quantity:
             return value
 
         raise ValueError(f"No conversion from {value!r} to Quantity")
-
-    @classmethod
-    def from_json(cls, json_object: Dict[str, Any]) -> "Quantity":
-        return Quantity(json_object["magnitude"], json_object["unit"])
 
     def __repr__(self) -> str:
         return f"Quantity(magnitude={self.magnitude!r}, unit={self.unit!r})"
@@ -1422,20 +1422,11 @@ class ConversionTable:
 
         return Quantity(numerator / denominator, other_unit)
 
-    @classmethod
-    def _format_path(cls, path: Optional[Iterable[Tuple[Ratio, Offset, Unit]]]) -> str:
-        if path is None:
-            return "None"
-        return str([f"* {r} + {o} -> {u}" for r, o, u in path])
-
     def _find(
         self,
         start: Unit,
         end: Unit,
     ) -> Optional[Iterable[Tuple[Ratio, Offset, Unit]]]:
-        tracer: Callable[..., None] = lambda *args: None
-        tracer(f"finding conversion from {start} -> {end}")
-
         start_terms = self._terms_by_dimension(start)
         end_terms = self._terms_by_dimension(end)
 
@@ -1444,7 +1435,7 @@ class ConversionTable:
         path: List[Tuple[Ratio, Offset, Unit]] = []
         for dimension in start_terms:
             for s, e in zip(start_terms[dimension], end_terms[dimension]):
-                this_path = self._find_path(s, e, tracer=tracer)
+                this_path = self._find_path(s, e)
                 if not this_path:
                     return None
                 path += this_path
@@ -1463,15 +1454,9 @@ class ConversionTable:
         start: Unit,
         end: Unit,
         visited: Optional[Set[Unit]] = None,
-        depth: int = 1,
-        tracer: Callable[..., None] = lambda *args: None,
     ) -> Optional[List[Tuple[Ratio, Offset, Unit]]]:
 
-        indent = "  " * depth
-        tracer(indent, f"finding path from {start} -> {end}")
-
         if start is end:
-            tracer(indent, f"{start} == {end}")
             return [(1, 0, end)]
 
         if visited is None:
@@ -1482,11 +1467,6 @@ class ConversionTable:
             visited.add(start)
 
         exponent, start, end = self._reduce_dimension(start, end)
-        if exponent > 1:
-            tracer(
-                indent,
-                f"reduced exponent by {exponent}, now finding {start} -> {end}",
-            )
 
         if sum(start.factors.values()) > sum(end.factors.values()):
             # This is a conversion like m² -> acre, where the end dimension is defined
@@ -1494,9 +1474,7 @@ class ConversionTable:
             # there's no unit that represents the square root of an acre that we can
             # compare the meter to); in this case, perform the search in reverse and it
             # should be able to find available conversions
-            tracer(indent, f"backtracking from {end} -> {start}")
             backtracked = self._backtrack(self._find_path(end, start), exponent, end)
-            tracer(indent, f"backtracked: {self._format_path(backtracked)}")
             return backtracked
 
         best_path = None
@@ -1504,10 +1482,9 @@ class ConversionTable:
         for intermediate, scale in self._ratios[start].items():
             offset = self._offsets[start].get(intermediate, 0)
             if intermediate == end:
-                tracer(indent, f"found direct conversion * {scale} + {offset}")
                 return [(scale**exponent, offset**exponent, end**exponent)]
 
-            path = self._find_path(intermediate, end, visited=visited, depth=depth + 1)
+            path = self._find_path(intermediate, end, visited=visited)
             if not path:
                 continue
 
@@ -1519,7 +1496,6 @@ class ConversionTable:
             if not best_path or len(path) < len(best_path):
                 best_path = path
 
-        tracer(indent, f"best path: {self._format_path(best_path)}")
         if best_path:
             return best_path
 
