@@ -951,6 +951,18 @@ class Unit:
             for unit, exponent in self.factors.items()
         )
 
+    def __format__(self, format_specifier: str) -> str:
+        if not format_specifier:
+            return str(self)
+
+        if format_specifier == "/":
+            numerator, denominator = self.as_ratio()
+            if denominator == One:
+                return str(self)
+            return str(numerator) + "/" + str(denominator)
+
+        raise ValueError(f"Unrecognized format specifier {format_specifier!r}")
+
     @classmethod
     def _simplify(cls, factors: Mapping["Unit", int]) -> Dict["Unit", int]:
         simplified = {
@@ -1168,6 +1180,14 @@ class Quantity:
 
     def __str__(self) -> str:
         return f"{self.magnitude} {self.unit}"
+
+    def __format__(self, format_specifier: str) -> str:
+        magnitude_format, _, unit_format = format_specifier.partition(":")
+        return (
+            self.magnitude.__format__(magnitude_format)
+            + " "
+            + self.unit.__format__(unit_format)
+        )
 
     def __add__(self, other: "Quantity") -> "Quantity":
         if isinstance(other, Quantity):
@@ -1593,13 +1613,13 @@ Energy = Dimension.derive(Length * Force, name="energy")
 Power = Dimension.derive(Energy / Time, name="power")
 
 Charge = Dimension.derive(Time * Current, name="charge")
-Potential = Dimension.derive(Power / Charge, name="potential")
+Potential = Dimension.derive(Energy / Charge, name="potential")
 Capacitance = Dimension.derive(Charge / Potential, name="capacitance")
 Resistance = Dimension.derive(Potential / Current, name="resistance")
 Conductance = Dimension.derive(Current / Potential, name="conductance")
 Inductance = Dimension.derive(Potential * Time / Current, name="inductance")
 
-MagneticFlux = Dimension.derive(Power / Current, name="magnetic flux")
+MagneticFlux = Dimension.derive(Potential * Time, name="magnetic flux")
 MagneticBField = Dimension.derive(Potential * Time / Area, name="magnetic B-field")
 
 LuminousFlux = LuminousIntensity * SolidAngle

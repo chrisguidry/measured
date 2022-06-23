@@ -144,6 +144,11 @@ Kelvin = Temperature.unit(name="kelvin", symbol="K")
 Mole = AmountOfSubstance.unit(name="mole", symbol="mol")
 Candela = LuminousIntensity.unit(name="candela", symbol="cd")
 
+# Technically, it's the kilogram that's the SI base unit, and the other derived units
+# are derived in terms of the kilogram.
+Kilogram = Mass.unit("kilogram", "kg")
+Kilogram.equals(1000 * Gram)
+
 
 # Derived Units
 # https://en.wikipedia.org/wiki/SI_derived_unit
@@ -153,7 +158,7 @@ Hertz = Unit.derive(One / Second, name="hertz", symbol="Hz")
 Radian = PlaneAngle.unit(name="radian", symbol="rad")
 Steradian = PlaneAngle.unit(name="steradian", symbol="sr")
 
-Newton = Unit.derive((Kilo * Gram) * Meter / Second**2, name="newton", symbol="N")
+Newton = Unit.derive((Kilogram) * Meter / Second**2, name="newton", symbol="N")
 Joule = Unit.derive(Meter * Newton, name="joule", symbol="J")
 Watt = Unit.derive(Joule / Second, name="watt", symbol="W")
 
