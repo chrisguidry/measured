@@ -1,4 +1,25 @@
-# https://en.wikipedia.org/wiki/Avoirdupois_system
+"""
+Defines the [Avoirdupois system of weights][1] and their conversions to SI
+
+[1]: https://en.wikipedia.org/wiki/Avoirdupois_system
+
+Attributes: Base units
+
+    Pound (Unit): The base unit for the Avoirdupois system
+
+Attributes: Units of mass ("weight")
+
+    Grain (Unit): 1/7000 lb.
+
+    Dram (Unit): 1/256 lb.
+
+    Ounce (Unit): 1/16 lb.
+
+    LongHundredweight (Unit): 112 lb.
+
+    LongTon (Unit): 2240 lb.
+
+"""
 
 from measured import Mass
 from measured.si import Gram, Kilo, Milli

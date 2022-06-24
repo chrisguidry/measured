@@ -15,7 +15,12 @@ watch:
 - src
 nav:
 - index.md
-- si.md
-- iec.md
+- 'Systems of Measurement':
+  - si.md
+  - fundamental.md
+  - iec.md
+  - astronomical.md
+  - us.md
+  - avoirdupois.md
 - formatting.md
 - serialization.md

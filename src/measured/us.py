@@ -2,6 +2,40 @@
 Defines the [United States customary units][1] and their conversions to SI
 
 [1]: https://en.wikipedia.org/wiki/United_States_customary_units
+
+
+Attributes: Human-scale units of length
+
+    Point (Unit): 1/72 inch
+    Pica (Unit): 1/6 inch
+    Inch (Unit): 1/12 foot, 25.4 millimeter
+    Foot (Unit): 12 inches
+    Yard (Unit): 3 feet
+    Mile (Unit): 5,280 feet
+
+Attributes: Survey units of length
+
+    Link (Unit): 33/50 feet
+    SurveyFoot (Unit): 1200/3937 meters
+    Rod (Unit): 25 links
+    Chain (Unit): 4 rods
+    Furlong (Unit): 10 chains
+    StatuteMile (Unit): 8 furlongs
+    League (Unit): 3 statute miles
+
+Attributes: Survey units of area and volume
+
+    Acre (Unit): 43,560 ft²
+    Section (Unit): 640 acres, 1 square statute mile
+    SurveyTownship (Unit): 36 sections, 4 square leagues
+    AcreFoot (Unit): a volume of 1 acre, 1 foot deep
+
+Attributes: Nautical units of length
+
+    Fathom (Unit): 6 feet
+    Cable (Unit): 120 fathoms
+    NauticalMile (Unit): 1,852 meters
+
 """
 
 from . import Area, Length, Mass, Temperature, Volume, avoirdupois

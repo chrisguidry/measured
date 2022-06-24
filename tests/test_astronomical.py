@@ -8,13 +8,14 @@ from measured.astronomical import (
     Parsec,
     SolarMass,
 )
-from measured.constants import GravitationalConstant
+from measured.fundamental import GravitationalConstant
 from measured.si import Day, Meter, Second
 
 
-def test_parsec_to_astronomical_unit() -> None:
+def test_parsec() -> None:
     # https://en.wikipedia.org/wiki/Parsec#Calculating_the_value_of_a_parsec
     (π * Parsec).assert_approximates(180 * 60 * 60 * AstronomicalUnit)
+    (1 * Parsec).assert_approximates(3.0856775814913673e16 * Meter, within=1e3)
 
 
 def test_light_year() -> None:

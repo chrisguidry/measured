@@ -823,9 +823,9 @@ class Unit:
     @classmethod
     def derive(cls, unit: "Unit", name: str, symbol: str) -> "Unit":
         """Registers a new named unit derived from other units"""
-        if name in cls._by_name:
+        if name in cls._by_name and cls._by_name[name] is not unit:
             raise ValueError(f"A unit named {name} is already defined")
-        if symbol in cls._by_symbol:
+        if symbol in cls._by_symbol and cls._by_symbol[symbol] is not unit:
             raise ValueError(f"A unit with symbol {symbol} is already defined")
 
         if unit.name:
