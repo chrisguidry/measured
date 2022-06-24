@@ -1,3 +1,12 @@
+from measured import (
+    Capacitance,
+    Charge,
+    Current,
+    MagneticBField,
+    MagneticFlux,
+    Potential,
+    Resistance,
+)
 from measured.si import (
     Ampere,
     Coulomb,
@@ -10,6 +19,48 @@ from measured.si import (
     Volt,
     Weber,
 )
+
+
+def test_ampere() -> None:
+    assert Ampere.name == "ampere"
+    assert Ampere.symbol == "A"
+    assert Ampere.dimension == Current
+
+
+def test_coulomb() -> None:
+    assert Coulomb.name == "coulomb"
+    assert Coulomb.symbol == "C"
+    assert Coulomb.dimension == Charge
+
+
+def test_farad() -> None:
+    assert Farad.name == "farad"
+    assert Farad.symbol == "F"
+    assert Farad.dimension == Capacitance
+
+
+def test_ohm() -> None:
+    assert Ohm.name == "ohm"
+    assert Ohm.symbol == "Ω"
+    assert Ohm.dimension == Resistance
+
+
+def test_tesla() -> None:
+    assert Tesla.name == "tesla"
+    assert Tesla.symbol == "T"
+    assert Tesla.dimension == MagneticBField
+
+
+def test_volt() -> None:
+    assert Volt.name == "volt"
+    assert Volt.symbol == "V"
+    assert Volt.dimension == Potential
+
+
+def test_weber() -> None:
+    assert Weber.name == "weber"
+    assert Weber.symbol == "Wb"
+    assert Weber.dimension == MagneticFlux
 
 
 def test_ohms_law() -> None:
@@ -35,5 +86,5 @@ def test_magnetic_inductance_is_magnetic_flux_per_area() -> None:
 
     area = (1 * (Milli * Meter)) ** 2
 
-    induction = flux / area
-    assert induction == 12000000 * Tesla
+    b_field = flux / area
+    assert b_field == 12000000 * Tesla

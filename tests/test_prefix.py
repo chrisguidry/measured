@@ -1,8 +1,23 @@
 import pytest
 
-from measured import IdentityPrefix, One
+from measured import IdentityPrefix, One, Prefix
 from measured.iec import Bit, Kibi, Mebi
 from measured.si import Deci, Kilo, Mega, Meter, Micro, Milli, Second
+
+
+def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
+    if "prefix" in metafunc.fixturenames:
+        examples = [Kibi, Mebi, Milli, Deci, Kilo, Mega]
+        ids = [d.name for d in examples]
+        metafunc.parametrize("prefix", examples, ids=ids)
+
+
+def test_repr(prefix: Prefix) -> None:
+    assert repr(prefix) == f"Prefix(base={prefix.base!r}, exponent={prefix.exponent!r})"
+
+
+def test_repr_roundtrips(prefix: Prefix) -> None:
+    assert eval(repr(prefix)) is prefix
 
 
 def test_prefixes_scale_quantities_up() -> None:

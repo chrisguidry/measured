@@ -243,7 +243,7 @@ class Dimension:
 
         >>> encoded = json.dumps(Length, cls=MeasuredJSONEncoder)
         >>> json.loads(encoded, cls=MeasuredJSONDecoder)
-        <Dimension(exponents=(0, 1, 0, 0, 0, 0, 0, 0, 0, 0), name='length', symbol='L')>
+        Dimension(exponents=(0, 1, 0, 0, 0, 0, 0, 0, 0, 0), name='length', symbol='L')
 
         With measured's JSON codecs installed, you can omit passing the encoder and
         decoder.
@@ -365,7 +365,7 @@ class Dimension:
         }
 
     @classmethod
-    def from_json(cls, json_object: Dict[str, Any]) -> "Dimension":
+    def __from_json__(cls, json_object: Dict[str, Any]) -> "Dimension":
         return Dimension(tuple(json_object["exponents"]))
 
     # Pydantic support
@@ -391,10 +391,10 @@ class Dimension:
 
     def __repr__(self) -> str:
         return (
-            "<Dimension("
+            "Dimension("
             f"exponents={self.exponents!r}, "
             f"name={self.name!r}, symbol={self.symbol!r}"
-            ")>"
+            ")"
         )
 
     def __str__(self) -> str:
@@ -402,7 +402,7 @@ class Dimension:
             return self.symbol
 
         return (
-            "".join(
+            "⋅".join(
                 f"{dimension.symbol}{superscript(self.exponents[i])}"
                 for i, dimension in enumerate(self._fundamental)
                 if self.exponents[i] != 0
@@ -590,7 +590,7 @@ class Prefix:
         }
 
     @classmethod
-    def from_json(cls, json_object: Dict[str, Any]) -> "Prefix":
+    def __from_json__(cls, json_object: Dict[str, Any]) -> "Prefix":
         return Prefix(json_object["base"], json_object["exponent"])
 
     # Pydantic support
@@ -615,7 +615,7 @@ class Prefix:
         raise ValueError(f"No conversion from {value!r} to Prefix")
 
     def __repr__(self) -> str:
-        return f"<Prefix(base={self.base!r}, exponent={self.exponent!r}>"
+        return f"Prefix(base={self.base!r}, exponent={self.exponent!r})"
 
     def __str__(self) -> str:
         if self.symbol:
@@ -823,14 +823,28 @@ class Unit:
     @classmethod
     def derive(cls, unit: "Unit", name: str, symbol: str) -> "Unit":
         """Registers a new named unit derived from other units"""
+        if name in cls._by_name:
+            raise ValueError(f"A unit named {name} is already defined")
+        if symbol in cls._by_symbol:
+            raise ValueError(f"A unit with symbol {symbol} is already defined")
+
         if unit.name:
             unit.names.append(name)
             unit.symbols.append(symbol)
             return unit
+        else:
+            unit.name = name
+            unit.symbol = symbol
 
-        unit.name = name
-        unit.symbol = symbol
+        cls._by_name[name] = unit
+        cls._by_symbol[symbol] = unit
+
         return unit
+
+    @classmethod
+    def named(cls, name: str) -> "Unit":
+        """Returns the unit with the given name"""
+        return cls._by_name[name]
 
     def equals(self, other: "Quantity") -> None:
         """Defines a conversion between this Unit and another"""
@@ -867,7 +881,7 @@ class Unit:
         }
 
     @classmethod
-    def from_json(cls, json_object: Dict[str, Any]) -> "Unit":
+    def __from_json__(cls, json_object: Dict[str, Any]) -> "Unit":
         if not json_object["factors"]:
             return cls._by_name[json_object["name"]]
         prefix = json_object["prefix"] or Prefix(0, 0)
@@ -916,22 +930,38 @@ class Unit:
         )
 
     def __repr__(self) -> str:
+        if self.name:
+            return f"Unit.named({self.name!r})"
+
         return (
-            "<Unit("
-            f"dimension={self.dimension!r}, "
+            "Unit("
             f"prefix={self.prefix!r}, "
+            f"factors={self.factors!r}, "
+            f"dimension={self.dimension!r}, "
             f"name={self.name!r}, symbol={self.symbol!r}"
-            ")>"
+            ")"
         )
 
     def __str__(self) -> str:
         if self.symbol:
-            return self.symbol
+            return f"{self.prefix}{self.symbol}"
 
-        return str(self.prefix) + "".join(
+        return str(self.prefix) + "⋅".join(
             f"{unit.prefix}{unit.symbol}{superscript(exponent)}"
             for unit, exponent in self.factors.items()
         )
+
+    def __format__(self, format_specifier: str) -> str:
+        if not format_specifier:
+            return str(self)
+
+        if format_specifier == "/":
+            numerator, denominator = self.as_ratio()
+            if denominator == One:
+                return str(self)
+            return str(numerator) + "/" + str(denominator)
+
+        raise ValueError(f"Unrecognized format specifier {format_specifier!r}")
 
     @classmethod
     def _simplify(cls, factors: Mapping["Unit", int]) -> Dict["Unit", int]:
@@ -1126,6 +1156,10 @@ class Quantity:
             "unit": self.unit,
         }
 
+    @classmethod
+    def __from_json__(cls, json_object: Dict[str, Any]) -> "Quantity":
+        return Quantity(json_object["magnitude"], json_object["unit"])
+
     # Pydantic support
 
     @classmethod
@@ -1141,15 +1175,19 @@ class Quantity:
 
         raise ValueError(f"No conversion from {value!r} to Quantity")
 
-    @classmethod
-    def from_json(cls, json_object: Dict[str, Any]) -> "Quantity":
-        return Quantity(json_object["magnitude"], json_object["unit"])
-
     def __repr__(self) -> str:
-        return f"<Quantity(magnitude={self.magnitude!r}, unit={self.unit!r})>"
+        return f"Quantity(magnitude={self.magnitude!r}, unit={self.unit!r})"
 
     def __str__(self) -> str:
         return f"{self.magnitude} {self.unit}"
+
+    def __format__(self, format_specifier: str) -> str:
+        magnitude_format, _, unit_format = format_specifier.partition(":")
+        return (
+            self.magnitude.__format__(magnitude_format)
+            + " "
+            + self.unit.__format__(unit_format)
+        )
 
     def __add__(self, other: "Quantity") -> "Quantity":
         if isinstance(other, Quantity):
@@ -1384,20 +1422,11 @@ class ConversionTable:
 
         return Quantity(numerator / denominator, other_unit)
 
-    @classmethod
-    def _format_path(cls, path: Optional[Iterable[Tuple[Ratio, Offset, Unit]]]) -> str:
-        if path is None:
-            return "None"
-        return str([f"* {r} + {o} -> {u}" for r, o, u in path])
-
     def _find(
         self,
         start: Unit,
         end: Unit,
     ) -> Optional[Iterable[Tuple[Ratio, Offset, Unit]]]:
-        tracer: Callable[..., None] = lambda *args: None
-        tracer(f"finding conversion from {start} -> {end}")
-
         start_terms = self._terms_by_dimension(start)
         end_terms = self._terms_by_dimension(end)
 
@@ -1406,7 +1435,7 @@ class ConversionTable:
         path: List[Tuple[Ratio, Offset, Unit]] = []
         for dimension in start_terms:
             for s, e in zip(start_terms[dimension], end_terms[dimension]):
-                this_path = self._find_path(s, e, tracer=tracer)
+                this_path = self._find_path(s, e)
                 if not this_path:
                     return None
                 path += this_path
@@ -1425,15 +1454,9 @@ class ConversionTable:
         start: Unit,
         end: Unit,
         visited: Optional[Set[Unit]] = None,
-        depth: int = 1,
-        tracer: Callable[..., None] = lambda *args: None,
     ) -> Optional[List[Tuple[Ratio, Offset, Unit]]]:
 
-        indent = "  " * depth
-        tracer(indent, f"finding path from {start} -> {end}")
-
         if start is end:
-            tracer(indent, f"{start} == {end}")
             return [(1, 0, end)]
 
         if visited is None:
@@ -1444,11 +1467,6 @@ class ConversionTable:
             visited.add(start)
 
         exponent, start, end = self._reduce_dimension(start, end)
-        if exponent > 1:
-            tracer(
-                indent,
-                f"reduced exponent by {exponent}, now finding {start} -> {end}",
-            )
 
         if sum(start.factors.values()) > sum(end.factors.values()):
             # This is a conversion like m² -> acre, where the end dimension is defined
@@ -1456,9 +1474,7 @@ class ConversionTable:
             # there's no unit that represents the square root of an acre that we can
             # compare the meter to); in this case, perform the search in reverse and it
             # should be able to find available conversions
-            tracer(indent, f"backtracking from {end} -> {start}")
             backtracked = self._backtrack(self._find_path(end, start), exponent, end)
-            tracer(indent, f"backtracked: {self._format_path(backtracked)}")
             return backtracked
 
         best_path = None
@@ -1466,10 +1482,9 @@ class ConversionTable:
         for intermediate, scale in self._ratios[start].items():
             offset = self._offsets[start].get(intermediate, 0)
             if intermediate == end:
-                tracer(indent, f"found direct conversion * {scale} + {offset}")
                 return [(scale**exponent, offset**exponent, end**exponent)]
 
-            path = self._find_path(intermediate, end, visited=visited, depth=depth + 1)
+            path = self._find_path(intermediate, end, visited=visited)
             if not path:
                 continue
 
@@ -1481,7 +1496,6 @@ class ConversionTable:
             if not best_path or len(path) < len(best_path):
                 best_path = path
 
-        tracer(indent, f"best path: {self._format_path(best_path)}")
         if best_path:
             return best_path
 
@@ -1575,13 +1589,13 @@ Energy = Dimension.derive(Length * Force, name="energy")
 Power = Dimension.derive(Energy / Time, name="power")
 
 Charge = Dimension.derive(Time * Current, name="charge")
-Potential = Dimension.derive(Power / Charge, name="potential")
+Potential = Dimension.derive(Energy / Charge, name="potential")
 Capacitance = Dimension.derive(Charge / Potential, name="capacitance")
 Resistance = Dimension.derive(Potential / Current, name="resistance")
 Conductance = Dimension.derive(Current / Potential, name="conductance")
 Inductance = Dimension.derive(Potential * Time / Current, name="inductance")
 
-MagneticFlux = Dimension.derive(Power / Current, name="magnetic flux")
+MagneticFlux = Dimension.derive(Potential * Time, name="magnetic flux")
 MagneticBField = Dimension.derive(Potential * Time / Area, name="magnetic B-field")
 
 LuminousFlux = LuminousIntensity * SolidAngle

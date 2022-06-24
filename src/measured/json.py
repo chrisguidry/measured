@@ -41,13 +41,13 @@ class MeasuredJSONDecoder(JSONDecoder):
         type_name = o.get("__measured__")
 
         if type_name == "Dimension":
-            return Dimension.from_json(o)
+            return Dimension.__from_json__(o)
         elif type_name == "Prefix":
-            return Prefix.from_json(o)
+            return Prefix.__from_json__(o)
         elif type_name == "Unit":
-            return Unit.from_json(o)
+            return Unit.__from_json__(o)
         elif type_name == "Quantity":
-            return Quantity.from_json(o)
+            return Quantity.__from_json__(o)
 
         return o
 

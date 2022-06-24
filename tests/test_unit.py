@@ -87,13 +87,10 @@ def test_no_fractional_exponentation(base: Unit) -> None:
         base ** Fraction(1, 2)  # type: ignore
 
 
-def test_repr(base: Unit) -> None:
-    r = repr(base)
-    assert r.startswith("<Unit(dimension=")
-    assert base.dimension.name and base.dimension.name in r
-    assert base.name and base.name in r
-    assert base.symbol and base.symbol in r
-    assert r.endswith(")>")
+def test_repr_roundtrips(base: Unit) -> None:
+    from measured import Dimension, Prefix  # noqa: F401
+
+    assert eval(repr(base)) is base
 
 
 def test_base_units_factor_to_themselves(base: Unit) -> None:
@@ -133,7 +130,13 @@ def test_names_unique() -> None:
     with pytest.raises(ValueError, match="already defined"):
         Length.unit("meter", "totally unique")
 
+    with pytest.raises(ValueError, match="already defined"):
+        Unit.derive(Meter / Second, name="ohm", symbol="totally unique")
+
 
 def test_symbols_unique() -> None:
     with pytest.raises(ValueError, match="already defined"):
         Length.unit("totally unique", "m")
+
+    with pytest.raises(ValueError, match="already defined"):
+        Unit.derive(Meter / Second, name="totally unique", symbol="Ω")

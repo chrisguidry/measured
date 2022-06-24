@@ -2,6 +2,24 @@ from measured import Acceleration, Energy, Force, Mass, Power
 from measured.si import Gram, Joule, Kilo, Meter, Milli, Newton, Second, Watt
 
 
+def test_newton() -> None:
+    assert Newton.name == "newton"
+    assert Newton.symbol == "N"
+    assert Newton.dimension == Force
+
+
+def test_joule() -> None:
+    assert Joule.name == "joule"
+    assert Joule.symbol == "J"
+    assert Joule.dimension == Energy
+
+
+def test_watt() -> None:
+    assert Watt.name == "watt"
+    assert Watt.symbol == "W"
+    assert Watt.dimension == Power
+
+
 def test_newtons_second_law_gram_meter() -> None:
     mass = 5 * Gram
     assert mass.unit.dimension == Mass
