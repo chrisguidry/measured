@@ -5,8 +5,11 @@ on:
     types: ['created']
 
 jobs:
+  build-and-test:
+    uses: ./.github/workflows/build-and-test.yml
   publish:
     runs-on: ubuntu-latest
+    needs: [build-and-test]
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
