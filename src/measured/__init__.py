@@ -155,6 +155,13 @@ if sys.version_info < (3, 9):  # pragma: no cover
 else:  # pragma: no cover
     from math import gcd
 
+
+try:
+    from icecream import ic
+except ImportError:  # pragma: no cover
+    ic = lambda *a: None if not a else (a[0] if len(a) == 1 else a)  # noqa
+
+
 __version__ = version("measured")
 
 NUMERIC_CLASSES = (int, float)
@@ -1394,6 +1401,9 @@ class ConversionTable:
         this = quantity.in_base_units()
         other = (1 * other_unit).in_base_units()
 
+        this = self._collapse_by_dimension(this)
+        other = self._collapse_by_dimension(other)
+
         this_numerator, this_denominator = this.unit.as_ratio()
         other_numerator, other_denominator = other.unit.as_ratio()
 
@@ -1409,13 +1419,12 @@ class ConversionTable:
                 f"No conversion from {this_denominator} to {other_denominator}"
             )
 
-        numerator = this.magnitude / other.magnitude
-
+        numerator = this.magnitude
         for scale, offset, _ in numerator_path:
             numerator *= scale
             numerator += offset
 
-        denominator = 1.0
+        denominator = other.magnitude
         for scale, offset, _ in denominator_path:
             denominator *= scale
             denominator += offset
@@ -1430,7 +1439,9 @@ class ConversionTable:
         start_terms = self._terms_by_dimension(start)
         end_terms = self._terms_by_dimension(end)
 
-        assert start_terms.keys() == end_terms.keys()
+        assert (
+            start_terms.keys() == end_terms.keys()
+        ), f"{start_terms.keys()} != {end_terms.keys()}"
 
         path: List[Tuple[Ratio, Offset, Unit]] = []
         for dimension in start_terms:
@@ -1448,6 +1459,46 @@ class ConversionTable:
             factor = factor**exponent
             terms[factor.dimension].append(factor)
         return terms
+
+    def _collapse_by_dimension(self, quantity: Quantity) -> Quantity:
+        """Return a new quantity with at most a single unit in each dimension, by
+        converting individual terms"""
+        magnitude = quantity.magnitude
+        by_dimension: Dict[Dimension, Tuple[Unit, int]] = {}
+        for unit, exponent in quantity.unit.factors.items():
+            dimension = unit.dimension
+            quantified = unit.quantify()
+
+            if dimension not in by_dimension:
+                magnitude *= quantified.magnitude**exponent
+                by_dimension[dimension] = (quantified.unit, exponent)
+                continue
+
+            current_unit, current_exponent = by_dimension[dimension]
+
+            path = self._find_path(quantified.unit, current_unit)
+            if not path:
+                raise ConversionNotFound(
+                    f"No conversion between {dimension} units {quantified.unit} "
+                    f"and {current_unit}"
+                )
+
+            for scale, offset, _ in path:
+                magnitude *= scale**exponent
+                magnitude += offset
+
+            by_dimension[dimension] = (current_unit, current_exponent + exponent)
+
+        factors = {
+            unit: exponent for unit, exponent in by_dimension.values() if exponent != 0
+        } or {One: 1}
+
+        final_dimension = Number
+        for dimension in by_dimension.keys():
+            final_dimension *= dimension
+
+        final = Quantity(magnitude, Unit(IdentityPrefix, factors, final_dimension))
+        return final
 
     def _find_path(
         self,
