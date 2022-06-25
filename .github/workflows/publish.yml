@@ -1,17 +1,12 @@
 name: Publish
 
 on:
-  push:
-    tags:
-    - '*'
+  release:
+    types: ['created']
 
 jobs:
   publish:
-
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
