@@ -47,7 +47,7 @@ jobs:
         pip install -e '.[dev]'
     - name: Test with pytest
       run: |
-        pytest ${{ matrix.coverage && '--cov-report=xml' }} ${{ (!matrix.coverage) && '--no-cov' }}
+        pytest ${{ (matrix.coverage && '--cov-report=xml') || '' }} ${{ (!matrix.coverage) && '--no-cov') || '' }}
     - uses: codecov/codecov-action@v2
       if: ${{ matrix.coverage }}
       with:
