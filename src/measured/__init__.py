@@ -118,6 +118,7 @@ Attributes: Base Units
 import sys
 from collections import defaultdict
 from functools import lru_cache, total_ordering
+from importlib.metadata import version
 from math import log
 from typing import (
     Any,
@@ -154,8 +155,7 @@ if sys.version_info < (3, 9):  # pragma: no cover
 else:  # pragma: no cover
     from math import gcd
 
-
-__version__ = "0.3.0"
+__version__ = version("measured")
 
 NUMERIC_CLASSES = (int, float)
 Numeric = Union[int, float]

@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := install
 
-.bookkeeping/development.in: setup.cfg
+.bookkeeping/development.in: setup.cfg pyproject.toml
 	mkdir -p .bookkeeping
 	echo "-e .[dev]" > .bookkeeping/development.in
 
