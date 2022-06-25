@@ -3,13 +3,14 @@ from math import pi as π
 from measured.astronomical import (
     AstronomicalUnit,
     EarthMass,
+    JulianYear,
     JupiterMass,
     LightYear,
     Parsec,
     SolarMass,
 )
 from measured.fundamental import GravitationalConstant
-from measured.si import Day, Meter, Second
+from measured.si import Meter
 
 
 def test_parsec() -> None:
@@ -27,11 +28,10 @@ def test_light_year() -> None:
 
 def test_deriving_solar_mass() -> None:
     # https://en.wikipedia.org/wiki/Solar_mass#Calculation
-    year = (365 * Day).in_unit(Second)
-    calculated = (4 * π**2 * AstronomicalUnit**3).in_unit(Meter**3) / (
-        GravitationalConstant * year**2
+    calculated = (4 * π**2 * AstronomicalUnit**3) / (
+        GravitationalConstant * JulianYear**2
     )
-    calculated.assert_approximates(1 * SolarMass, within=2.74 + 27)
+    calculated.assert_approximates(1 * SolarMass, within=2.74e27)
 
 
 def test_solar_system_masses() -> None:

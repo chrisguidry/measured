@@ -1,6 +1,16 @@
 import pytest
 
-from measured import Area, ConversionNotFound, Length, Mass, Numeric, Unit, conversions
+from measured import (
+    Area,
+    ConversionNotFound,
+    Length,
+    Mass,
+    Number,
+    Numeric,
+    One,
+    Unit,
+    conversions,
+)
 from measured.si import Meter, Second
 from measured.us import Acre, Foot, Inch
 
@@ -103,3 +113,14 @@ def test_failing_to_convert_denominator() -> None:
 
     with pytest.raises(ConversionNotFound):
         (1 * Meter / Flib).in_unit(Meter / Flob)
+
+
+def test_failing_to_collapse_dimensions() -> None:
+    Jib = Mass.unit("jibbity", "jibbity")
+    Job = Mass.unit("jobbity", "jobbity")
+
+    assert (Jib / Job).dimension == Number
+    assert (Job / Jib).dimension == Number
+
+    with pytest.raises(ConversionNotFound):
+        ((1 * Jib) / (1 * Job)).in_unit(One)
