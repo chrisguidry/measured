@@ -5,7 +5,7 @@ Defines the [International System of Units][1] ("SI") and [prefixes][2].
 
 [2]: https://en.wikipedia.org/wiki/Metric_prefix
 
-Attributes: Base Units
+Attributes: Base units
 
     Meter (Unit): The distance travelled by light in a vacuum in 1/299792458 seconds.
 
@@ -31,7 +31,7 @@ Attributes: Base Units
         monochromatic radiation of frequency 5.4×10¹⁴ hertz and that has a radiant
         intensity in that direction of 1/683 watt per steradian.
 
-Attributes: Derived Units
+Attributes: Derived units
 
     Hertz (Unit): measures `Frequency`
 
