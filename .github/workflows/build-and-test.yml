@@ -37,23 +37,23 @@ jobs:
     steps:
     - name: Show matrix
       run: echo '${{ toJSON(matrix) }}'
+
     - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install prerequisites
-      run: |
-        python -m pip install --upgrade pip build
-    - name: Build package
-      run: |
-        python -m build
-    - name: Install package
-      run:
-        pip install -e '.[dev]'
-    - name: Test with pytest
-      run: |
-        pytest ${{ matrix.coverageArgument }}
+        cache: pip
+        cache-dependency-path: '{pyproject.toml,setup.cfg}'
+
+    - run: python -m pip install --upgrade pip build
+
+    - run: python -m build
+
+    - run: pip install -e '.[dev]'
+
+    - run: pytest ${{ matrix.coverageArgument }}
+
     - uses: codecov/codecov-action@v2
       if: ${{ matrix.coverage }}
       with:
