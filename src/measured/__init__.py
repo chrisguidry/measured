@@ -115,6 +115,7 @@ Attributes: Base Units
 
 """
 
+import functools
 import sys
 from collections import defaultdict
 from functools import lru_cache, total_ordering
@@ -482,6 +483,7 @@ class Dimension:
 
         return Dimension(tuple(s // degree for s in self.exponents))
 
+    @functools.lru_cache(maxsize=None)
     def as_ratio(self) -> Tuple["Dimension", "Dimension"]:
         """Returns this dimension, split into a numerator and denominator"""
         numerator = tuple(e if e >= 0 else 0 for e in self.exponents)
@@ -1077,6 +1079,7 @@ class Unit:
         )
         return Unit(prefix, factors, dimension)
 
+    @functools.lru_cache(maxsize=None)
     def as_ratio(self) -> Tuple["Unit", "Unit"]:
         """Returns this unit, split into a numerator and denominator"""
         numerator, denominator = self.dimension.as_ratio()
@@ -1401,8 +1404,8 @@ class ConversionTable:
         this = quantity.in_base_units()
         other = (1 * other_unit).in_base_units()
 
-        this = self._collapse_by_dimension(this)
-        other = self._collapse_by_dimension(other)
+        this = this.magnitude * self._collapse_by_dimension(this.unit)
+        other = other.magnitude * self._collapse_by_dimension(other.unit)
 
         this_numerator, this_denominator = this.unit.as_ratio()
         other_numerator, other_denominator = other.unit.as_ratio()
@@ -1431,6 +1434,7 @@ class ConversionTable:
 
         return Quantity(numerator / denominator, other_unit)
 
+    @lru_cache(maxsize=None)
     def _find(
         self,
         start: Unit,
@@ -1460,12 +1464,13 @@ class ConversionTable:
             terms[factor.dimension].append(factor)
         return terms
 
-    def _collapse_by_dimension(self, quantity: Quantity) -> Quantity:
+    @functools.lru_cache(maxsize=None)
+    def _collapse_by_dimension(self, unit: Unit) -> Quantity:
         """Return a new quantity with at most a single unit in each dimension, by
         converting individual terms"""
-        magnitude = quantity.magnitude
+        magnitude: Numeric = 1
         by_dimension: Dict[Dimension, Tuple[Unit, int]] = {}
-        for unit, exponent in quantity.unit.factors.items():
+        for unit, exponent in unit.factors.items():
             dimension = unit.dimension
             quantified = unit.quantify()
 
@@ -1500,7 +1505,15 @@ class ConversionTable:
         final = Quantity(magnitude, Unit(IdentityPrefix, factors, final_dimension))
         return final
 
+    @lru_cache(maxsize=None)
     def _find_path(
+        self,
+        start: Unit,
+        end: Unit,
+    ) -> Optional[List[Tuple[Ratio, Offset, Unit]]]:
+        return self._find_path_recursive(start, end)
+
+    def _find_path_recursive(
         self,
         start: Unit,
         end: Unit,
@@ -1535,7 +1548,7 @@ class ConversionTable:
             if intermediate == end:
                 return [(scale**exponent, offset**exponent, end**exponent)]
 
-            path = self._find_path(intermediate, end, visited=visited)
+            path = self._find_path_recursive(intermediate, end, visited=visited)
             if not path:
                 continue
 
