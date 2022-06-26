@@ -5,7 +5,7 @@ import pytest
 from measured import (
     AmountOfSubstance,
     Area,
-    Current,
+    Charge,
     Dimension,
     Frequency,
     Length,
@@ -170,18 +170,18 @@ def test_mass() -> None:
     assert Mass is Number * Mass
 
 
-def test_current() -> None:
-    assert isinstance(Current, Dimension)
-    assert Current.name == "current"
-    assert Current.symbol == "I"
-    assert Current is Number * Current
-
-
 def test_temperature() -> None:
     assert isinstance(Temperature, Dimension)
     assert Temperature.name == "temperature"
     assert Temperature.symbol == "Θ"
     assert Temperature is Number * Temperature
+
+
+def test_charge() -> None:
+    assert isinstance(Charge, Dimension)
+    assert Charge.name == "charge"
+    assert Charge.symbol == "Q"
+    assert Charge is Number * Charge
 
 
 def test_amount_of_substance() -> None:
