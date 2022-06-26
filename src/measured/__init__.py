@@ -116,9 +116,10 @@ Attributes: Base Units
 """
 
 import functools
+import operator
 import sys
 from collections import defaultdict
-from functools import lru_cache, total_ordering
+from functools import lru_cache, reduce, total_ordering
 from importlib.metadata import version
 from math import log
 from typing import (
@@ -138,7 +139,8 @@ from typing import (
     overload,
 )
 
-from .formatting import superscript
+from . import _measured_parser
+from .formatting import from_superscript, superscript
 
 if sys.version_info < (3, 9):  # pragma: no cover
     # math.gcd changed in Python 3.8 from a two-argument for to a variable argument form
@@ -543,6 +545,7 @@ class Prefix:
     _initialized: bool = False
 
     _by_name: ClassVar[Dict[str, "Prefix"]] = {}
+    _by_symbol: ClassVar[Dict[str, "Prefix"]] = {}
 
     base: int
     exponent: Numeric
@@ -582,6 +585,8 @@ class Prefix:
 
         if name:
             self._by_name[name] = self
+        if symbol:
+            self._by_symbol[symbol] = self
 
     # Pickle support
 
@@ -609,6 +614,11 @@ class Prefix:
         cls,
     ) -> Generator[Callable[[Union[str, "Prefix"]], "Prefix"], None, None]:
         yield cls.validate
+
+    @classmethod
+    def resolve_symbol(cls, symbol: str) -> "Prefix":
+        """Returns the Prefix with the given symbol"""
+        return cls._by_symbol[symbol]
 
     @classmethod
     def validate(cls, value: Union[str, "Prefix"]) -> "Prefix":
@@ -854,6 +864,23 @@ class Unit:
     def named(cls, name: str) -> "Unit":
         """Returns the unit with the given name"""
         return cls._by_name[name]
+
+    @classmethod
+    def resolve_symbol(cls, symbol: str) -> "Unit":
+        """Returns the unit with the given (possibly prefixed) symbol"""
+        if symbol in cls._by_symbol:
+            return cls._by_symbol[symbol]
+
+        for i in range(1, len(symbol)):
+            try:
+                prefix = Prefix.resolve_symbol(symbol[:i])
+                unit = cls._by_symbol[symbol[i:]]
+            except KeyError:
+                continue
+
+            return prefix * unit
+
+        raise KeyError(f"No unit (or prefixed unit) matching {symbol!r}")
 
     def equals(self, other: "Quantity") -> None:
         """Defines a conversion between this Unit and another"""
@@ -1101,6 +1128,39 @@ class ConversionNotFound(ValueError):
     pass
 
 
+class QuantityTransformer(_measured_parser.Transformer[Any, "Quantity"]):
+    inline = _measured_parser.v_args(inline=True)
+
+    @inline
+    def unit(self, numerator: Unit, denominator: Optional[Unit] = None) -> Unit:
+        return numerator / (denominator or One)
+
+    @inline
+    def unit_sequence(self, *terms: Unit) -> Unit:
+        return reduce(operator.mul, terms)
+
+    @inline
+    def term(self, symbol: str, exponent: int = 1) -> Unit:
+        return Unit.resolve_symbol(symbol) ** exponent
+
+    @inline
+    def carat_exponent(self, exponent: str) -> int:
+        return int(exponent[1:])
+
+    @inline
+    def superscript_exponent(self, exponent: str) -> int:
+        value = from_superscript(exponent)
+        assert isinstance(value, int)
+        return value
+
+    @inline
+    def quantity(self, magnitude: Numeric, unit: Unit) -> "Quantity":
+        return Quantity(magnitude, unit)
+
+    int = inline(int)
+    float = inline(float)
+
+
 @total_ordering
 class Quantity:
     """Quantity represents a quantity of some Unit
@@ -1187,6 +1247,14 @@ class Quantity:
 
     def __repr__(self) -> str:
         return f"Quantity(magnitude={self.magnitude!r}, unit={self.unit!r})"
+
+    _parser: ClassVar[_measured_parser.Lark] = _measured_parser.Parser(  # type: ignore
+        transformer=QuantityTransformer()
+    )
+
+    @classmethod
+    def parse(cls, string: str) -> "Quantity":
+        return cast(Quantity, cls._parser.parse(string))
 
     def __str__(self) -> str:
         return f"{self.magnitude} {self.unit}"

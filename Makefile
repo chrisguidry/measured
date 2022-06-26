@@ -1,4 +1,5 @@
-.DEFAULT_GOAL := install
+.PHONY: all
+all: install src/measured/_measured_parser.py
 
 .bookkeeping/development.in: setup.cfg pyproject.toml
 	mkdir -p .bookkeeping
@@ -22,8 +23,13 @@
 	pip-compile --upgrade --output-file $@.next $<
 	mv $@.next $@
 
+_%_parser.py: %.lark
+	python -m lark.tools.standalone $< | sed s/Lark_StandAlone/Parser/g > $@
+	black $@
+	isort $@
+
 .PHONY: install
-install: .bookkeeping/installed
+install: .bookkeeping/installed src/measured/_measured_parser.py
 
 .PHONY: clean
 clean:
