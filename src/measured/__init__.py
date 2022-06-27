@@ -757,6 +757,27 @@ class Unit:
         >>> assert Meter.factors == {Meter: 1}
         >>> assert Second.factors == {Second: 1}
         >>> assert meter_per_second.factors == {Meter: 1, Second: -1}
+
+
+        [`Unit`][measured.Unit] values define format specifiers to control how they are
+        formatted as strings:
+
+        >>> from measured.si import Meter, Second
+        >>> str(Meter / Second)
+        'm⋅s⁻¹'
+        >>> f"{Meter / Second}"
+        'm⋅s⁻¹'
+        >>> f"{Meter**2 / Second**2}"
+        'm²⋅s⁻²'
+
+        The `/` format specifier presents the unit as a ratio:
+
+        >>> f"{Meter / Second:/}"
+        'm/s'
+        >>> f"{Meter**2/Second:/}"
+        'm²/s'
+        >>> f"{Meter**2/Second**2:/}"
+        'm²/s²'
     """
 
     UnitKey = Tuple[Prefix, Tuple[Tuple["Unit", int], ...]]
@@ -879,6 +900,9 @@ class Unit:
                 continue
 
             return prefix * unit
+
+        if symbol in cls._by_name:
+            return cls._by_name[symbol]
 
         raise KeyError(f"No unit (or prefixed unit) matching {symbol!r}")
 
@@ -1202,6 +1226,36 @@ class Quantity:
         * `1 * Second` → `Quantity(1, Second)`
         * `Quantity(2, Meter) / Quantity(1, Second)` → `Quantity(2, Meter / Second)`
 
+        [`Quantity`][measured.Quantity] values define format specifiers to control how
+        they are formatted as strings:
+
+        >>> from measured.si import Meter, Second
+        >>> str(5 * Meter / Second)
+        '5 m⋅s⁻¹'
+        >>> f"{5 * Meter / Second}"
+        '5 m⋅s⁻¹'
+        >>> f"{5 * Meter**2 / Second**2}"
+        '5 m²⋅s⁻²'
+
+        When formatting a [`Quantity`][measured.Quantity], you can specify two separate
+        format specifiers, separated by a `:`.  The first specifier is used to format
+        the `magnitude`, and the second is used to format the `unit` (see
+        [`Unit`][measured.Unit] for more information about the available specifiers).
+
+        Specifying both the magnitude and unit format:
+
+        >>> f"{5.1234 * Meter / Second:.2f:/}"
+        '5.12 m/s'
+
+        Specifying only the magnitude's format:
+
+        >>> f"{5.1234 * Meter / Second:.2f}"
+        '5.12 m⋅s⁻¹'
+
+        Specifying only the unit's format:
+
+        >>> f"{5.1234 * Meter / Second::/}"
+        '5.1234 m/s'
 
     """
 
