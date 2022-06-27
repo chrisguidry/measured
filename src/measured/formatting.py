@@ -8,6 +8,7 @@ SUPERSCRIPTS = {
         for i, v in enumerate(["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"])
     },
 }
+DIGITS = {v: k for k, v in SUPERSCRIPTS.items()}
 
 
 def superscript(exponent: Union[int, float]) -> str:
@@ -28,3 +29,7 @@ def superscript(exponent: Union[int, float]) -> str:
         return ""
 
     return "".join(SUPERSCRIPTS[c] for c in str(exponent))
+
+
+def from_superscript(string: str) -> int:
+    return int("".join(DIGITS[c] for c in string))

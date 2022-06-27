@@ -1,0 +1,32 @@
+?start: quantity
+
+quantity: magnitude unit
+
+magnitude: SIGNED_INT -> int
+         | SIGNED_FLOAT -> float
+
+unit: unit_sequence (_DIVIDE unit_sequence)?
+
+unit_sequence: term+
+             | term (_MULTIPLY term)+
+
+term: SYMBOL exponent?
+
+_MULTIPLY: "⋅" | "*"
+_DIVIDE: "/"
+
+exponent: CARAT_EXPONENT -> carat_exponent
+        | SUPERSCRIPT_EXPONENT -> superscript_exponent
+
+CARAT_EXPONENT: "^" SIGNED_INT
+
+SUPERSCRIPT_EXPONENT: ["⁻"] SUPERSCRIPT_DIGIT+
+SUPERSCRIPT_DIGIT: "⁰" | "¹" | "²" | "³" | "⁴" | "⁵" | "⁶" | "⁷" | "⁸" | "⁹"
+
+SYMBOL: ("a".."z" | "A".."Z" | "Ω" | "μ")+
+
+%import common.SIGNED_INT
+%import common.SIGNED_FLOAT
+%import common.WS
+
+%ignore WS
