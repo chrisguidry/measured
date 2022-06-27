@@ -22,8 +22,11 @@ def test_unit_that_should_not_parse(string: str) -> None:
     "string, unit",
     [
         ("m", Meter),
+        ("meter", Meter),
         ("Hz", Hertz),
+        ("hertz", Hertz),
         ("Ω", Ohm),
+        ("ohm", Ohm),
     ],
 )
 def test_single_unit(string: str, unit: Unit) -> None:
@@ -34,6 +37,7 @@ def test_single_unit(string: str, unit: Unit) -> None:
     "string, unit",
     [
         ("m²", Meter**2),
+        ("meter²", Meter**2),
         ("m²²²", Meter**222),
         ("m⁻¹", Meter**-1),
         ("m^2", Meter**2),
