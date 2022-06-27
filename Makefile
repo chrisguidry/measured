@@ -29,7 +29,7 @@ _%_parser.py: %.lark
 	isort $@
 
 .PHONY: install
-install: .bookkeeping/installed src/measured/_measured_parser.py
+install: .bookkeeping/installed
 
 .PHONY: clean
 clean:

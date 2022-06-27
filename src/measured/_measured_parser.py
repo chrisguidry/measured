@@ -30,27 +30,23 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from types import ModuleType
 from typing import (
-    TypeVar,
-    Generic,
-    Type,
-    Tuple,
-    List,
-    Dict,
-    Iterator,
-    Collection,
-    Callable,
-    Optional,
-    FrozenSet,
-    Any,
-    Union,
-    Iterable,
     IO,
     TYPE_CHECKING,
-    Pattern as REPattern,
+    Any,
+    Callable,
     ClassVar,
-    Set,
+    Collection,
+    Dict,
+    FrozenSet,
+    Generic,
+    Iterable,
+    Iterator,
+    List,
     Mapping,
+    Optional,
 )
+from typing import Pattern as REPattern
+from typing import Set, Tuple, Type, TypeVar, Union
 
 
 class LarkError(Exception):
@@ -330,8 +326,9 @@ class MissingVariableError(LarkError):
     pass
 
 
-import sys, re
 import logging
+import re
+import sys
 
 logger: logging.Logger = logging.getLogger("lark")
 logger.addHandler(logging.StreamHandler())
@@ -435,13 +432,13 @@ class SerializeMemoizer(Serialize):
 
 
 try:
-    import regex  ##
+    import regex  # #
 
 except ImportError:
     regex = None
 
-import sre_parse
 import sre_constants
+import sre_parse
 
 categ_pattern = re.compile(r"\\p{[A-Za-z_]+}")
 
@@ -612,7 +609,7 @@ class Tree(Generic[_Leaf_T]):
         return self.find_pred(lambda t: t.data == data)
 
 
-from functools import wraps, update_wrapper
+from functools import update_wrapper, wraps
 from inspect import getmembers, getmro
 
 _Return_T = TypeVar("_Return_T")
@@ -1888,7 +1885,7 @@ class ParserConf(Serialize):
 
 
 from functools import partial, wraps
-from itertools import repeat, product
+from itertools import product, repeat
 
 
 class ExpandSingleChild:
@@ -3512,7 +3509,9 @@ class PythonIndenter(Indenter):
     tab_len = 8
 
 
-import pickle, zlib, base64
+import base64
+import pickle
+import zlib
 
 DATA = {
     "parser": {
@@ -3559,78 +3558,78 @@ DATA = {
         "parser": {
             "tokens": {
                 0: "SYMBOL",
-                1: "term",
-                2: "$END",
-                3: "_DIVIDE",
-                4: "_MULTIPLY",
-                5: "__unit_sequence_plus_1",
-                6: "__unit_sequence_plus_0",
-                7: "unit",
-                8: "unit_sequence",
-                9: "exponent",
-                10: "CARAT_EXPONENT",
-                11: "SUPERSCRIPT_EXPONENT",
+                1: "$END",
+                2: "_DIVIDE",
+                3: "CARAT_EXPONENT",
+                4: "SUPERSCRIPT_EXPONENT",
+                5: "exponent",
+                6: "_MULTIPLY",
+                7: "term",
+                8: "magnitude",
+                9: "start",
+                10: "SIGNED_INT",
+                11: "quantity",
                 12: "SIGNED_FLOAT",
-                13: "SIGNED_INT",
-                14: "quantity",
-                15: "magnitude",
-                16: "start",
+                13: "__unit_sequence_plus_1",
+                14: "unit_sequence",
+                15: "__unit_sequence_plus_0",
+                16: "unit",
             },
             "states": {
-                0: {0: (0, 11), 1: (0, 16)},
-                1: {2: (1, {"@": 12})},
-                2: {2: (1, {"@": 22}), 3: (1, {"@": 22}), 4: (1, {"@": 22})},
-                3: {},
+                0: {0: (1, {"@": 21}), 1: (1, {"@": 21}), 2: (1, {"@": 21})},
+                1: {1: (1, {"@": 12})},
+                2: {1: (1, {"@": 9})},
+                3: {2: (0, 17), 1: (1, {"@": 13})},
                 4: {
-                    5: (0, 10),
-                    4: (0, 13),
-                    2: (1, {"@": 20}),
-                    3: (1, {"@": 20}),
-                    0: (1, {"@": 20}),
-                },
-                5: {0: (1, {"@": 10})},
-                6: {0: (0, 11), 6: (0, 17), 1: (0, 4), 7: (0, 18), 8: (0, 12)},
-                7: {
-                    2: (1, {"@": 16}),
-                    3: (1, {"@": 16}),
-                    4: (1, {"@": 16}),
-                    0: (1, {"@": 16}),
-                },
-                8: {
-                    3: (1, {"@": 19}),
-                    4: (1, {"@": 19}),
-                    0: (1, {"@": 19}),
-                    2: (1, {"@": 19}),
-                },
-                9: {2: (1, {"@": 21}), 3: (1, {"@": 21}), 0: (1, {"@": 21})},
-                10: {4: (0, 0), 2: (1, {"@": 15}), 3: (1, {"@": 15})},
-                11: {
-                    9: (0, 7),
-                    10: (0, 19),
-                    11: (0, 8),
+                    3: (0, 13),
+                    4: (0, 21),
+                    5: (0, 16),
+                    6: (1, {"@": 17}),
+                    1: (1, {"@": 17}),
                     2: (1, {"@": 17}),
-                    3: (1, {"@": 17}),
-                    4: (1, {"@": 17}),
                     0: (1, {"@": 17}),
                 },
-                12: {3: (0, 20), 2: (1, {"@": 13})},
-                13: {0: (0, 11), 1: (0, 2)},
-                14: {0: (1, {"@": 11})},
-                15: {12: (0, 14), 13: (0, 5), 14: (0, 21), 15: (0, 6), 16: (0, 3)},
-                16: {2: (1, {"@": 23}), 3: (1, {"@": 23}), 4: (1, {"@": 23})},
-                17: {0: (0, 11), 1: (0, 9), 2: (1, {"@": 14}), 3: (1, {"@": 14})},
-                18: {2: (1, {"@": 9})},
-                19: {
-                    3: (1, {"@": 18}),
-                    4: (1, {"@": 18}),
+                5: {7: (0, 10), 0: (0, 4)},
+                6: {0: (0, 4), 7: (0, 19)},
+                7: {0: (1, {"@": 11})},
+                8: {0: (1, {"@": 10})},
+                9: {1: (1, {"@": 8})},
+                10: {6: (1, {"@": 22}), 1: (1, {"@": 22}), 2: (1, {"@": 22})},
+                11: {8: (0, 18), 9: (0, 20), 10: (0, 8), 11: (0, 9), 12: (0, 7)},
+                12: {
+                    6: (0, 5),
+                    13: (0, 15),
+                    0: (1, {"@": 20}),
+                    1: (1, {"@": 20}),
+                    2: (1, {"@": 20}),
+                },
+                13: {
+                    6: (1, {"@": 18}),
                     0: (1, {"@": 18}),
+                    1: (1, {"@": 18}),
                     2: (1, {"@": 18}),
                 },
-                20: {0: (0, 11), 8: (0, 1), 1: (0, 4), 6: (0, 17)},
-                21: {2: (1, {"@": 8})},
+                14: {0: (0, 4), 7: (0, 0), 1: (1, {"@": 14}), 2: (1, {"@": 14})},
+                15: {6: (0, 6), 1: (1, {"@": 15}), 2: (1, {"@": 15})},
+                16: {
+                    6: (1, {"@": 16}),
+                    1: (1, {"@": 16}),
+                    2: (1, {"@": 16}),
+                    0: (1, {"@": 16}),
+                },
+                17: {0: (0, 4), 14: (0, 1), 15: (0, 14), 7: (0, 12)},
+                18: {14: (0, 3), 15: (0, 14), 7: (0, 12), 0: (0, 4), 16: (0, 2)},
+                19: {6: (1, {"@": 23}), 1: (1, {"@": 23}), 2: (1, {"@": 23})},
+                20: {},
+                21: {
+                    6: (1, {"@": 19}),
+                    0: (1, {"@": 19}),
+                    1: (1, {"@": 19}),
+                    2: (1, {"@": 19}),
+                },
             },
-            "start_states": {"start": 15},
-            "end_states": {"start": 3},
+            "start_states": {"start": 11},
+            "end_states": {"start": 20},
         },
         "__type__": "ParsingFrontend",
     },
