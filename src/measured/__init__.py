@@ -1254,6 +1254,34 @@ class Quantity:
 
     @classmethod
     def parse(cls, string: str) -> "Quantity":
+        """
+        Parses a quantity from a string.
+
+        Examples:
+
+            It is important to import any modules of units you will be parsing.  Units
+            and their symbols are registered when they are first imported and created.
+
+            >>> from measured import Quantity, si
+
+            Integer and floating point quantities can be parsed, along with units of
+            any complexity.
+
+            >>> distance = Quantity.parse('5200 m')
+            >>> speed = Quantity.parse('5.2e2 m/s')
+            >>> time = distance / speed
+            >>> str(time)
+            '10.0 s'
+            >>> amperes_cubed_per_area = Quantity.parse('2 A³/m²')
+            >>> str(amperes_cubed_per_area)
+            '2 A³⋅m⁻²'
+
+            Measured can parse any unit in the same format it produces with `str`, but
+            also understands easier-to-type versions:
+
+            >>> assert Quantity.parse('2 m^2/s') == Quantity.parse('2 m²⋅s⁻¹')
+            >>> assert Quantity.parse('2 m^2*s') == Quantity.parse('2 m²⋅s')
+        """
         return cast(Quantity, cls._parser.parse(string))
 
     def __str__(self) -> str:
