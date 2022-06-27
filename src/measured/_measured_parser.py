@@ -3549,87 +3549,86 @@ DATA = {
                 {"@": 20},
                 {"@": 21},
                 {"@": 22},
-                {"@": 23},
             ],
-            "start": ["start"],
+            "start": ["unit", "quantity"],
             "parser_type": "lalr",
             "__type__": "ParserConf",
         },
         "parser": {
             "tokens": {
-                0: "SYMBOL",
-                1: "$END",
-                2: "_DIVIDE",
-                3: "CARAT_EXPONENT",
-                4: "SUPERSCRIPT_EXPONENT",
-                5: "exponent",
-                6: "_MULTIPLY",
-                7: "term",
-                8: "magnitude",
-                9: "start",
-                10: "SIGNED_INT",
-                11: "quantity",
-                12: "SIGNED_FLOAT",
-                13: "__unit_sequence_plus_1",
-                14: "unit_sequence",
-                15: "__unit_sequence_plus_0",
-                16: "unit",
+                0: "unit_sequence",
+                1: "SYMBOL",
+                2: "__unit_sequence_plus_0",
+                3: "term",
+                4: "_MULTIPLY",
+                5: "$END",
+                6: "_DIVIDE",
+                7: "__unit_sequence_plus_1",
+                8: "unit",
+                9: "SIGNED_FLOAT",
+                10: "quantity",
+                11: "SIGNED_INT",
+                12: "magnitude",
+                13: "exponent",
+                14: "CARAT_EXPONENT",
+                15: "SUPERSCRIPT_EXPONENT",
             },
             "states": {
-                0: {0: (1, {"@": 21}), 1: (1, {"@": 21}), 2: (1, {"@": 21})},
-                1: {1: (1, {"@": 12})},
-                2: {1: (1, {"@": 9})},
-                3: {2: (0, 17), 1: (1, {"@": 13})},
-                4: {
-                    3: (0, 13),
-                    4: (0, 21),
-                    5: (0, 16),
-                    6: (1, {"@": 17}),
-                    1: (1, {"@": 17}),
-                    2: (1, {"@": 17}),
-                    0: (1, {"@": 17}),
-                },
-                5: {7: (0, 10), 0: (0, 4)},
-                6: {0: (0, 4), 7: (0, 19)},
-                7: {0: (1, {"@": 11})},
-                8: {0: (1, {"@": 10})},
-                9: {1: (1, {"@": 8})},
-                10: {6: (1, {"@": 22}), 1: (1, {"@": 22}), 2: (1, {"@": 22})},
-                11: {8: (0, 18), 9: (0, 20), 10: (0, 8), 11: (0, 9), 12: (0, 7)},
-                12: {
-                    6: (0, 5),
-                    13: (0, 15),
-                    0: (1, {"@": 20}),
-                    1: (1, {"@": 20}),
-                    2: (1, {"@": 20}),
-                },
-                13: {
-                    6: (1, {"@": 18}),
-                    0: (1, {"@": 18}),
-                    1: (1, {"@": 18}),
-                    2: (1, {"@": 18}),
-                },
-                14: {0: (0, 4), 7: (0, 0), 1: (1, {"@": 14}), 2: (1, {"@": 14})},
-                15: {6: (0, 6), 1: (1, {"@": 15}), 2: (1, {"@": 15})},
-                16: {
-                    6: (1, {"@": 16}),
-                    1: (1, {"@": 16}),
-                    2: (1, {"@": 16}),
-                    0: (1, {"@": 16}),
-                },
-                17: {0: (0, 4), 14: (0, 1), 15: (0, 14), 7: (0, 12)},
-                18: {14: (0, 3), 15: (0, 14), 7: (0, 12), 0: (0, 4), 16: (0, 2)},
-                19: {6: (1, {"@": 23}), 1: (1, {"@": 23}), 2: (1, {"@": 23})},
-                20: {},
-                21: {
-                    6: (1, {"@": 19}),
-                    0: (1, {"@": 19}),
+                0: {0: (0, 11), 1: (0, 17), 2: (0, 4), 3: (0, 2)},
+                1: {4: (1, {"@": 21}), 5: (1, {"@": 21}), 6: (1, {"@": 21})},
+                2: {
+                    7: (0, 3),
+                    4: (0, 7),
                     1: (1, {"@": 19}),
-                    2: (1, {"@": 19}),
+                    5: (1, {"@": 19}),
+                    6: (1, {"@": 19}),
                 },
+                3: {4: (0, 8), 5: (1, {"@": 14}), 6: (1, {"@": 14})},
+                4: {3: (0, 13), 1: (0, 17), 5: (1, {"@": 13}), 6: (1, {"@": 13})},
+                5: {1: (0, 17), 2: (0, 4), 8: (0, 22), 3: (0, 2), 0: (0, 10)},
+                6: {1: (1, {"@": 9})},
+                7: {3: (0, 1), 1: (0, 17)},
+                8: {1: (0, 17), 3: (0, 14)},
+                9: {9: (0, 21), 10: (0, 12), 11: (0, 6), 12: (0, 5)},
+                10: {6: (0, 0), 5: (1, {"@": 12})},
+                11: {5: (1, {"@": 11})},
+                12: {},
+                13: {1: (1, {"@": 20}), 5: (1, {"@": 20}), 6: (1, {"@": 20})},
+                14: {4: (1, {"@": 22}), 5: (1, {"@": 22}), 6: (1, {"@": 22})},
+                15: {},
+                16: {
+                    4: (1, {"@": 17}),
+                    5: (1, {"@": 17}),
+                    1: (1, {"@": 17}),
+                    6: (1, {"@": 17}),
+                },
+                17: {
+                    13: (0, 18),
+                    14: (0, 16),
+                    15: (0, 20),
+                    1: (1, {"@": 16}),
+                    4: (1, {"@": 16}),
+                    5: (1, {"@": 16}),
+                    6: (1, {"@": 16}),
+                },
+                18: {
+                    1: (1, {"@": 15}),
+                    4: (1, {"@": 15}),
+                    5: (1, {"@": 15}),
+                    6: (1, {"@": 15}),
+                },
+                19: {1: (0, 17), 2: (0, 4), 3: (0, 2), 0: (0, 10), 8: (0, 15)},
+                20: {
+                    4: (1, {"@": 18}),
+                    5: (1, {"@": 18}),
+                    1: (1, {"@": 18}),
+                    6: (1, {"@": 18}),
+                },
+                21: {1: (1, {"@": 10})},
+                22: {5: (1, {"@": 8})},
             },
-            "start_states": {"start": 11},
-            "end_states": {"start": 20},
+            "start_states": {"unit": 19, "quantity": 9},
+            "end_states": {"quantity": 12, "unit": 15},
         },
         "__type__": "ParsingFrontend",
     },
@@ -3649,7 +3648,6 @@ DATA = {
         {"@": 20},
         {"@": 21},
         {"@": 22},
-        {"@": 23},
     ],
     "options": {
         "debug": False,
@@ -3660,7 +3658,7 @@ DATA = {
         "parser": "lalr",
         "lexer": "contextual",
         "transformer": None,
-        "start": ["start"],
+        "start": ["unit", "quantity"],
         "priority": "normal",
         "ambiguity": "auto",
         "regex": False,
@@ -3761,21 +3759,6 @@ MEMO = {
         "__type__": "TerminalDef",
     },
     8: {
-        "origin": {"name": Token("RULE", "start"), "__type__": "NonTerminal"},
-        "expansion": [{"name": "quantity", "__type__": "NonTerminal"}],
-        "order": 0,
-        "alias": None,
-        "options": {
-            "keep_all_tokens": False,
-            "expand1": True,
-            "priority": None,
-            "template_source": None,
-            "empty_indices": (),
-            "__type__": "RuleOptions",
-        },
-        "__type__": "Rule",
-    },
-    9: {
         "origin": {"name": Token("RULE", "quantity"), "__type__": "NonTerminal"},
         "expansion": [
             {"name": "magnitude", "__type__": "NonTerminal"},
@@ -3793,7 +3776,7 @@ MEMO = {
         },
         "__type__": "Rule",
     },
-    10: {
+    9: {
         "origin": {"name": Token("RULE", "magnitude"), "__type__": "NonTerminal"},
         "expansion": [
             {"name": "SIGNED_INT", "filter_out": False, "__type__": "Terminal"}
@@ -3810,7 +3793,7 @@ MEMO = {
         },
         "__type__": "Rule",
     },
-    11: {
+    10: {
         "origin": {"name": Token("RULE", "magnitude"), "__type__": "NonTerminal"},
         "expansion": [
             {"name": "SIGNED_FLOAT", "filter_out": False, "__type__": "Terminal"}
@@ -3827,7 +3810,7 @@ MEMO = {
         },
         "__type__": "Rule",
     },
-    12: {
+    11: {
         "origin": {"name": Token("RULE", "unit"), "__type__": "NonTerminal"},
         "expansion": [
             {"name": "unit_sequence", "__type__": "NonTerminal"},
@@ -3846,7 +3829,7 @@ MEMO = {
         },
         "__type__": "Rule",
     },
-    13: {
+    12: {
         "origin": {"name": Token("RULE", "unit"), "__type__": "NonTerminal"},
         "expansion": [{"name": "unit_sequence", "__type__": "NonTerminal"}],
         "order": 1,
@@ -3861,7 +3844,7 @@ MEMO = {
         },
         "__type__": "Rule",
     },
-    14: {
+    13: {
         "origin": {"name": Token("RULE", "unit_sequence"), "__type__": "NonTerminal"},
         "expansion": [{"name": "__unit_sequence_plus_0", "__type__": "NonTerminal"}],
         "order": 0,
@@ -3876,7 +3859,7 @@ MEMO = {
         },
         "__type__": "Rule",
     },
-    15: {
+    14: {
         "origin": {"name": Token("RULE", "unit_sequence"), "__type__": "NonTerminal"},
         "expansion": [
             {"name": "term", "__type__": "NonTerminal"},
@@ -3894,7 +3877,7 @@ MEMO = {
         },
         "__type__": "Rule",
     },
-    16: {
+    15: {
         "origin": {"name": Token("RULE", "term"), "__type__": "NonTerminal"},
         "expansion": [
             {"name": "SYMBOL", "filter_out": False, "__type__": "Terminal"},
@@ -3912,7 +3895,7 @@ MEMO = {
         },
         "__type__": "Rule",
     },
-    17: {
+    16: {
         "origin": {"name": Token("RULE", "term"), "__type__": "NonTerminal"},
         "expansion": [{"name": "SYMBOL", "filter_out": False, "__type__": "Terminal"}],
         "order": 1,
@@ -3927,7 +3910,7 @@ MEMO = {
         },
         "__type__": "Rule",
     },
-    18: {
+    17: {
         "origin": {"name": Token("RULE", "exponent"), "__type__": "NonTerminal"},
         "expansion": [
             {"name": "CARAT_EXPONENT", "filter_out": False, "__type__": "Terminal"}
@@ -3944,7 +3927,7 @@ MEMO = {
         },
         "__type__": "Rule",
     },
-    19: {
+    18: {
         "origin": {"name": Token("RULE", "exponent"), "__type__": "NonTerminal"},
         "expansion": [
             {
@@ -3965,7 +3948,7 @@ MEMO = {
         },
         "__type__": "Rule",
     },
-    20: {
+    19: {
         "origin": {"name": "__unit_sequence_plus_0", "__type__": "NonTerminal"},
         "expansion": [{"name": "term", "__type__": "NonTerminal"}],
         "order": 0,
@@ -3980,7 +3963,7 @@ MEMO = {
         },
         "__type__": "Rule",
     },
-    21: {
+    20: {
         "origin": {"name": "__unit_sequence_plus_0", "__type__": "NonTerminal"},
         "expansion": [
             {"name": "__unit_sequence_plus_0", "__type__": "NonTerminal"},
@@ -3998,7 +3981,7 @@ MEMO = {
         },
         "__type__": "Rule",
     },
-    22: {
+    21: {
         "origin": {"name": "__unit_sequence_plus_1", "__type__": "NonTerminal"},
         "expansion": [
             {"name": "_MULTIPLY", "filter_out": True, "__type__": "Terminal"},
@@ -4016,7 +3999,7 @@ MEMO = {
         },
         "__type__": "Rule",
     },
-    23: {
+    22: {
         "origin": {"name": "__unit_sequence_plus_1", "__type__": "NonTerminal"},
         "expansion": [
             {"name": "__unit_sequence_plus_1", "__type__": "NonTerminal"},

@@ -24,7 +24,8 @@ all: install src/measured/_measured_parser.py
 	mv $@.next $@
 
 _%_parser.py: %.lark
-	python -m lark.tools.standalone $< | sed s/Lark_StandAlone/Parser/g > $@
+	python -m lark.tools.standalone --start unit --start quantity $< | \
+		sed s/Lark_StandAlone/Parser/g > $@
 	black $@
 	isort $@
 

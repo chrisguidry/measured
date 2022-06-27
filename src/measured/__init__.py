@@ -978,6 +978,39 @@ class Unit:
             ")"
         )
 
+    @classmethod
+    def parse(cls, string: str) -> "Unit":
+        """
+        Parses a unit from a string.
+
+        Examples:
+
+            It is important to import any modules of units you will be parsing.  Units
+            and their symbols are registered when they are first imported and created.
+
+            >>> from measured import Unit, si
+
+            Integer and floating point quantities can be parsed, along with units of
+            any complexity.
+
+            >>> meter_per_second = Unit.parse('m/s')
+            >>> meter_per_second.dimension == Speed
+            True
+            >>> amperes_cubed_per_area = Unit.parse('A³/m²')
+            >>> from measured.si import Meter, Ampere
+            >>> amperes_cubed_per_area is Ampere**3/Meter**2
+            True
+            >>> str(amperes_cubed_per_area)
+            'A³⋅m⁻²'
+
+            Measured can parse any unit in the same format it produces with `str`, but
+            also understands easier-to-type versions:
+
+            >>> assert Unit.parse('m^2/s') == Unit.parse('m²⋅s⁻¹')
+            >>> assert Unit.parse('m^2*s') == Unit.parse('m²⋅s')
+        """
+        return cast(Unit, _parser.parse(string, start="unit"))
+
     def __str__(self) -> str:
         if self.symbol:
             return f"{self.prefix}{self.symbol}"
@@ -1128,39 +1161,6 @@ class ConversionNotFound(ValueError):
     pass
 
 
-class QuantityTransformer(_measured_parser.Transformer[Any, "Quantity"]):
-    inline = _measured_parser.v_args(inline=True)
-
-    @inline
-    def unit(self, numerator: Unit, denominator: Optional[Unit] = None) -> Unit:
-        return numerator / (denominator or One)
-
-    @inline
-    def unit_sequence(self, *terms: Unit) -> Unit:
-        return reduce(operator.mul, terms)
-
-    @inline
-    def term(self, symbol: str, exponent: int = 1) -> Unit:
-        return Unit.resolve_symbol(symbol) ** exponent
-
-    @inline
-    def carat_exponent(self, exponent: str) -> int:
-        return int(exponent[1:])
-
-    @inline
-    def superscript_exponent(self, exponent: str) -> int:
-        value = from_superscript(exponent)
-        assert isinstance(value, int)
-        return value
-
-    @inline
-    def quantity(self, magnitude: Numeric, unit: Unit) -> "Quantity":
-        return Quantity(magnitude, unit)
-
-    int = inline(int)
-    float = inline(float)
-
-
 @total_ordering
 class Quantity:
     """Quantity represents a quantity of some Unit
@@ -1248,10 +1248,6 @@ class Quantity:
     def __repr__(self) -> str:
         return f"Quantity(magnitude={self.magnitude!r}, unit={self.unit!r})"
 
-    _parser: ClassVar[_measured_parser.Lark] = _measured_parser.Parser(  # type: ignore
-        transformer=QuantityTransformer()
-    )
-
     @classmethod
     def parse(cls, string: str) -> "Quantity":
         """
@@ -1282,7 +1278,7 @@ class Quantity:
             >>> assert Quantity.parse('2 m^2/s') == Quantity.parse('2 m²⋅s⁻¹')
             >>> assert Quantity.parse('2 m^2*s') == Quantity.parse('2 m²⋅s')
         """
-        return cast(Quantity, cls._parser.parse(string))
+        return cast(Quantity, _parser.parse(string, start="quantity"))
 
     def __str__(self) -> str:
         return f"{self.magnitude} {self.unit}"
@@ -1446,6 +1442,47 @@ class Quantity:
         )
 
         assert self.approximates(other, within=within), message
+
+
+ParseError = _measured_parser.LarkError
+
+
+class QuantityTransformer(_measured_parser.Transformer[Any, "Quantity"]):
+    inline = _measured_parser.v_args(inline=True)
+
+    @inline
+    def unit(self, numerator: Unit, denominator: Optional[Unit] = None) -> Unit:
+        return numerator / (denominator or One)
+
+    @inline
+    def unit_sequence(self, *terms: Unit) -> Unit:
+        return reduce(operator.mul, terms)
+
+    @inline
+    def term(self, symbol: str, exponent: int = 1) -> Unit:
+        return Unit.resolve_symbol(symbol) ** exponent
+
+    @inline
+    def carat_exponent(self, exponent: str) -> int:
+        return int(exponent[1:])
+
+    @inline
+    def superscript_exponent(self, exponent: str) -> int:
+        value = from_superscript(exponent)
+        assert isinstance(value, int)
+        return value
+
+    @inline
+    def quantity(self, magnitude: Numeric, unit: Unit) -> "Quantity":
+        return Quantity(magnitude, unit)
+
+    int = inline(int)
+    float = inline(float)
+
+
+_parser: _measured_parser.Lark = _measured_parser.Parser(  # type: ignore
+    transformer=QuantityTransformer()
+)
 
 
 Ratio = Numeric
