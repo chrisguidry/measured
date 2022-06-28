@@ -173,6 +173,7 @@ Weber = Unit.derive(Joule / Ampere, name="weber", symbol="Wb")
 Tesla = Unit.derive(Weber / Meter**2, name="tesla", symbol="T")
 
 Celsius = Temperature.unit(name="celsius", symbol="°C")
+Celsius.alias(symbol="degC")
 Celsius.zero(273.15 * Kelvin)
 
 Lumen = Unit.derive(Candela * Steradian, name="lumen", symbol="lm")
@@ -205,13 +206,14 @@ Day.equals(1440 * Minute)
 Day.equals(24 * Hour)
 
 Degree = PlaneAngle.unit("degree", "°")
+Degree.alias(symbol="deg")
 Degree.equals(π / 180 * Radian)
 
-Arcminute = PlaneAngle.unit("arcminute", "'")
+Arcminute = PlaneAngle.unit("arcminute", "arcmin")
 Arcminute.equals(π / 10800 * Radian)
 Arcminute.equals(1 / 60 * Degree)
 
-Arcsecond = PlaneAngle.unit("arcsecond", '"')
+Arcsecond = PlaneAngle.unit("arcsecond", "arcsec")
 Arcsecond.equals(π / (180 * 3600) * Radian)
 Arcsecond.equals(1 / 3600 * Degree)
 Arcsecond.equals(1 / 60 * Arcminute)

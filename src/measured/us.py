@@ -76,7 +76,7 @@ Link.equals(7.92 * Inch)
 Link.equals(33 / 50 * Foot)
 Link.equals(792 / 3937 * Meter)
 
-SurveyFoot = Length.unit(name="US survey foot", symbol="US survey foot")
+SurveyFoot = Length.unit(name="US survey foot", symbol="US-survey-foot")
 SurveyFoot.equals(1200 / 3937 * Meter)
 SurveyFoot.equals(1.000002 * Foot)
 
@@ -94,7 +94,7 @@ Furlong = Length.unit(name="furlong", symbol="fur.")
 Furlong.equals(10 * Chain)
 Furlong.equals(792 / 3937 * Kilo * Meter)
 
-StatuteMile = Length.unit(name="US statute mile", symbol="US statute mile")
+StatuteMile = Length.unit(name="US statute mile", symbol="US-statute-mile")
 StatuteMile.equals(8 * Furlong)
 StatuteMile.equals(6336 / 3937 * Kilo * Meter)
 
@@ -145,7 +145,7 @@ AcreFoot.equals(43560 * Foot**3)
 Minim = Volume.unit(name="minim", symbol="min.")
 Minim.equals(61.611519921875 * Micro * Liter)
 
-FluidDram = Volume.unit(name="fluid dram", symbol="fl. dr.")
+FluidDram = Volume.unit(name="fluid dram", symbol="fl.dr.")
 FluidDram.equals(60 * Minim)
 FluidDram.equals(3.6966911953125 * Milli * Liter)
 
@@ -158,7 +158,7 @@ Tablespoon.equals(3 * Teaspoon)
 Tablespoon.equals(4 * FluidDram)
 Tablespoon.equals(14.78676478125 * Milli * Liter)
 
-FluidOunce = Volume.unit(name="fluid ounce", symbol="fl. oz.")
+FluidOunce = Volume.unit(name="fluid ounce", symbol="fl.oz.")
 FluidOunce.equals(2 * Tablespoon)
 FluidOunce.equals(29.5735295625 * Milli * Liter)
 
@@ -207,14 +207,14 @@ Hogshead.equals(238.480942392 * Liter)
 # Dry Volumes
 # https://en.wikipedia.org/wiki/United_States_customary_units#Dry_volume
 
-DryPint = Volume.unit(name="dry pint", symbol="dry pint")
+DryPint = Volume.unit(name="dry pint", symbol="dry-pint")
 DryPint.equals(33.6003125 * Inch**3)
 DryPint.equals(0.5506104713575 * Liter)
 
-DryQuart = Volume.unit(name="dry quart", symbol="dry quart")
+DryQuart = Volume.unit(name="dry quart", symbol="dry-quart")
 DryQuart.equals(2 * DryPint)
 
-DryGallon = Volume.unit(name="dry gallon", symbol="dry gallon")
+DryGallon = Volume.unit(name="dry gallon", symbol="dry-gallon")
 DryGallon.equals(2 * DryQuart)
 
 Peck = Volume.unit(name="peck", symbol="pk.")
@@ -224,7 +224,7 @@ Bushel = Volume.unit(name="bushel", symbol="bu.")
 Bushel.equals(4 * Peck)
 Bushel.equals(35.23907016688 * Liter)
 
-DryBarrel = Volume.unit(name="dry barrel", symbol="dry barrel")
+DryBarrel = Volume.unit(name="dry barrel", symbol="dry-barrel")
 DryBarrel.equals(7056 * Inch**3)
 
 
@@ -254,4 +254,5 @@ Rankine = Temperature.unit("Rankine", "R")
 Rankine.equals(5 / 9 * Kelvin)
 
 Fahrenheit = Temperature.unit(name="fahrenheit", symbol="°F")
+Fahrenheit.alias(symbol="degF")
 Fahrenheit.zero(+459.67 * Rankine)

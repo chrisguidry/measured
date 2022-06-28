@@ -1,5 +1,5 @@
 .PHONY: all
-all: install src/measured/_measured_parser.py
+all: install src/measured/_parser.py
 
 .bookkeeping/development.in: setup.cfg pyproject.toml
 	mkdir -p .bookkeeping
@@ -23,7 +23,7 @@ all: install src/measured/_measured_parser.py
 	pip-compile --upgrade --output-file $@.next $<
 	mv $@.next $@
 
-_%_parser.py: %.lark
+src/measured/_parser.py: src/measured/measured.lark
 	python -m lark.tools.standalone --start unit --start quantity $< | \
 		sed s/Lark_StandAlone/Parser/g > $@
 	black $@

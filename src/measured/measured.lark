@@ -21,7 +21,12 @@ CARAT_EXPONENT: "^" SIGNED_INT
 SUPERSCRIPT_EXPONENT: ["⁻"] SUPERSCRIPT_DIGIT+
 SUPERSCRIPT_DIGIT: "⁰" | "¹" | "²" | "³" | "⁴" | "⁵" | "⁶" | "⁷" | "⁸" | "⁹"
 
-SYMBOL: ("a".."z" | "A".."Z" | "Ω" | "μ" | ".")+
+LOWER: "a".."z"
+UPPER: "A".."Z"
+GREEK: "Α".."ω"
+OBJECTS: "☉"
+PUNCTUATION: "." | "°" | "-"
+SYMBOL: ("1" | LOWER | UPPER | GREEK | OBJECTS | PUNCTUATION)+
 
 %import common.SIGNED_INT
 %import common.SIGNED_FLOAT
