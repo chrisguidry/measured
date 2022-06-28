@@ -139,7 +139,7 @@ from typing import (
     overload,
 )
 
-from . import _measured_parser
+from . import _parser
 from .formatting import from_superscript, superscript
 
 if sys.version_info < (3, 9):  # pragma: no cover
@@ -792,7 +792,9 @@ class Unit:
     prefix: Prefix
     factors: Mapping["Unit", int]
     name: Optional[str]
+    names: List[str]
     symbol: Optional[str]
+    symbols: List[str]
 
     def __new__(
         cls,
@@ -825,19 +827,16 @@ class Unit:
     ) -> None:
         if self._initialized:
             return
+
         self.prefix = prefix
         self.factors = factors or {self: 1}
         self.dimension = dimension
-        self.name = name
-        self.symbol = symbol
-        self.names = [name]
-        self.symbols = [symbol]
+        self.name = None
+        self.symbol = None
+        self.names = []
+        self.symbols = []
+        self.alias(name=name, symbol=symbol)
         self._initialized = True
-
-        if name:
-            self._by_name[name] = self
-        if symbol:
-            self._by_symbol[symbol] = self
 
     @classmethod
     def _build_key(cls, prefix: Prefix, factors: Mapping["Unit", int]) -> UnitKey:
@@ -851,9 +850,10 @@ class Unit:
     @classmethod
     def define(cls, dimension: Dimension, name: str, symbol: str) -> "Unit":
         """Defines a new base unit"""
-        if name and name in cls._by_name:
+        if name in cls._by_name:
             raise ValueError(f"A unit named {name} is already defined")
-        if symbol and symbol in cls._by_symbol:
+
+        if symbol in cls._by_symbol:
             raise ValueError(f"A unit with symbol {symbol} is already defined")
 
         unit = cls(IdentityPrefix, {}, dimension, name, symbol)
@@ -863,22 +863,7 @@ class Unit:
     @classmethod
     def derive(cls, unit: "Unit", name: str, symbol: str) -> "Unit":
         """Registers a new named unit derived from other units"""
-        if name in cls._by_name and cls._by_name[name] is not unit:
-            raise ValueError(f"A unit named {name} is already defined")
-        if symbol in cls._by_symbol and cls._by_symbol[symbol] is not unit:
-            raise ValueError(f"A unit with symbol {symbol} is already defined")
-
-        if unit.name:
-            unit.names.append(name)
-            unit.symbols.append(symbol)
-            return unit
-        else:
-            unit.name = name
-            unit.symbol = symbol
-
-        cls._by_name[name] = unit
-        cls._by_symbol[symbol] = unit
-
+        unit.alias(name=name, symbol=symbol)
         return unit
 
     @classmethod
@@ -917,6 +902,31 @@ class Unit:
         if zero.unit == self:
             raise ValueError("No need to define conversions for a unit and itself")
         conversions.translate(self, zero)
+
+    def alias(self, name: Optional[str] = None, symbol: Optional[str] = None) -> None:
+        """Adds an alternative name and/or symbol to the unit"""
+        if name:
+            if name in self._by_name and self._by_name[name] is not self:
+                raise ValueError(f"A unit named {name} is already defined")
+
+            if not self.name:
+                self.name = name
+
+            self.names.append(name)
+            self._by_name[name] = self
+
+        if symbol:
+            if symbol in self._by_symbol and self._by_symbol[symbol] is not self:
+                raise ValueError(f"A unit with symbol {symbol} is already defined")
+
+            if symbol and " " in symbol:
+                raise ValueError(f"{symbol!r} will not be parsable if it has spaces.")
+
+            if not self.symbol:
+                self.symbol = symbol
+
+            self.symbols.append(symbol)
+            self._by_symbol[symbol] = self
 
     # Pickle support
 
@@ -1033,7 +1043,7 @@ class Unit:
             >>> assert Unit.parse('m^2/s') == Unit.parse('m²⋅s⁻¹')
             >>> assert Unit.parse('m^2*s') == Unit.parse('m²⋅s')
         """
-        return cast(Unit, _parser.parse(string, start="unit"))
+        return cast(Unit, parser.parse(string, start="unit"))
 
     def __str__(self) -> str:
         if self.symbol:
@@ -1332,7 +1342,7 @@ class Quantity:
             >>> assert Quantity.parse('2 m^2/s') == Quantity.parse('2 m²⋅s⁻¹')
             >>> assert Quantity.parse('2 m^2*s') == Quantity.parse('2 m²⋅s')
         """
-        return cast(Quantity, _parser.parse(string, start="quantity"))
+        return cast(Quantity, parser.parse(string, start="quantity"))
 
     def __str__(self) -> str:
         return f"{self.magnitude} {self.unit}"
@@ -1498,11 +1508,11 @@ class Quantity:
         assert self.approximates(other, within=within), message
 
 
-ParseError = _measured_parser.LarkError
+ParseError = _parser.LarkError
 
 
-class QuantityTransformer(_measured_parser.Transformer[Any, "Quantity"]):
-    inline = _measured_parser.v_args(inline=True)
+class QuantityTransformer(_parser.Transformer[Any, "Quantity"]):
+    inline = _parser.v_args(inline=True)
 
     @inline
     def unit(self, numerator: Unit, denominator: Optional[Unit] = None) -> Unit:
@@ -1534,9 +1544,7 @@ class QuantityTransformer(_measured_parser.Transformer[Any, "Quantity"]):
     float = inline(float)
 
 
-_parser: _measured_parser.Lark = _measured_parser.Parser(  # type: ignore
-    transformer=QuantityTransformer()
-)
+parser: _parser.Lark = _parser.Parser(transformer=QuantityTransformer())  # type: ignore
 
 
 Ratio = Numeric

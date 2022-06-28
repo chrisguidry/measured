@@ -26,12 +26,12 @@ Grain = avoirdupois.Grain
 Pennyweight = Mass.unit("pennyweight", "dwt")
 Pennyweight.equals(24 * Grain)
 
-Ounce = Mass.unit("troy ounce", "oz t")
+Ounce = Mass.unit("troy ounce", "oz-t")
 Ounce.equals(480 * Grain)
 Ounce.equals(20 * Pennyweight)
 Ounce.equals(31.10348 * Gram)
 
-Pound = Mass.unit("troy pound", "lb t")
+Pound = Mass.unit("troy pound", "lb-t")
 Pound.equals(12 * Ounce)
 Pound.equals(240 * Pennyweight)
 Pound.equals(373.24172 * Gram)

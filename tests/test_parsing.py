@@ -1,8 +1,26 @@
 import pytest
 
-from measured import ParseError, Quantity, Unit
+from measured import Numeric, ParseError, Quantity, Unit, systems  # noqa: F401
 from measured.iec import Byte, Kibi
 from measured.si import Ampere, Hertz, Kilo, Meter, Micro, Ohm, Second
+
+ALL_UNITS = sorted(Unit.base(), key=lambda u: u.name or "")
+
+
+def test_unit_symbols_should_not_have_spaces() -> None:
+    with pytest.raises(ValueError, match="spaces"):
+        Meter.alias(symbol="the metre")
+
+
+@pytest.mark.parametrize("unit", ALL_UNITS, ids=[u.name for u in ALL_UNITS])
+def test_each_unit_parsable(unit: Unit) -> None:
+    assert Unit.parse(str(unit)) is unit
+
+
+@pytest.mark.parametrize("magnitude", [-1e-30 - 1.1, -1, 0, 1, 1.1, 1e30])
+@pytest.mark.parametrize("unit", ALL_UNITS, ids=[u.name for u in ALL_UNITS])
+def test_int_quantity_in_each_unit_parsable(magnitude: Numeric, unit: Unit) -> None:
+    assert Quantity.parse(str(magnitude * unit)) == magnitude * unit
 
 
 @pytest.mark.parametrize(
@@ -11,6 +29,8 @@ from measured.si import Ampere, Hertz, Kilo, Meter, Micro, Ohm, Second
         "fleebles",
         "queeble²",
         ",,,",
+        "",
+        " ",
     ],
 )
 def test_unit_that_should_not_parse(string: str) -> None:

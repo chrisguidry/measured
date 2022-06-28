@@ -39,11 +39,11 @@ Pound = Mass.unit("pound", "lb.")
 Pound.equals(16 * Ounce)
 Pound.equals(453.59237 * Gram)
 
-LongHundredweight = Mass.unit("long hundredweight", "long hundredweight")
+LongHundredweight = Mass.unit("long hundredweight", "long-hundredweight")
 LongHundredweight.equals(112 * Pound)
 LongHundredweight.equals(50.80234544 * Kilo * Gram)
 
-LongTon = Mass.unit("long ton", "long ton")
+LongTon = Mass.unit("long ton", "long-ton")
 LongTon.equals(20 * LongHundredweight)
 LongTon.equals(2240 * Pound)
 LongTon.equals(1016.0469088 * Kilo * Gram)
