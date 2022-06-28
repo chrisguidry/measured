@@ -1,3 +1,4 @@
+import re
 import subprocess
 
 
@@ -17,9 +18,15 @@ def test_can_run_as_script() -> None:
     assert "Unit: meter" in output
 
 
-def test_can_print_conversion_tree() -> None:
+def test_can_print_conversions() -> None:
     output = run("measured 1 foot")
     assert "Magnitude: 1" in output
     assert "Unit: foot" in output
-    assert "12.0 in." in output
-    assert "0.3048 m" in output
+    assert re.findall(r"12\.0\s+inch", output)
+    assert re.findall(r"0\.3048\s+meter", output)
+
+
+def test_can_handle_no_conversions() -> None:
+    output = run("measured 1 hertz")
+    assert "Magnitude: 1" in output
+    assert "Unit: hertz" in output

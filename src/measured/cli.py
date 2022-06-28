@@ -1,5 +1,5 @@
 import argparse
-from typing import Optional, Set
+from typing import Generator, Iterable, Optional, Set, Tuple
 
 from measured import Numeric, Offset, Quantity, Unit, conversions, systems  # noqa: F401
 
@@ -9,11 +9,11 @@ parser.add_argument(
 )
 
 
-def print_conversion_tree(
+def all_equivalents(
     quantity: Quantity,
     depth: int = 0,
     visited: Optional[Set[Unit]] = None,
-) -> None:
+) -> Generator[Quantity, None, None]:
     unit = quantity.unit
 
     if visited is None:
@@ -21,14 +21,7 @@ def print_conversion_tree(
     else:
         visited.add(unit)
 
-    indent = "  " * depth
-
-    children = sorted(
-        conversions._ratios[unit].items(),
-        key=lambda p: p[1],
-        reverse=True,
-    )
-    for other, ratio in children:
+    for other, ratio in conversions._ratios[unit].items():
         if other in visited:
             continue
 
@@ -37,13 +30,33 @@ def print_conversion_tree(
         magnitude = (quantity.magnitude * ratio) + offset
         next_quantity = Quantity(magnitude, other)
 
-        print(f"{indent}{next_quantity}")
-        print_conversion_tree(next_quantity, depth=depth + 1, visited=visited)
+        yield next_quantity
+        yield from all_equivalents(next_quantity, depth + 1, visited=visited)
+
+
+def dot_aligned(
+    quantities: Iterable[Quantity],
+) -> Generator[Tuple[str, Unit], None, None]:
+    try:
+        magnitudes, units = zip(*((q.magnitude, q.unit) for q in quantities))
+    except ValueError:
+        return
+
+    magnitude_strings = [str(m) for m in magnitudes]
+    dot_indices = [s.find(".") for s in magnitude_strings]
+    largest_left = max(dot_indices)
+    right_padding = max(len(m) for m in magnitude_strings) + largest_left
+    for (magnitude_string, dot_index), unit in zip(
+        zip(magnitude_strings, dot_indices), units
+    ):
+        left_padding = largest_left - dot_index
+        yield format(" " * left_padding + magnitude_string, f"<{right_padding}"), unit
 
 
 def main() -> None:
     arguments = parser.parse_args()
     quantity = Quantity.parse(" ".join(arguments.quantity))
+    quantity = quantity.in_base_units()
     unit = quantity.unit
     dimension = unit.dimension
 
@@ -52,4 +65,8 @@ def main() -> None:
     print("Dimension:", dimension.name or f"{dimension}")
 
     print("Equivalent to:")
-    print_conversion_tree(quantity)
+    equivalents = sorted(
+        all_equivalents(quantity), key=lambda q: abs(q.magnitude), reverse=True
+    )
+    for magnitude_string, unit in dot_aligned(equivalents):
+        print(f"{magnitude_string} {unit.name}")
