@@ -14,6 +14,16 @@ new one, or performing arithmetic on an existing one to produce new values.  Ins
 of [`Dimension`][measured.Dimension], [`Prefix`][measured.Prefix], and
 [`Unit`][measured.Unit] are always singletons within a Python process.
 
+For more background on the approach taken by this library, please see the material on
+[quantity calculus][1] and [dimensional analysis][2].  `measured` uses the terms
+"dimension", "unit", "prefix", and "quantity" in the same way.
+
+
+[1]: https://en.wikipedia.org/wiki/Quantity_calculus
+
+[2]: https://en.wikipedia.org/wiki/Dimensional_analysis
+
+
 Examples:
 
     >>> from measured.si import Meter, Second
@@ -67,35 +77,51 @@ Attributes: Fundamental dimensions
 Attributes: Derived dimensions
 
     Area (Dimension):
+
     Volume (Dimension):
 
     PlaneAngle (Dimension):
+
     SolidAngle (Dimension):
 
     Speed (Dimension):
+
     Acceleration (Dimension):
+
     Jerk (Dimension):
+
     Snap (Dimension):
+
     Crackle (Dimension):
+
     Pop (Dimension):
 
     Frequency (Dimension):
 
     Force (Dimension):
+
     Energy (Dimension):
+
     Power (Dimension):
 
     Charge (Dimension):
+
     Potential (Dimension):
+
     Capacitance (Dimension):
+
     Resistance (Dimension):
+
     Conductance (Dimension):
+
     Inductance (Dimension):
 
     MagneticFlux (Dimension):
+
     MagneticBField (Dimension):
 
     LuminousFlux (Dimension):
+
     Illuminance (Dimension):
 
     RadioactiveDose (Dimension):

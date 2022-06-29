@@ -1,8 +1,14 @@
 import pytest
 
 from measured import Information, One, Quantity
-from measured.iec import Bit, Byte, Gibi, Kibi, Mebi
+from measured.iec import Bit, Byte, Gibi, Kibi, Mebi, Shannon
 from measured.si import Giga, Kilo, Mega, Second
+
+
+def test_shannons_measure_information() -> None:
+    assert Shannon.dimension == Information
+    assert Shannon.name == "shannon"
+    assert Shannon.symbol == "Sh"
 
 
 def test_bits_measure_information() -> None:
@@ -15,6 +21,11 @@ def test_bytes_measure_information() -> None:
     assert Byte.dimension == Information
     assert Byte.name == "byte"
     assert Byte.symbol == "B"
+
+
+def test_bit_is_equivalent_to_shannon() -> None:
+    assert 1 * Bit == 1 * Shannon
+    assert 1 * Shannon == 1 * Bit
 
 
 def test_bytes_are_8_bits() -> None:
