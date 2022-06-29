@@ -24,43 +24,45 @@ from measured.si import (
 def test_ampere() -> None:
     assert Ampere.name == "ampere"
     assert Ampere.symbol == "A"
-    assert Ampere.dimension == Current
+    assert Ampere.dimension is Current
+    assert 1 * Ampere == 1 * Coulomb / Second
 
 
 def test_coulomb() -> None:
     assert Coulomb.name == "coulomb"
     assert Coulomb.symbol == "C"
-    assert Coulomb.dimension == Charge
+    assert Coulomb.dimension is Charge
+    assert 1 * Coulomb == 1 * Ampere * Second
 
 
 def test_farad() -> None:
     assert Farad.name == "farad"
     assert Farad.symbol == "F"
-    assert Farad.dimension == Capacitance
+    assert Farad.dimension is Capacitance
 
 
 def test_ohm() -> None:
     assert Ohm.name == "ohm"
     assert Ohm.symbol == "Ω"
-    assert Ohm.dimension == Resistance
+    assert Ohm.dimension is Resistance
 
 
 def test_tesla() -> None:
     assert Tesla.name == "tesla"
     assert Tesla.symbol == "T"
-    assert Tesla.dimension == MagneticBField
+    assert Tesla.dimension is MagneticBField
 
 
 def test_volt() -> None:
     assert Volt.name == "volt"
     assert Volt.symbol == "V"
-    assert Volt.dimension == Potential
+    assert Volt.dimension is Potential
 
 
 def test_weber() -> None:
     assert Weber.name == "weber"
     assert Weber.symbol == "Wb"
-    assert Weber.dimension == MagneticFlux
+    assert Weber.dimension is MagneticFlux
 
 
 def test_ohms_law() -> None:

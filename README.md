@@ -14,8 +14,8 @@
 >>> time = 2 * Second
 >>> speed = distance / time
 >>> assert speed == 5 * Meter / Second
->>> assert speed.unit == Meter / Second
->>> assert speed.unit.dimension == Speed
+>>> assert speed.unit is Meter / Second
+>>> assert speed.unit.dimension is Speed
 ```
 
 The goal of `measured` is to provide a sound foundation for recording and converting

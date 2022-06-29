@@ -6,19 +6,19 @@ from measured.si import Giga, Kilo, Mega, Second
 
 
 def test_shannons_measure_information() -> None:
-    assert Shannon.dimension == Information
+    assert Shannon.dimension is Information
     assert Shannon.name == "shannon"
     assert Shannon.symbol == "Sh"
 
 
 def test_bits_measure_information() -> None:
-    assert Bit.dimension == Information
+    assert Bit.dimension is Information
     assert Bit.name == "bit"
     assert Bit.symbol == "b"
 
 
 def test_bytes_measure_information() -> None:
-    assert Byte.dimension == Information
+    assert Byte.dimension is Information
     assert Byte.name == "byte"
     assert Byte.symbol == "B"
 
@@ -70,4 +70,4 @@ def test_bit_iec_si_compatibility(iec: Quantity, si: Quantity) -> None:
 )
 def test_byte_iec_si_compatibility(iec: Quantity, si: Quantity) -> None:
     difference = iec.in_base_units() - si.in_base_units()
-    assert iec.approximates(si, within=1e-5), f"{iec} and {si} differ by {difference}"
+    assert iec.approximates(si), f"{iec} and {si} differ by {difference}"

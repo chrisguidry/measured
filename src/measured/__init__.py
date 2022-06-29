@@ -518,6 +518,18 @@ class Dimension:
         denominator = tuple(-e if e < 0 else 0 for e in self.exponents)
         return Dimension(numerator), Dimension(denominator)
 
+    def is_factor(self, other: "Dimension") -> bool:
+        """Returns true if this dimension is a factor of the other dimension"""
+        if self is other or self is Number:
+            return True
+
+        exponents = [
+            i
+            for i, (mine, theirs) in enumerate(zip(self.exponents, other.exponents))
+            if (theirs and mine) and theirs >= mine
+        ]
+        return bool(exponents)
+
 
 class Prefix:
     """Prefixes scale a [`Unit`][measured.Unit] up or down by a constant factor.
@@ -1054,7 +1066,7 @@ class Unit:
             any complexity.
 
             >>> meter_per_second = Unit.parse('m/s')
-            >>> meter_per_second.dimension == Speed
+            >>> meter_per_second.dimension is Speed
             True
             >>> amperes_cubed_per_area = Unit.parse('A³/m²')
             >>> from measured.si import Meter, Ampere
@@ -1475,19 +1487,7 @@ class Quantity:
         except ConversionNotFound:
             return NotImplemented
 
-    def approximates(self, other: "Quantity", within: Numeric = 1e-6) -> bool:
-        """Indicates whether this Quantity and another Quantity are close enough to
-        each other to be considered equal.
-
-        Parameters:
-            other (Quantity): the other quantity to compare this quantity to
-            within (int | float): the tolerance
-
-        Examples:
-
-            >>> from measured.si import Meter
-            >>> assert (0.001 * Meter).approximates(0.002 * Meter, within=0.01)
-        """
+    def _approximation(self, other: "Quantity") -> Union[Numeric, bool]:
         if self == other:
             return True
 
@@ -1503,26 +1503,54 @@ class Quantity:
             except ConversionNotFound:
                 return False
 
-        difference = this - other
-        tolerance = Quantity(within, this.unit)
+        if other.magnitude == 0:
+            ratio = this.magnitude
+        else:
+            ratio = 1 - this.magnitude / other.magnitude
 
-        return abs(difference) <= tolerance
+        return abs(ratio)
 
-    def assert_approximates(self, other: "Quantity", within: Numeric = 1e-6) -> None:
+    def approximates(self, other: "Quantity", within: float = 1e-6) -> bool:
+        """Indicates whether this Quantity and another Quantity are close enough to
+        each other to be considered equal.
+
+        Parameters:
+            other (Quantity): the other quantity to compare this quantity to
+            within (float): the tolerance as a ratio; e.g. 5% would be within=0.05
+
+        Examples:
+
+            >>> from measured.si import Meter
+            >>> assert (0.001 * Meter).approximates(0.002 * Meter, within=0.5)
+            >>> assert not (0.001 * Meter).approximates(0.002 * Meter, within=0.01)
+        """
+        approximation = self._approximation(other)
+        if approximation is True or approximation is False:
+            return approximation
+
+        return bool(approximation <= within)
+
+    def assert_approximates(self, other: "Quantity", within: float = 1e-6) -> None:
         """Asserts whether this Quantity and another Quantity are close enough to
         each other to be considered equal, with a helpful assertion message
 
         Parameters:
             other (Quantity): the other quantity to compare this quantity to
-            within (int | float): the tolerance
+            within (float): the tolerance as a ratio; e.g. 5% would be within=0.05
 
         Examples:
 
             >>> from measured.si import Meter
-            >>> (0.001 * Meter).assert_approximates(0.002 * Meter, within=0.01)
+            >>> (0.001 * Meter).assert_approximates(0.002 * Meter, within=0.5)
         """
         left = self.in_base_units()
         right = other.in_base_units()
+
+        approximation = self._approximation(other)
+        if approximation is True:
+            return
+
+        assert approximation
 
         message = " or ".join(
             [
@@ -1531,7 +1559,8 @@ class Quantity:
             ]
         )
 
-        assert self.approximates(other, within=within), message
+        message += f" (off by {approximation})"
+        assert approximation <= within, message
 
 
 ParseError = _parser.LarkError
@@ -1634,13 +1663,13 @@ class ConversionTable:
         numerator_path = self._find(this_numerator, other_numerator)
         if not numerator_path:
             raise ConversionNotFound(
-                f"No conversion from {this_numerator} to {other_numerator}"
+                f"No conversion from {this_numerator!r} to {other_numerator!r}"
             )
 
         denominator_path = self._find(this_denominator, other_denominator)
         if not denominator_path:
             raise ConversionNotFound(
-                f"No conversion from {this_denominator} to {other_denominator}"
+                f"No conversion from {this_denominator!r} to {other_denominator!r}"
             )
 
         numerator = this.magnitude
@@ -1691,6 +1720,8 @@ class ConversionTable:
         converting individual terms"""
         magnitude: Numeric = 1
         by_dimension: Dict[Dimension, Tuple[Unit, int]] = {}
+
+        # Convert units until there is only one for each dimension
         for unit, exponent in unit.factors.items():
             dimension = unit.dimension
             quantified = unit.quantify()
@@ -1715,16 +1746,33 @@ class ConversionTable:
 
             by_dimension[dimension] = (current_unit, current_exponent + exponent)
 
+        # Find any units whose dimensions cancel and try to combine them.  For example,
+        # if the factors here are Ampere/Second, that's the same as Coulomb.
         factors = {
             unit: exponent for unit, exponent in by_dimension.values() if exponent != 0
         } or {One: 1}
+
+        for this, this_exponent in list(factors.items()):
+            for other, other_exponent in list(factors.items()):
+                if this is other:
+                    continue
+
+                if this not in factors or other not in factors:
+                    continue
+
+                this_term = this**this_exponent
+                other_term = other**other_exponent
+
+                if (Number / other_term.dimension).is_factor(this_term.dimension):
+                    del factors[this]
+                    del factors[other]
+                    factors[this_term * other_term] = 1
 
         final_dimension = Number
         for dimension in by_dimension.keys():
             final_dimension *= dimension
 
-        final = Quantity(magnitude, Unit(IdentityPrefix, factors, final_dimension))
-        return final
+        return Quantity(magnitude, Unit(IdentityPrefix, factors, final_dimension))
 
     @lru_cache(maxsize=None)
     def _find_path(
@@ -1790,10 +1838,10 @@ class ConversionTable:
     def _reduce_dimension(cls, start: Unit, end: Unit) -> Tuple[int, Unit, Unit]:
         """Reduce the dimension of the given units to their lowest common exponents"""
         assert (
-            start.dimension == end.dimension
+            start.dimension is end.dimension
         ), f"{start} and {end} measure different dimensions"
 
-        if start.dimension == Number:
+        if start.dimension is Number:
             return 1, start, end
 
         exponent = gcd(*start.dimension.exponents)
