@@ -1,6 +1,6 @@
 from measured import Length, Mass, Temperature, Time
-from measured.fundamental import G, c, k, ℏ
 from measured.natural import PlanckLength, PlanckMass, PlanckTemperature, PlanckTime
+from measured.physics import G, c, k, ℏ
 from measured.si import Joule, Kelvin, Kilogram, Meter, Second
 
 

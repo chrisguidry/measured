@@ -1,6 +1,6 @@
 from measured import Charge, Length, Mass, Time
-from measured.fundamental import c, mₑ, ℏ
 from measured.natural import NaturalCharge, NaturalLength, NaturalMass, NaturalTime
+from measured.physics import c, mₑ, ℏ
 from measured.si import Coulomb, Kilogram, Meter, Second
 
 
@@ -9,7 +9,7 @@ def test_unity() -> None:
     mₑ.assert_approximates(1 * NaturalMass)
     ℏ.assert_approximates(1 * ((NaturalLength**2 * NaturalMass) / NaturalTime))
 
-    # TODO: this is failing to find a conversion
+    # TODO: this is failing to cancel terms fully
     # ε0.assert_approximates(
     #     1
     #     * ((NaturalTime**2 * NaturalCharge**2) / (NaturalMass * NaturalLength**3))

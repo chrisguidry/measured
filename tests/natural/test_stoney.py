@@ -1,6 +1,6 @@
 from measured import Charge, Length, Mass, Time
-from measured.fundamental import G, c, e, α, ℏ
 from measured.natural import StoneyCharge, StoneyLength, StoneyMass, StoneyTime
+from measured.physics import G, c, e, α, ℏ
 from measured.si import Coulomb, Kilogram, Meter, Second
 
 
@@ -9,7 +9,7 @@ def test_unity() -> None:
     G.assert_approximates(1 * (StoneyLength**3 / (StoneyMass * StoneyTime**2)))
     e.assert_approximates(1 * StoneyCharge)
 
-    # TODO: this is failing to find a conversion
+    # TODO: this is failing to cancel terms fully
     # kₑ.assert_approximates(
     #     1 * ((AtomicLength**3 * AtomicMass) / (AtomicTime**2 * AtomicCharge**2))
     # )

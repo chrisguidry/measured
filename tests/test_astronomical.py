@@ -9,7 +9,7 @@ from measured.astronomical import (
     Parsec,
     SolarMass,
 )
-from measured.fundamental import G
+from measured.physics import G
 from measured.si import Meter
 
 

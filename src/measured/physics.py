@@ -31,6 +31,24 @@ Attributes: Physical constants
 
     [1]: https://en.wikipedia.org/wiki/Elementary_charge
 
+    ε0 (Quantity): [Vacuum permittivity][1], the capability of an electric field to
+        permeate a vacuum
+
+    [1]: https://en.wikipedia.org/wiki/Vacuum_permittivity
+
+    mₑ (Quantity): The [mass of an electron][1]
+
+    [1]: https://en.wikipedia.org/wiki/Electron_mass
+
+    kₑ (Quantity): Coulomb's [electric force constants][1]
+
+    [1]: https://en.wikipedia.org/wiki/Coulomb_constant
+
+    α (Quantity): The [fine-structure constant][1], quantifying the strength of
+        electromagnetic interactions
+
+    [1]: https://en.wikipedia.org/wiki/Fine-structure_constant
+
 
 """
 
@@ -63,8 +81,7 @@ e = 1.602176634e-19 * Coulomb
 mₑ = 9.1093837015e-31 * Kilogram
 
 # https://en.wikipedia.org/wiki/Coulomb_constant
-kₑ = 8.9875517923e9 * (Kilogram * Meter**3) / (Second**2 * Coulomb**2)
-
+kₑ = (4 * π * ε0) ** -1
 
 # https://en.wikipedia.org/wiki/Fine-structure_constant
 α = (e**2) / (4 * π * ε0 * ħ * c)

@@ -38,7 +38,7 @@ Attributes: Units of mass
 from math import pi as π
 
 from measured import Length, Mass, Time, Unit, si
-from measured.fundamental import c
+from measured.physics import c
 from measured.si import Kilogram, Meter
 
 # Measures of Time

@@ -5,7 +5,7 @@
 from math import pi as π
 
 from measured import Charge, Length, Mass, Temperature, Time
-from measured.fundamental import G, c, e, k, kₑ, mₑ, ε0, ℏ
+from measured.physics import G, c, e, k, kₑ, mₑ, ε0, ℏ
 
 PlanckLength = Length.unit("planck length", "lₚ")
 PlanckLength.equals(((ℏ * G) / c**3).root(2))
