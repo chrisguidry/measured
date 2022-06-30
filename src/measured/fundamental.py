@@ -36,7 +36,7 @@ Attributes: Physical constants
 
 from math import pi as π
 
-from measured.si import Coulomb, Hertz, Joule, Kelvin, Kilogram, Meter, Second
+from measured.si import Coulomb, Farad, Hertz, Joule, Kelvin, Kilogram, Meter, Second
 
 # https://en.wikipedia.org/wiki/Speed_of_light
 c = 299792458 * Meter / Second
@@ -55,3 +55,9 @@ k = 1.380649e-23 * Joule / Kelvin
 
 # https://en.wikipedia.org/wiki/Elementary_charge
 e = 1.602176634e-19 * Coulomb
+
+# https://en.wikipedia.org/wiki/Vacuum_permittivity
+ε0 = 8.8541878128e-12 * Farad / Meter
+
+# https://en.wikipedia.org/wiki/Electron_mass
+mₑ = 9.1093837015e-31 * Kilogram

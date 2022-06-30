@@ -1,7 +1,11 @@
+# https://en.wikipedia.org/wiki/Natural_units
+
 # https://en.wikipedia.org/wiki/Planck_units
 
+from math import pi as π
+
 from measured import Charge, Length, Mass, Temperature, Time
-from measured.fundamental import G, c, e, k, ℏ
+from measured.fundamental import G, c, e, k, mₑ, ε0, ℏ
 from measured.si import Coulomb, Kilogram, Meter, Second
 
 PlanckLength = Length.unit("planck length", "lₚ")
@@ -34,3 +38,18 @@ StoneyTime.equals(((G * kₑ * e**2) / c**6).root(2))
 
 StoneyCharge = Charge.unit("stoney charge", "qₛ")
 StoneyCharge.equals(e)
+
+
+# https://en.wikipedia.org/wiki/Natural_units#Atomic_units
+
+AtomicLength = Length.unit("atomic length", "lₐ")
+AtomicLength.equals(((4 * π * ε0) * ℏ**2) / (mₑ * e**2))
+
+AtomicMass = Mass.unit("atomic mass", "mₐ")
+AtomicMass.equals(mₑ)
+
+AtomicTime = Time.unit("atomic time", "tₐ")
+AtomicTime.equals(((4 * π * ε0) ** 2 * ℏ**3) / (mₑ * e**4))
+
+AtomicCharge = Charge.unit("atomic charge", "qₐ")
+AtomicCharge.equals(e)
