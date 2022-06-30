@@ -1,12 +1,28 @@
-import argparse
+import sys
+import textwrap
+from argparse import ArgumentParser, RawTextHelpFormatter
 from typing import Generator, Iterable, Optional, Set, Tuple
 
 from measured import Numeric, Offset, Quantity, Unit, conversions, systems  # noqa: F401
 
-parser = argparse.ArgumentParser(description="Unit conversions with measured")
-parser.add_argument(
-    "quantity", metavar="term", nargs="+", help="The quantity to print conversions for"
+parser = ArgumentParser(
+    description="Unit conversions with measured",
+    epilog=textwrap.dedent(
+        """
+        Quantities are expressed as a number followed by any number of terms multiplied,
+        divided, or raised to powers.  For example:
+
+        $ measured 5 mile
+        $ measured 3 meter^2
+        $ measured 4 meter/second
+    """,
+    ),
+    formatter_class=RawTextHelpFormatter,
 )
+parser.add_argument(
+    "quantity", metavar="term", nargs="*", help="The quantity to print conversions for"
+)
+parser.add_argument("--list", action="store_true", help="List all available units")
 
 
 def all_equivalents(
@@ -53,9 +69,18 @@ def dot_aligned(
         yield format(" " * left_padding + magnitude_string, f"<{right_padding}"), unit
 
 
-def main() -> None:
-    arguments = parser.parse_args()
-    quantity = Quantity.parse(" ".join(arguments.quantity))
+def print_unit_list() -> None:
+    for symbol, unit in Unit._by_symbol.items():
+        print(f"{symbol} ({unit.name}, {unit.dimension.name or unit.dimension.symbol})")
+
+
+def print_quantity(input_string: str) -> None:
+    try:
+        quantity = Quantity.parse(input_string)
+    except Exception as e:
+        print(f"Error parsing quantity from {input_string!r}:\n{str(e)}")
+        sys.exit(1)
+
     quantity = quantity.in_base_units()
     unit = quantity.unit
     dimension = unit.dimension
@@ -70,3 +95,18 @@ def main() -> None:
     )
     for magnitude_string, unit in dot_aligned(equivalents):
         print(f"{magnitude_string} {unit.name}")
+
+
+def main() -> None:
+    arguments = parser.parse_args()
+
+    if arguments.list:
+        print_unit_list()
+        return
+
+    input_string = " ".join(arguments.quantity)
+    if input_string:
+        print_quantity(input_string)
+        return
+
+    parser.print_help()

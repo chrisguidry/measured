@@ -1,5 +1,8 @@
 import re
 import subprocess
+from subprocess import CalledProcessError
+
+import pytest
 
 
 def run(command: str) -> str:
@@ -18,6 +21,18 @@ def test_can_run_as_script() -> None:
     assert "Unit: meter" in output
 
 
+def test_prints_help_with_no_arguments() -> None:
+    output = run("measured")
+    assert "usage: measured [-h]" in output
+    assert "positional arguments:" in output
+
+
+def test_can_list_units() -> None:
+    output = run("measured --list")
+    assert "m (meter, length)" in output
+    assert "in. (inch, length)" in output
+
+
 def test_can_print_conversions() -> None:
     output = run("measured 1 foot")
     assert "Magnitude: 1" in output
@@ -30,3 +45,11 @@ def test_can_handle_no_conversions() -> None:
     output = run("measured 1 hertz")
     assert "Magnitude: 1" in output
     assert "Unit: hertz" in output
+
+
+def test_handles_parse_errors_gracefully() -> None:
+    with pytest.raises(CalledProcessError) as excinfo:
+        run("measured flibbidy gibbidy")
+
+    assert excinfo.value.returncode == 1
+    assert "Error parsing quantity" in excinfo.value.stdout
