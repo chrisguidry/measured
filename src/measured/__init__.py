@@ -1752,10 +1752,13 @@ class ConversionTable:
             unit: exponent for unit, exponent in by_dimension.values() if exponent != 0
         } or {One: 1}
 
-        for this, this_exponent in list(factors.items()):
-            for other, other_exponent in list(factors.items()):
-                if this is other or this not in factors or other not in factors:
-                    continue
+        to_check = set(factors.keys())
+
+        while to_check:
+            this = to_check.pop()
+            this_exponent = factors[this]
+            for other in to_check:
+                other_exponent = factors[other]
 
                 this_term = this**this_exponent
                 other_term = other**other_exponent
@@ -1763,7 +1766,10 @@ class ConversionTable:
                 if (Number / other_term.dimension).is_factor(this_term.dimension):
                     del factors[this]
                     del factors[other]
+                    to_check.discard(other)
+
                     factors[this_term * other_term] = 1
+                    break
 
         final_dimension = Number
         for dimension in by_dimension.keys():
