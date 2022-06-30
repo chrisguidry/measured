@@ -61,3 +61,6 @@ e = 1.602176634e-19 * Coulomb
 
 # https://en.wikipedia.org/wiki/Electron_mass
 mₑ = 9.1093837015e-31 * Kilogram
+
+# https://en.wikipedia.org/wiki/Coulomb_constant
+kₑ = 8.9875517923e9 * (Kilogram * Meter**3) / (Second**2 * Coulomb**2)

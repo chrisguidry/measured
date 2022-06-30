@@ -1546,11 +1546,15 @@ class Quantity:
         left = self.in_base_units()
         right = other.in_base_units()
 
+        assert (
+            self.unit.dimension == other.unit.dimension
+        ), f"{self.unit.dimension} != {other.unit.dimension}"
+
         approximation = self._approximation(other)
         if approximation is True:
             return
 
-        assert approximation
+        assert approximation, f"No converstion betwee {self} and {other}"
 
         message = " or ".join(
             [

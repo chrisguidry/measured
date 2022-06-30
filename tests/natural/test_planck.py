@@ -1,7 +1,16 @@
 from measured import Length, Mass, Temperature, Time
-from measured.fundamental import ℏ
+from measured.fundamental import G, c, k, ℏ
 from measured.natural import PlanckLength, PlanckMass, PlanckTemperature, PlanckTime
 from measured.si import Joule, Kelvin, Kilogram, Meter, Second
+
+
+def test_unity() -> None:
+    c.assert_approximates(1 * (PlanckLength / PlanckTime))
+    ℏ.assert_approximates(1 * ((PlanckLength**2 * PlanckMass) / PlanckTime))
+    G.assert_approximates(1 * (PlanckLength**3 / (PlanckMass * PlanckTime**2)))
+    k.assert_approximates(
+        1 * ((PlanckLength**2 * PlanckMass) / (PlanckTemperature * PlanckTime**2))
+    )
 
 
 def test_hbar() -> None:

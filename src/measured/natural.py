@@ -5,8 +5,7 @@
 from math import pi as π
 
 from measured import Charge, Length, Mass, Temperature, Time
-from measured.fundamental import G, c, e, k, mₑ, ε0, ℏ
-from measured.si import Coulomb, Kilogram, Meter, Second
+from measured.fundamental import G, c, e, k, kₑ, mₑ, ε0, ℏ
 
 PlanckLength = Length.unit("planck length", "lₚ")
 PlanckLength.equals(((ℏ * G) / c**3).root(2))
@@ -22,10 +21,6 @@ PlanckTemperature.equals(((ℏ * c**5) / (G * k**2)).root(2))
 
 
 # https://en.wikipedia.org/wiki/Stoney_units
-
-# The Coulomb constant
-# https://en.wikipedia.org/wiki/Coulomb_constant
-kₑ = 8.9875517923e9 * (Kilogram * Meter**3) / (Second**2 * Coulomb**2)
 
 StoneyLength = Length.unit("stoney length", "lₛ")
 StoneyLength.equals(((G * kₑ * e**2) / c**4).root(2))
