@@ -1754,10 +1754,7 @@ class ConversionTable:
 
         for this, this_exponent in list(factors.items()):
             for other, other_exponent in list(factors.items()):
-                if this is other:
-                    continue
-
-                if this not in factors or other not in factors:
+                if this is other or this not in factors or other not in factors:
                     continue
 
                 this_term = this**this_exponent
