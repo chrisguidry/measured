@@ -35,9 +35,8 @@ Attributes: Units of mass
     JupiterMass (Unit): The mass of Jupiter
 """
 
-from math import pi as π
-
 from measured import Length, Mass, Time, Unit, si
+from measured.geometry import π
 from measured.physics import c
 from measured.si import Kilogram, Meter
 

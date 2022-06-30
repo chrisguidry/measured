@@ -1,5 +1,3 @@
-from math import pi as π
-
 from measured.astronomical import (
     AstronomicalUnit,
     EarthMass,
@@ -9,6 +7,7 @@ from measured.astronomical import (
     Parsec,
     SolarMass,
 )
+from measured.geometry import π
 from measured.physics import G
 from measured.si import Meter
 

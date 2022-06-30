@@ -1,10 +1,82 @@
-# https://en.wikipedia.org/wiki/Natural_units
+"""
+Defines several systems of [natural units][1] of measurement, derived entirely from
+[universal physical constants][2], as defined in [`measured.physics`](../physics).
+These units simplify the expression of concepts in cosmology and particle physics.
 
-# https://en.wikipedia.org/wiki/Planck_units
+[1]: https://en.wikipedia.org/wiki/Natural_units
 
-from math import pi as π
+[2]: https://en.wikipedia.org/wiki/Physical_constant
+
+
+## Planck Units
+
+The [Planck units][1] are defined such that `c`, `G`, `ℏ`, and `k` equal `1`.
+
+[1]: https://en.wikipedia.org/wiki/Planck_units
+
+
+Attributes: Planck units
+
+    PlanckLength (Unit):
+
+    PlanckMass (Unit):
+
+    PlanckTime (Unit):
+
+    PlanckTemperature (Unit):
+
+## Stoney units
+
+The [Stoney units][1] are defined such that `c`, `G`, `kₑ` and `e` equal `1`.
+
+[1]: https://en.wikipedia.org/wiki/Stoney_units
+
+Attributes: Stoney units
+
+    StoneyLength (Unit):
+
+    StoneyMass (Unit):
+
+    StoneyTime (Unit):
+
+    StoneyCharge (Unit):
+
+## Hartree atomic units
+
+The [Atomic units][1] are defined such that `e`, `mₑ`, `ℏ`, and `kₑ` equal `1`.
+
+[1]: https://en.wikipedia.org/wiki/Hartree_atomic_units
+
+Attributes: Hartree atomic units
+
+    AtomicLength (Unit):
+
+    AtomicMass (Unit):
+
+    AtomicTime (Unit):
+
+    AtomicCharge (Unit):
+
+## Naturral units
+
+The [Natural units][1] are defined such that `c`, `mₑ`, `ℏ`, and `ε0` equal `1`.
+
+[1]: https://en.wikipedia.org/wiki/Natural_units
+
+Attributes: Natural units
+
+    NaturalLength (Unit):
+
+    NaturalMass (Unit):
+
+    NaturalTime (Unit):
+
+    NaturalCharge (Unit):
+
+"""
 
 from measured import Charge, Length, Mass, Temperature, Time
+from measured.geometry import π
 from measured.physics import G, c, e, k, kₑ, mₑ, ε0, ℏ
 
 PlanckLength = Length.unit("planck length", "lₚ")

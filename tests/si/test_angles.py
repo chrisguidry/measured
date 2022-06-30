@@ -1,8 +1,7 @@
-from math import pi as π
-
 import pytest
 
 from measured import Number, One, PlaneAngle, Quantity, SolidAngle
+from measured.geometry import π
 from measured.si import Arcminute, Arcsecond, Degree, Radian, Steradian
 
 

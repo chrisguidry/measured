@@ -15,8 +15,9 @@ Attributes: Base units
 
     Gram (Unit): The kilogram is defined by setting the Planck constant _h_ exactly
         to 6.62607015×10⁻³⁴ J⋅s (J = kg⋅m²⋅s⁻²), given the definitions of the metre
-        and the second.  Note that `measured` uses `Gram` as the base unit, for
-        simplicity.
+        and the second.  Note that `measured` uses `Gram` as the base unit for SI, for
+        simplicity with manipulating metric prefixes.  It also defines a separate
+        `Kilogram` with a conversion to `Gram`.
 
     Ampere (Unit): The flow of exactly 1/1.602176634×10⁻¹⁹ times the elementary charge
         _e_ per second.
@@ -88,7 +89,7 @@ Attributes: Prefixes (base 10)
 
 """
 
-from math import pi as π
+from measured.geometry import π
 
 from . import (
     AmountOfSubstance,

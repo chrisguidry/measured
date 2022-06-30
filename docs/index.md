@@ -3,6 +3,7 @@
 `measured` is a library for measurements and quantities.
 
 [![PyPi](https://img.shields.io/pypi/v/measured)](https://pypi.org/project/measured)
+[![Python Versions](https://img.shields.io/pypi/pyversions/measured)](https://pypi.org/project/measured)
 
 ::: measured
     options:
