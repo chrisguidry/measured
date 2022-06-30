@@ -253,8 +253,8 @@ class Dimension:
         >>> assert Speed == Length / Time
         >>> assert Frequency == Number / Time
 
-        `measured` attempts to maintain Dimensions as singletons, so they can be used in
-        both equality and identity tests.
+        `measured` maintains `Dimension` instances as singletons within a single
+        process, so they can be used in both equality and identity tests.
 
         >>> assert Volume is Length**3
 
@@ -274,7 +274,7 @@ class Dimension:
         >>> json.dumps(Length, cls=MeasuredJSONEncoder)
         '{"__measured__": "Dimension", "name": "length", "symbol": "L", ...}'
 
-        While using `measured`'s [JSON codecs][measured.json], Dimensions may be
+        While using `measured`'s [JSON codecs](../serialization), Dimensions may be
         deserialized directly from that JSON representation.
 
         >>> encoded = json.dumps(Length, cls=MeasuredJSONEncoder)
@@ -759,7 +759,8 @@ class Unit:
     """Unit is a predetermined reference amount or definition for a measurable quantity
 
     `measured` includes a number of well-known units, and additional contributions are
-    always welcome.  The SI system of units is covered in the [`measured.si`][] package.
+    always welcome.  The SI system of units is covered in the [`measured.si`](../si)
+    package.
 
     Attributes:
 
@@ -1407,7 +1408,7 @@ class Quantity:
 
         return NotImplemented
 
-    def __mul__(self, other: Union["Quantity", "Unit", "Numeric"]) -> "Quantity":
+    def __mul__(self, other: Union["Quantity", "Unit", Numeric]) -> "Quantity":
         if isinstance(other, Unit):
             return Quantity(self.magnitude, self.unit * other)
 
@@ -1421,7 +1422,7 @@ class Quantity:
 
     __rmul__ = __mul__
 
-    def __truediv__(self, other: Union["Quantity", "Unit", "Numeric"]) -> "Quantity":
+    def __truediv__(self, other: Union["Quantity", "Unit", Numeric]) -> "Quantity":
         if isinstance(other, Unit):
             return Quantity(self.magnitude, self.unit / other)
 
@@ -1430,6 +1431,12 @@ class Quantity:
 
         if isinstance(other, NUMERIC_CLASSES):
             return Quantity(self.magnitude / other, self.unit)
+
+        return NotImplemented
+
+    def __rtruediv__(self, other: Numeric) -> "Quantity":
+        if isinstance(other, NUMERIC_CLASSES):
+            return Quantity(other / self.magnitude, self.unit)
 
         return NotImplemented
 
@@ -1546,11 +1553,15 @@ class Quantity:
         left = self.in_base_units()
         right = other.in_base_units()
 
+        assert (
+            self.unit.dimension == other.unit.dimension
+        ), f"{self.unit.dimension} != {other.unit.dimension}"
+
         approximation = self._approximation(other)
         if approximation is True:
             return
 
-        assert approximation
+        assert approximation, f"No converstion betwee {self} and {other}"
 
         message = " or ".join(
             [

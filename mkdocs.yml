@@ -17,9 +17,11 @@ nav:
 - index.md
 - 'Systems of Measurement':
   - si.md
-  - fundamental.md
-  - iec.md
+  - geometry.md
+  - physics.md
+  - natural.md
   - astronomical.md
+  - iec.md
   - us.md
   - avoirdupois.md
   - troy.md
