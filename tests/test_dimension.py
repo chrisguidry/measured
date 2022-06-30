@@ -6,6 +6,7 @@ from measured import (
     AmountOfSubstance,
     Area,
     Charge,
+    Current,
     Dimension,
     Frequency,
     Length,
@@ -13,6 +14,8 @@ from measured import (
     Mass,
     Number,
     PlaneAngle,
+    Potential,
+    Resistance,
     SolidAngle,
     Speed,
     Temperature,
@@ -226,3 +229,34 @@ def test_only_integer_roots() -> None:
 def test_whole_power_roots_only() -> None:
     with pytest.raises(ValueError):
         Volume.root(2)
+
+
+@pytest.mark.parametrize(
+    "factor, whole",
+    [
+        (Number, Number),
+        (Number, Mass),
+        (Number, Area),
+        (Number, Resistance),
+        (Length, Area),
+        (Area, Area),
+        (Area, Volume),
+        (Potential, Current),
+    ],
+)
+def test_testing_factors(factor: Dimension, whole: Dimension) -> None:
+    assert factor.is_factor(whole)
+
+
+@pytest.mark.parametrize(
+    "nonfactor, whole",
+    [
+        (Time, Length),
+        (Length, Time),
+        (Mass, Number),
+        (Area, Number),
+        (Area, Length),
+    ],
+)
+def test_testing_non_factors(nonfactor: Dimension, whole: Dimension) -> None:
+    assert not nonfactor.is_factor(whole)

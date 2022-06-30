@@ -25,10 +25,10 @@ from measured.us import (
 def test_point() -> None:
     assert Point.name == "point"
     assert Point.symbol == "p."
-    assert Point.dimension == Length
+    assert Point.dimension is Length
 
     assert 1 * Point == (1 / 12) * Pica
-    (1 * Point).assert_approximates((1 / 72) * Inch, within=1e-9)
+    (1 * Point).assert_approximates((1 / 72) * Inch)
     assert 1 * Point == (127 / 360 * Milli * Meter)
     (1 * Point).assert_approximates(352.778 * Micro * Meter)
 
@@ -36,17 +36,17 @@ def test_point() -> None:
 def test_pica() -> None:
     assert Pica.name == "pica"
     assert Pica.symbol == "P."
-    assert Pica.dimension == Length
+    assert Pica.dimension is Length
 
     assert 1 * Pica == 12 * Point
     assert 1 * Pica == (1 / 6) * Inch
-    (1 * Pica).assert_approximates(4.233 * Milli * Meter)
+    (1 * Pica).assert_approximates(4.233 * Milli * Meter, within=8e-5)
 
 
 def test_inch() -> None:
     assert Inch.name == "inch"
     assert Inch.symbol == "in."
-    assert Inch.dimension == Length
+    assert Inch.dimension is Length
 
     assert 1 * Inch == 72 * Point
     assert 1 * Inch == 6 * Pica
@@ -58,9 +58,9 @@ def test_inch() -> None:
 def test_foot() -> None:
     assert Foot.name == "foot"
     assert Foot.symbol == "ft."
-    assert Foot.dimension == Length
+    assert Foot.dimension is Length
 
-    (1 * Foot).assert_approximates(864 * Point, within=1e-3)
+    (1 * Foot).assert_approximates(864 * Point)
     assert 1 * Foot == 72 * Pica
     assert 1 * Foot == 12 * Inch
     assert 1 * Foot == (1 / 3) * Yard
@@ -70,7 +70,7 @@ def test_foot() -> None:
 def test_yard() -> None:
     assert Yard.name == "yard"
     assert Yard.symbol == "yd."
-    assert Yard.dimension == Length
+    assert Yard.dimension is Length
 
     assert 1 * Yard == 36 * Inch
     assert 1 * Yard == 3 * Foot
@@ -80,7 +80,7 @@ def test_yard() -> None:
 def test_mile() -> None:
     assert Mile.name == "mile"
     assert Mile.symbol == "mi."
-    assert Mile.dimension == Length
+    assert Mile.dimension is Length
 
     assert 1 * Mile == 5280 * Foot
     assert 1 * Mile == 1760 * Yard

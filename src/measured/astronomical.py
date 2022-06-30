@@ -38,7 +38,7 @@ Attributes: Units of mass
 from math import pi as π
 
 from measured import Length, Mass, Time, Unit, si
-from measured.fundamental import SpeedOfLight
+from measured.fundamental import c
 from measured.si import Kilogram, Meter
 
 # Measures of Time
@@ -55,7 +55,7 @@ AstronomicalUnit.equals(149597870700 * Meter)
 
 # https://en.wikipedia.org/wiki/Light-year
 LightYear = Length.unit("light-year", "ly")
-LightYear.equals((SpeedOfLight * JulianYear).in_unit(Meter))
+LightYear.equals((c * JulianYear).in_unit(Meter))
 
 # https://en.wikipedia.org/wiki/Parsec#Calculating_the_value_of_a_parsec
 Parsec = Length.unit("parsec", "pc")

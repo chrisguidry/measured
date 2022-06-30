@@ -40,7 +40,7 @@ def test_approximating_requires_units_with_conversion() -> None:
     one = 1 * Meter
     other = 1 * Bogus
 
-    assert not one.approximates(other, within=1e100)
+    assert not one.approximates(other)
 
 
 def test_unit_conversion_must_be_in_same_dimension() -> None:
@@ -109,7 +109,7 @@ def test_failing_to_convert_denominator() -> None:
     Flib = Mass.unit("flibbidy", "flibbidy")
     Flob = Mass.unit("flobbidy", "flobbidy")
 
-    assert (Meter / Flib).dimension == (Meter / Flob).dimension
+    assert (Meter / Flib).dimension is (Meter / Flob).dimension
 
     with pytest.raises(ConversionNotFound):
         (1 * Meter / Flib).in_unit(Meter / Flob)
@@ -119,8 +119,8 @@ def test_failing_to_collapse_dimensions() -> None:
     Jib = Mass.unit("jibbity", "jibbity")
     Job = Mass.unit("jobbity", "jobbity")
 
-    assert (Jib / Job).dimension == Number
-    assert (Job / Jib).dimension == Number
+    assert (Jib / Job).dimension is Number
+    assert (Job / Jib).dimension is Number
 
     with pytest.raises(ConversionNotFound):
         ((1 * Jib) / (1 * Job)).in_unit(One)

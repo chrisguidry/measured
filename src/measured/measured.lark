@@ -23,10 +23,11 @@ SUPERSCRIPT_DIGIT: "⁰" | "¹" | "²" | "³" | "⁴" | "⁵" | "⁶" | "⁷" | 
 
 LOWER: "a".."z"
 UPPER: "A".."Z"
+SUBSCRIPTS: "ₐ".."ₜ"
 GREEK: "Α".."ω"
 OBJECTS: "☉"
 PUNCTUATION: "." | "°" | "-"
-SYMBOL: ("1" | LOWER | UPPER | GREEK | OBJECTS | PUNCTUATION)+
+SYMBOL: ("1" | LOWER | UPPER | SUBSCRIPTS | GREEK | OBJECTS | PUNCTUATION)+
 
 %import common.SIGNED_INT
 %import common.SIGNED_FLOAT
