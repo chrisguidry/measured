@@ -48,3 +48,18 @@ AtomicTime.equals(((4 * π * ε0) ** 2 * ℏ**3) / (mₑ * e**4))
 
 AtomicCharge = Charge.unit("atomic charge", "qₐ")
 AtomicCharge.equals(e)
+
+
+# https://en.wikipedia.org/wiki/Natural_units#Natural_units_(particle_and_atomic_physics)
+
+NaturalLength = Length.unit("natural length", "lₙ")
+NaturalLength.equals((ℏ / (mₑ * c)))
+
+NaturalMass = Mass.unit("natural mass", "mₙ")
+NaturalMass.equals(mₑ)
+
+NaturalTime = Time.unit("natural time", "tₙ")
+NaturalTime.equals((ℏ / (mₑ * c**2)))
+
+NaturalCharge = Charge.unit("natural charge", "qₙ")
+NaturalCharge.equals((ε0 * ℏ * c).root(2))

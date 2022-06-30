@@ -64,3 +64,7 @@ mₑ = 9.1093837015e-31 * Kilogram
 
 # https://en.wikipedia.org/wiki/Coulomb_constant
 kₑ = 8.9875517923e9 * (Kilogram * Meter**3) / (Second**2 * Coulomb**2)
+
+
+# https://en.wikipedia.org/wiki/Fine-structure_constant
+α = (e**2) / (4 * π * ε0 * ħ * c)

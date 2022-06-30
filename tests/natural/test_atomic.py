@@ -1,5 +1,5 @@
 from measured import Charge, Length, Mass, Time
-from measured.fundamental import e, mₑ, ℏ
+from measured.fundamental import c, e, mₑ, α, ℏ
 from measured.natural import AtomicCharge, AtomicLength, AtomicMass, AtomicTime
 from measured.si import Coulomb, Kilogram, Meter, Second
 
@@ -13,6 +13,8 @@ def test_unity() -> None:
     # kₑ.assert_approximates(
     #     1 * ((AtomicLength**3 * AtomicMass) / (AtomicTime**2 * AtomicCharge**2))
     # )
+
+    c.assert_approximates(α**-1 * (AtomicLength / AtomicTime))
 
 
 def test_length() -> None:
