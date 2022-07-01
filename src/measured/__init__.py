@@ -270,10 +270,12 @@ class Dimension:
     """
 
     _known: ClassVar[Dict[Tuple[int, ...], "Dimension"]] = {}
-    _initialized: bool = False
+    _initialized: bool
 
     _fundamental: ClassVar[List["Dimension"]] = []
     _by_name: ClassVar[Dict[str, "Dimension"]] = {}
+
+    __slots__ = ("_initialized", "exponents", "name", "symbol")
 
     exponents: Tuple[int, ...]
     name: Optional[str]
@@ -289,6 +291,7 @@ class Dimension:
             return cls._known[exponents]
 
         self = super().__new__(cls)
+        self._initialized = False
         cls._known[exponents] = self
         return self
 
@@ -300,6 +303,7 @@ class Dimension:
     ) -> None:
         if self._initialized:
             return
+
         self.exponents = exponents
         self.name = name
         self.symbol = symbol
@@ -560,10 +564,12 @@ class Prefix:
     """
 
     _known: ClassVar[Dict[Tuple[int, Numeric], "Prefix"]] = {}
-    _initialized: bool = False
+    _initialized: bool
 
     _by_name: ClassVar[Dict[str, "Prefix"]] = {}
     _by_symbol: ClassVar[Dict[str, "Prefix"]] = {}
+
+    __slots__ = ("_initialized", "base", "exponent", "name", "symbol")
 
     base: int
     exponent: Numeric
@@ -582,6 +588,7 @@ class Prefix:
             return cls._known[key]
 
         self = super().__new__(cls)
+        self._initialized = False
         cls._known[key] = self
         return self
 
@@ -802,18 +809,19 @@ class Unit:
     UnitKey = Tuple[Prefix, Tuple[Tuple["Unit", int], ...]]
 
     _known: ClassVar[Dict[UnitKey, "Unit"]] = {}
-    _initialized: bool = False
+    _initialized: bool
 
     _base: ClassVar[Set["Unit"]] = set()
     _by_name: ClassVar[Dict[str, "Unit"]] = {}
     _by_symbol: ClassVar[Dict[str, "Unit"]] = {}
 
+    __slots__ = ("_initialized", "prefix", "factors", "dimension", "names", "symbols")
+
     prefix: Prefix
     factors: Mapping["Unit", int]
-    name: Optional[str]
-    names: List[str]
-    symbol: Optional[str]
-    symbols: List[str]
+    dimension: Dimension
+    names: Tuple[str, ...]
+    symbols: Tuple[str, ...]
 
     def __new__(
         cls,
@@ -831,6 +839,7 @@ class Unit:
             return cls._by_name[name]
 
         self = super().__new__(cls)
+        self._initialized = False
         if not factors:
             key = cls._build_key(prefix, {self: 1})
         cls._known[key] = self
@@ -850,10 +859,8 @@ class Unit:
         self.prefix = prefix
         self.factors = factors or {self: 1}
         self.dimension = dimension
-        self.name = None
-        self.symbol = None
-        self.names = []
-        self.symbols = []
+        self.names = tuple()
+        self.symbols = tuple()
         self.alias(name=name, symbol=symbol)
         self._initialized = True
 
@@ -928,10 +935,7 @@ class Unit:
             if name in self._by_name and self._by_name[name] is not self:
                 raise ValueError(f"A unit named {name} is already defined")
 
-            if not self.name:
-                self.name = name
-
-            self.names.append(name)
+            self.names = self.names + (name,)
             self._by_name[name] = self
 
         if symbol:
@@ -941,11 +945,16 @@ class Unit:
             if symbol and " " in symbol:
                 raise ValueError(f"{symbol!r} will not be parsable if it has spaces.")
 
-            if not self.symbol:
-                self.symbol = symbol
-
-            self.symbols.append(symbol)
+            self.symbols = self.symbols + (symbol,)
             self._by_symbol[symbol] = self
+
+    @property
+    def name(self) -> Optional[str]:
+        return self.names[0] if self.names else None
+
+    @property
+    def symbol(self) -> Optional[str]:
+        return self.symbols[0] if self.symbols else None
 
     # Pickle support
 
@@ -1283,6 +1292,11 @@ class Quantity:
         '5.1234 m/s'
 
     """
+
+    __slots__ = ("magnitude", "unit")
+
+    magnitude: Numeric
+    unit: Unit
 
     def __init__(self, magnitude: Numeric, unit: Unit):
         self.magnitude = magnitude

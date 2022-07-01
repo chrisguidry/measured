@@ -1,5 +1,6 @@
 .bookkeeping
 .build
+build
 .coverage
 dist
 .mypy_cache
