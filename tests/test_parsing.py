@@ -1,7 +1,8 @@
 import pytest
 
-from measured import Numeric, ParseError, Quantity, Unit, systems  # noqa: F401
+from measured import Numeric, Quantity, Unit, systems  # noqa: F401
 from measured.iec import Byte, Kibi
+from measured.parsing import ParseError
 from measured.si import Ampere, Hertz, Kilo, Meter, Micro, Ohm, Second
 
 ALL_UNITS = sorted(Unit.base(), key=lambda u: u.name or "")

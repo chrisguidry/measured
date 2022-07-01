@@ -2,7 +2,8 @@
 
 import pytest
 
-from measured import ConversionNotFound, Quantity
+from measured import Quantity
+from measured.conversions import ConversionNotFound
 from measured.si import Hertz, Meter, Minute, Second
 from measured.us import Foot, Inch
 

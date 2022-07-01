@@ -3,7 +3,7 @@ import textwrap
 from argparse import ArgumentParser, RawTextHelpFormatter
 from typing import Generator, Iterable, Optional, Set, Tuple
 
-from measured import Numeric, Offset, Quantity, Unit, conversions, systems  # noqa: F401
+from measured import Quantity, Unit, conversions, systems  # noqa: F401
 
 parser = ArgumentParser(
     description="Unit conversions with measured",

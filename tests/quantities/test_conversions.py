@@ -1,16 +1,7 @@
 import pytest
 
-from measured import (
-    Area,
-    ConversionNotFound,
-    Length,
-    Mass,
-    Number,
-    Numeric,
-    One,
-    Unit,
-    conversions,
-)
+from measured import Area, Length, Mass, Number, Numeric, One, Unit, conversions
+from measured.conversions import ConversionNotFound
 from measured.si import Meter, Second
 from measured.us import Acre, Foot, Inch
 

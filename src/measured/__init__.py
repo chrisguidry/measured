@@ -142,10 +142,8 @@ Attributes: Base Units
 """
 
 import functools
-import operator
-import sys
 from collections import defaultdict
-from functools import lru_cache, reduce, total_ordering
+from functools import lru_cache, total_ordering
 from importlib.metadata import version
 from math import log
 from typing import (
@@ -165,25 +163,7 @@ from typing import (
     overload,
 )
 
-from . import _parser
-from .formatting import from_superscript, superscript
-
-if sys.version_info < (3, 9):  # pragma: no cover
-    # math.gcd changed in Python 3.8 from a two-argument for to a variable argument form
-    import math
-
-    from typing_extensions import SupportsIndex
-
-    def recursive_gcd(*integers: SupportsIndex) -> int:
-        if len(integers) <= 2:
-            return math.gcd(*integers)
-        return math.gcd(integers[0], gcd(*integers[1:]))
-
-    gcd = recursive_gcd
-
-else:  # pragma: no cover
-    from math import gcd
-
+from .formatting import superscript
 
 try:
     from icecream import ic
@@ -1230,10 +1210,6 @@ class Unit:
         )
 
 
-class ConversionNotFound(ValueError):
-    pass
-
-
 @total_ordering
 class Quantity:
     """Quantity represents a quantity of some Unit
@@ -1388,11 +1364,9 @@ class Quantity:
 
     def __format__(self, format_specifier: str) -> str:
         magnitude_format, _, unit_format = format_specifier.partition(":")
-        return (
-            self.magnitude.__format__(magnitude_format)
-            + " "
-            + self.unit.__format__(unit_format)
-        )
+        magnitude = self.magnitude.__format__(magnitude_format)
+        unit = self.unit.__format__(unit_format)
+        return f"{magnitude} {unit}"
 
     def __add__(self, other: "Quantity") -> "Quantity":
         if isinstance(other, Quantity):
@@ -1473,7 +1447,7 @@ class Quantity:
 
         try:
             return this.in_unit(other.unit) == other
-        except ConversionNotFound:
+        except conversions.ConversionNotFound:
             return NotImplemented
 
     def __lt__(self, other: Any) -> bool:
@@ -1491,7 +1465,7 @@ class Quantity:
 
         try:
             return this.in_unit(other.unit) < other
-        except ConversionNotFound:
+        except conversions.ConversionNotFound:
             return NotImplemented
 
     def _approximation(self, other: "Quantity") -> Union[Numeric, bool]:
@@ -1507,7 +1481,7 @@ class Quantity:
         if this.unit != other.unit:
             try:
                 this = this.in_unit(other.unit)
-            except ConversionNotFound:
+            except conversions.ConversionNotFound:
                 return False
 
         if other.magnitude == 0:
@@ -1572,327 +1546,6 @@ class Quantity:
 
         message += f" (off by {approximation})"
         assert approximation <= within, message
-
-
-ParseError = _parser.LarkError
-
-
-class QuantityTransformer(_parser.Transformer[Any, "Quantity"]):
-    inline = _parser.v_args(inline=True)
-
-    @inline
-    def unit(self, numerator: Unit, denominator: Optional[Unit] = None) -> Unit:
-        return numerator / (denominator or One)
-
-    @inline
-    def unit_sequence(self, *terms: Unit) -> Unit:
-        return reduce(operator.mul, terms)
-
-    @inline
-    def term(self, symbol: str, exponent: int = 1) -> Unit:
-        return Unit.resolve_symbol(symbol) ** exponent
-
-    @inline
-    def carat_exponent(self, exponent: str) -> int:
-        return int(exponent[1:])
-
-    @inline
-    def superscript_exponent(self, exponent: str) -> int:
-        value = from_superscript(exponent)
-        assert isinstance(value, int)
-        return value
-
-    @inline
-    def quantity(self, magnitude: Numeric, unit: Unit) -> "Quantity":
-        return Quantity(magnitude, unit)
-
-    int = inline(int)
-    float = inline(float)
-
-
-parser: _parser.Lark = _parser.Parser(transformer=QuantityTransformer())  # type: ignore
-
-
-Ratio = Numeric
-Offset = Numeric
-
-
-class ConversionTable:
-    _ratios: Dict[Unit, Dict[Unit, Ratio]]
-    _offsets: Dict[Unit, Dict[Unit, Offset]]
-
-    def __init__(self) -> None:
-        self._ratios = defaultdict(dict)
-        self._offsets = defaultdict(dict)
-
-    def equate(self, a: Quantity, b: Quantity) -> None:
-        """Defines a conversion between one Unit and another, expressed as a ratio
-        between the two."""
-
-        if a.unit == b.unit and a.unit is not One:
-            raise ValueError("No need to define conversions for a unit and itself")
-
-        a = a.in_base_units()
-        b = b.in_base_units()
-
-        self._ratios[a.unit][b.unit] = b.magnitude / a.magnitude
-        self._ratios[b.unit][a.unit] = a.magnitude / b.magnitude
-
-    def translate(self, scale: Unit, zero: Quantity) -> None:
-        """Defines a unit as a scale starting from the given zero point in another
-        unit"""
-        if scale == zero.unit:
-            raise ValueError("No need to define conversions for a unit and itself")
-
-        degree = zero.unit
-        offset = zero.magnitude
-
-        self._ratios[degree][scale] = 1
-        self._ratios[scale][degree] = 1
-
-        self._offsets[degree][scale] = -offset
-        self._offsets[scale][degree] = +offset
-
-    def convert(self, quantity: Quantity, other_unit: Unit) -> Quantity:
-        """Converts the given quantity into another unit, if possible"""
-        if quantity.unit.dimension != other_unit.dimension:
-            raise ConversionNotFound(
-                "No conversion from "
-                f"{quantity.unit} ({quantity.unit.dimension}) to "
-                f"{other_unit} ({other_unit.dimension})"
-            )
-
-        this = quantity.in_base_units()
-        other = (1 * other_unit).in_base_units()
-
-        this = this.magnitude * self._collapse_by_dimension(this.unit)
-        other = other.magnitude * self._collapse_by_dimension(other.unit)
-
-        this_numerator, this_denominator = this.unit.as_ratio()
-        other_numerator, other_denominator = other.unit.as_ratio()
-
-        numerator_path = self._find(this_numerator, other_numerator)
-        if not numerator_path:
-            raise ConversionNotFound(
-                f"No conversion from {this_numerator!r} to {other_numerator!r}"
-            )
-
-        denominator_path = self._find(this_denominator, other_denominator)
-        if not denominator_path:
-            raise ConversionNotFound(
-                f"No conversion from {this_denominator!r} to {other_denominator!r}"
-            )
-
-        numerator = this.magnitude
-        for scale, offset, _ in numerator_path:
-            numerator *= scale
-            numerator += offset
-
-        denominator = other.magnitude
-        for scale, offset, _ in denominator_path:
-            denominator *= scale
-            denominator += offset
-
-        return Quantity(numerator / denominator, other_unit)
-
-    @lru_cache(maxsize=None)
-    def _find(
-        self,
-        start: Unit,
-        end: Unit,
-    ) -> Optional[Iterable[Tuple[Ratio, Offset, Unit]]]:
-        start_terms = self._terms_by_dimension(start)
-        end_terms = self._terms_by_dimension(end)
-
-        assert (
-            start_terms.keys() == end_terms.keys()
-        ), f"{start_terms.keys()} != {end_terms.keys()}"
-
-        path: List[Tuple[Ratio, Offset, Unit]] = []
-        for dimension in start_terms:
-            for s, e in zip(start_terms[dimension], end_terms[dimension]):
-                this_path = self._find_path(s, e)
-                if not this_path:
-                    return None
-                path += this_path
-        return path
-
-    @classmethod
-    def _terms_by_dimension(cls, unit: Unit) -> Dict[Dimension, List[Unit]]:
-        terms = defaultdict(list)
-        for factor, exponent in unit.factors.items():
-            factor = factor**exponent
-            terms[factor.dimension].append(factor)
-        return terms
-
-    @functools.lru_cache(maxsize=None)
-    def _collapse_by_dimension(self, unit: Unit) -> Quantity:
-        """Return a new quantity with at most a single unit in each dimension, by
-        converting individual terms"""
-        magnitude: Numeric = 1
-        by_dimension: Dict[Dimension, Tuple[Unit, int]] = {}
-
-        # Convert units until there is only one for each dimension
-        for unit, exponent in unit.factors.items():
-            dimension = unit.dimension
-            quantified = unit.quantify()
-
-            if dimension not in by_dimension:
-                magnitude *= quantified.magnitude**exponent
-                by_dimension[dimension] = (quantified.unit, exponent)
-                continue
-
-            current_unit, current_exponent = by_dimension[dimension]
-
-            path = self._find_path(quantified.unit, current_unit)
-            if not path:
-                raise ConversionNotFound(
-                    f"No conversion between {dimension} units {quantified.unit} "
-                    f"and {current_unit}"
-                )
-
-            for scale, offset, _ in path:
-                magnitude *= scale**exponent
-                magnitude += offset
-
-            by_dimension[dimension] = (current_unit, current_exponent + exponent)
-
-        # Find any units whose dimensions cancel and try to combine them.  For example,
-        # if the factors here are Ampere/Second, that's the same as Coulomb.
-        factors = {
-            unit: exponent for unit, exponent in by_dimension.values() if exponent != 0
-        } or {One: 1}
-
-        to_check = set(factors.keys())
-
-        while to_check:
-            this = to_check.pop()
-            this_exponent = factors[this]
-            for other in to_check:
-                other_exponent = factors[other]
-
-                this_term = this**this_exponent
-                other_term = other**other_exponent
-
-                if (Number / other_term.dimension).is_factor(this_term.dimension):
-                    del factors[this]
-                    del factors[other]
-                    to_check.discard(other)
-
-                    factors[this_term * other_term] = 1
-                    break
-
-        final_dimension = Number
-        for dimension in by_dimension.keys():
-            final_dimension *= dimension
-
-        return Quantity(magnitude, Unit(IdentityPrefix, factors, final_dimension))
-
-    @lru_cache(maxsize=None)
-    def _find_path(
-        self,
-        start: Unit,
-        end: Unit,
-    ) -> Optional[List[Tuple[Ratio, Offset, Unit]]]:
-        return self._find_path_recursive(start, end)
-
-    def _find_path_recursive(
-        self,
-        start: Unit,
-        end: Unit,
-        visited: Optional[Set[Unit]] = None,
-    ) -> Optional[List[Tuple[Ratio, Offset, Unit]]]:
-
-        if start is end:
-            return [(1, 0, end)]
-
-        if visited is None:
-            visited = {start}
-        elif start in visited:
-            return None
-        else:
-            visited.add(start)
-
-        exponent, start, end = self._reduce_dimension(start, end)
-
-        if sum(start.factors.values()) > sum(end.factors.values()):
-            # This is a conversion like m² -> acre, where the end dimension is defined
-            # directly in the higher exponent and there isn't a lower-power unit (e.g.
-            # there's no unit that represents the square root of an acre that we can
-            # compare the meter to); in this case, perform the search in reverse and it
-            # should be able to find available conversions
-            backtracked = self._backtrack(self._find_path(end, start), exponent, end)
-            return backtracked
-
-        best_path = None
-
-        for intermediate, scale in self._ratios[start].items():
-            offset = self._offsets[start].get(intermediate, 0)
-            if intermediate == end:
-                return [(scale**exponent, offset**exponent, end**exponent)]
-
-            path = self._find_path_recursive(intermediate, end, visited=visited)
-            if not path:
-                continue
-
-            path = [(scale, offset, intermediate)] + list(path)
-            path = [
-                (scale**exponent, offset**exponent, unit**exponent)
-                for scale, offset, unit in path
-            ]
-            if not best_path or len(path) < len(best_path):
-                best_path = path
-
-        if best_path:
-            return best_path
-
-        return None
-
-    @classmethod
-    def _reduce_dimension(cls, start: Unit, end: Unit) -> Tuple[int, Unit, Unit]:
-        """Reduce the dimension of the given units to their lowest common exponents"""
-        assert (
-            start.dimension is end.dimension
-        ), f"{start} and {end} measure different dimensions"
-
-        if start.dimension is Number:
-            return 1, start, end
-
-        exponent = gcd(*start.dimension.exponents)
-
-        try:
-            start_root = start.root(exponent)
-            end_root = end.root(exponent)
-        except FractionalDimensionError:
-            return 1, start, end
-
-        return exponent, start_root, end_root
-
-    @classmethod
-    def _backtrack(
-        cls,
-        path: Optional[Iterable[Tuple[Ratio, Offset, Unit]]],
-        exponent: int,
-        end: Unit,
-    ) -> Optional[List[Tuple[Ratio, Offset, Unit]]]:
-        """Given a path to convert a start unit to an end unit, produce the reverse
-        path, which would convert the end unit to the start unit"""
-        if path is None:
-            return None
-
-        path = list(reversed(list(path)))
-
-        units = [u for _, _, u in path[1:]] + [end]
-        scales_and_offsets = [(s, o) for s, o, _ in path]
-
-        backtracked = [
-            (1 / (scale**exponent), -(offset**exponent), unit**exponent)
-            for (scale, offset), unit in zip(scales_and_offsets, units)
-        ]
-        return backtracked
-
-
-conversions = ConversionTable()
 
 
 # https://en.wikipedia.org/wiki/Dimensional_analysis#Definition
@@ -1961,4 +1614,9 @@ IdentityPrefix = Prefix(0, 0)
 # Fundamental units
 
 One = Number.unit(name="one", symbol="1")
+
+
+from . import conversions  # noqa: E402
+from .parsing import parser  # noqa: E402
+
 One.equals(1 * One)
