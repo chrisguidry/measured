@@ -88,5 +88,13 @@ def complex_conversions() -> None:
             assert divided.unit == One
 
 
+@app.command()
+def list_of_quantities() -> None:
+    all_the_ohms = []
+    for a in (Quantity(a, Ampere) for a in range(1, 10001)):
+        for v in (Quantity(v, Volt) for v in range(1, 1001)):
+            all_the_ohms.append(v / a)
+
+
 if __name__ == "__main__":
     app()
