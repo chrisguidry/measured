@@ -1298,8 +1298,10 @@ class Quantity:
     magnitude: Numeric
     unit: Unit
 
-    def __init__(self, magnitude: Numeric, unit: Unit):
+    def __init__(self, magnitude: Numeric, unit: Union[Unit, str]):
         self.magnitude = magnitude
+        if isinstance(unit, str):
+            unit = Unit.parse(unit)
         self.unit = unit
 
     def in_base_units(self) -> "Quantity":
@@ -1337,6 +1339,23 @@ class Quantity:
             return value
 
         raise ValueError(f"No conversion from {value!r} to Quantity")
+
+    # SQLAlchemy support
+
+    def __composite_values__(self) -> Tuple[Numeric, str]:
+        """
+        From the [SQLAlchemy documentation][1]:
+
+            The requirements for the custom datatype class are that it have a
+            constructor which accepts positional arguments corresponding to its column
+            format, and also provides a method __composite_values__() which returns the
+            state of the object as a list or tuple, in order of its column-based
+            attributes. It also should supply adequate __eq__() and __ne__() methods
+            which test the equality of two instances.
+
+            [1]: https://docs.sqlalchemy.org/en/20/orm/composites.html
+        """
+        return self.magnitude, str(self.unit)
 
     def __repr__(self) -> str:
         return f"Quantity(magnitude={self.magnitude!r}, unit={self.unit!r})"
