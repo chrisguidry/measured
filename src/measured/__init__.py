@@ -1298,7 +1298,7 @@ class Quantity:
     magnitude: Numeric
     unit: Unit
 
-sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss    def __init__(self, magnitude: Numeric, unit: Union[Unit, str]):
+    def __init__(self, magnitude: Numeric, unit: Union[Unit, str]):
         self.magnitude = magnitude
         if isinstance(unit, str):
             unit = Unit.parse(unit)
