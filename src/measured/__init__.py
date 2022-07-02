@@ -1401,6 +1401,9 @@ class Quantity:
         unit = self.unit.__format__(unit_format)
         return f"{magnitude} {unit}"
 
+    def __hash__(self) -> int:
+        return hash((self.magnitude, self.unit))
+
     def __add__(self, other: "Quantity") -> "Quantity":
         if isinstance(other, Quantity):
             other = other.in_unit(self.unit)

@@ -102,19 +102,6 @@ def test_cannot_divide_by_random_types() -> None:
         (5 * Meter) / "hi"  # type: ignore
 
 
-def test_repr(quantity: Quantity) -> None:
-    assert (
-        repr(quantity)
-        == f"Quantity(magnitude={quantity.magnitude!r}, unit={quantity.unit!r})"
-    )
-
-
-def test_repr_roundtrips(quantity: Quantity) -> None:
-    from measured import Dimension, Prefix, Unit  # noqa: F401
-
-    assert eval(repr(quantity)) == quantity
-
-
 def test_negative() -> None:
     assert -(5 * Meter) == -5 * Meter
 
@@ -201,3 +188,33 @@ def test_approximating() -> None:
     (1 * Meter).assert_approximates(1.0000000001 * Meter)
     assert not (1 * Meter).approximates(1.01 * Meter)
     assert not (1 * Meter).approximates(1.0 * Second)
+
+
+def test_repr(quantity: Quantity) -> None:
+    assert (
+        repr(quantity)
+        == f"Quantity(magnitude={quantity.magnitude!r}, unit={quantity.unit!r})"
+    )
+
+
+def test_repr_roundtrips(quantity: Quantity) -> None:
+    from measured import Dimension, Prefix, Unit  # noqa: F401
+
+    assert eval(repr(quantity)) == quantity
+
+
+def test_hashing(quantity: Quantity) -> None:
+    assert isinstance(hash(quantity), int)
+
+    equal = Quantity(quantity.magnitude, quantity.unit)
+    assert quantity is not equal
+    assert hash(quantity) == hash(equal)
+
+    unequal = Quantity(quantity.magnitude - 1, quantity.unit)
+    assert quantity is not unequal
+    assert hash(quantity) != hash(unequal)
+
+    assert {quantity, equal, unequal} == {quantity, unequal}
+    assert {quantity: "hi"}[quantity] == "hi"
+    assert {quantity: "hi"}[equal] == "hi"
+    assert {quantity: "hi"}.get(unequal) is None
