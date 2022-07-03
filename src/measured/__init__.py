@@ -1571,7 +1571,7 @@ class Quantity:
         if approximation is True:
             return
 
-        assert approximation, f"No converstion betwee {self} and {other}"
+        assert approximation, f"No conversion between {self} and {other}"
 
         message = " or ".join(
             [
