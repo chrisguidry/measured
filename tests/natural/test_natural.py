@@ -2,7 +2,7 @@ import pytest
 
 from measured import Charge, Length, Mass, Quantity, Time
 from measured.natural import NaturalCharge, NaturalLength, NaturalMass, NaturalTime
-from measured.physics import c, mₑ, ℏ
+from measured.physics import c, mₑ, ε0, ℏ
 from measured.si import Coulomb, Kilogram, Meter, Second
 
 
@@ -12,17 +12,16 @@ from measured.si import Coulomb, Kilogram, Meter, Second
         (c, 1 * (NaturalLength / NaturalTime)),
         (mₑ, 1 * NaturalMass),
         (ℏ, 1 * ((NaturalLength**2 * NaturalMass) / NaturalTime)),
-        # TODO: this is failing to cancel terms fully
-        # (
-        #     ε0,
-        #     (
-        #         1
-        #         * (
-        #             (NaturalTime**2 * NaturalCharge**2)
-        #             / (NaturalMass * NaturalLength**3)
-        #         )
-        #     ),
-        # ),
+        (
+            ε0,
+            (
+                1
+                * (
+                    (NaturalTime**2 * NaturalCharge**2)
+                    / (NaturalMass * NaturalLength**3)
+                )
+            ),
+        ),
     ],
 )
 def test_unity(fundamental_constant: Quantity, unity: Quantity) -> None:

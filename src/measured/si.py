@@ -14,13 +14,14 @@ Attributes: Base units
         caesium-133 atom.
 
     Gram (Unit): The kilogram is defined by setting the Planck constant _h_ exactly
-        to 6.62607015×10⁻³⁴ J⋅s (J = kg⋅m²⋅s⁻²), given the definitions of the metre
-        and the second.  Note that `measured` uses `Gram` as the base unit for SI, for
+        to 6.62607015×10⁻³⁴ J⋅s (J = kg⋅m²⋅s⁻²), given the definitions of the metre and
+        the second.  Note that `measured` uses `Gram` as the base unit for SI, for
         simplicity with manipulating metric prefixes.  It also defines a separate
         `Kilogram` with a conversion to `Gram`.
 
     Ampere (Unit): The flow of exactly 1/1.602176634×10⁻¹⁹ times the elementary charge
-        _e_ per second.
+        _e_ per second.  Internally, `measured` uses `Coulomb` as a base SI unit, and
+        derives `Ampere` from it.
 
     Kelvin (Unit): The kelvin is defined by setting the fixed numerical value of the
         Boltzmann constant _k_ to 1.380649×10⁻²3 J⋅K⁻¹, (J = kg⋅m²⋅s⁻²), given the
@@ -41,24 +42,36 @@ Attributes: Derived units
     Steradian (Unit): measures `SolidAngle`, a dimensionless `Number`
 
     Newton (Unit): measures `Force`
+
     Joule (Unit): measures `Energy`
+
     Watt (Unit): measures `Power`
 
-    Coulomb (Unit): measures `Charge`
+    Coulomb (Unit): measures `Charge`.  Internally, `measured` uses `Coulomb` as a base
+        SI unit, and derives `Ampere` from it.
+
     Volt (Unit): measures `Potential`
+
     Farad (Unit): measures `Capacitance`
+
     Ohm (Unit): measures `Resistance`
+
     Siemens (Unit): measures `Conductance`
+
     Henry (Unit): measures `Inductance`
 
     Weber (Unit): measures `MagneticFlux`
+
     Tesla (Unit): measures `MagneticBField`
 
     Lumen (Unit): measures `LuminousFlux`
+
     Lux (Unit): measures `Illuminance`
 
     Becquerel (Unit): Radioactive decays per unit time (alias for `Hertz`)
+
     Gray (Unit): absorbed dose of ionizing radiation (measures `RadioactiveDose`)
+
     Sievert (Unit): equivalent dose of ionizing radiation (measures `RadioactiveDose`)
 
     Katal (Unit): measures `Catalysis`
@@ -67,24 +80,43 @@ Attributes: Derived units
 Attributes: Prefixes (base 10)
 
     Yotta (Prefix): 10 ²⁴, symbol `Y`
+
     Zetta (Prefix): 10²¹, symbol `Z`
+
     Exa (Prefix): 10¹⁸, symbol `E`
+
     Peta (Prefix): 10¹⁵, symbol `P`
+
     Tera (Prefix): 10¹², symbol `T`
+
     Giga (Prefix): 10⁹, symbol `G`
+
     Mega (Prefix): 10⁶, symbol `M`
+
     Kilo (Prefix): 10³, symbol `k`
+
     Hecto (Prefix): 10 ², symbol `h`
+
     Deca (Prefix): 10¹, symbol `d`
+
     Deci (Prefix): 10⁻¹, symbol `d`
+
     Centi (Prefix): 10⁻², symbol `c`
+
     Milli (Prefix): 10⁻³, symbol `m`
+
     Micro (Prefix): 10⁻⁶, symbol `μ`
+
     Nano (Prefix): 10⁻⁹, symbol `n`
+
     Pico (Prefix): 10⁻¹², symbol `p`
+
     Femto (Prefix): 10⁻¹⁵, symbol `f`
+
     Atto (Prefix): 10⁻¹⁸, symbol `a`
+
     Zepto (Prefix): 10⁻²¹, symbol `z`
+
     Yocto (Prefix): 10⁻²⁴, symbol `y`
 
 """
@@ -93,7 +125,7 @@ from measured.geometry import π
 
 from . import (
     AmountOfSubstance,
-    Current,
+    Charge,
     Length,
     LuminousIntensity,
     Mass,
@@ -140,7 +172,7 @@ Yocto = Prefix(10, -24, name="yocto", symbol="y")
 Meter = Length.unit(name="meter", symbol="m")
 Second = Time.unit(name="second", symbol="s")
 Gram = Mass.unit(name="gram", symbol="g")
-Ampere = Current.unit(name="ampere", symbol="A")
+Coulomb = Charge.unit(name="coulomb", symbol="C")
 Kelvin = Temperature.unit(name="kelvin", symbol="K")
 Mole = AmountOfSubstance.unit(name="mole", symbol="mol")
 Candela = LuminousIntensity.unit(name="candela", symbol="cd")
@@ -163,7 +195,9 @@ Newton = Unit.derive((Kilogram) * Meter / Second**2, name="newton", symbol="N")
 Joule = Unit.derive(Meter * Newton, name="joule", symbol="J")
 Watt = Unit.derive(Joule / Second, name="watt", symbol="W")
 
-Coulomb = Unit.derive(Second * Ampere, name="coulomb", symbol="C")
+# Technically, the Ampere is the SI base unit, but Charge is a simpler/more fundamental
+# property, and better aligns with the fundamental dimensions
+Ampere = Unit.derive(Coulomb / Second, name="ampere", symbol="A")
 Volt = Unit.derive(Watt / Ampere, name="volt", symbol="V")
 Farad = Unit.derive(Coulomb / Volt, name="farad", symbol="F")
 Ohm = Unit.derive(Volt / Ampere, name="ohm", symbol="Ω")

@@ -53,10 +53,9 @@ Attributes: Fundamental dimensions
 
         [1]: https://en.wikipedia.org/wiki/Mass
 
-    Current (Dimension): the net rate of [flow of electrical charge][1] through a
-        conductor
+    Charge (Dimension): how strongly matter [interacts with the electric field][1]
 
-        [1]: https://en.wikipedia.org/wiki/Electric_current
+        [1]: https://en.wikipedia.org/wiki/Electric_charge
 
     Temperature (Dimension): the average amount of [kinetic energy][1] in a system
 
@@ -104,7 +103,7 @@ Attributes: Derived dimensions
 
     Power (Dimension):
 
-    Charge (Dimension):
+    Current (Dimension):
 
     Potential (Dimension):
 
@@ -1063,7 +1062,7 @@ class Unit:
             >>> amperes_cubed_per_area is Ampere**3/Meter**2
             True
             >>> str(amperes_cubed_per_area)
-            'A³⋅m⁻²'
+            'C³⋅s⁻³⋅m⁻²'
 
             Measured can parse any unit in the same format it produces with `str`, but
             also understands easier-to-type versions:
@@ -1382,7 +1381,7 @@ class Quantity:
             '10.0 s'
             >>> amperes_cubed_per_area = Quantity.parse('2 A³/m²')
             >>> str(amperes_cubed_per_area)
-            '2 A³⋅m⁻²'
+            '2 C³⋅s⁻³⋅m⁻²'
 
             Measured can parse any unit in the same format it produces with `str`, but
             also understands easier-to-type versions:

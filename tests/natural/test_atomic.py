@@ -2,7 +2,7 @@ import pytest
 
 from measured import Charge, Length, Mass, Quantity, Time
 from measured.natural import AtomicCharge, AtomicLength, AtomicMass, AtomicTime
-from measured.physics import c, e, mₑ, α, ℏ
+from measured.physics import c, e, kₑ, mₑ, α, ℏ
 from measured.si import Coulomb, Kilogram, Meter, Second
 
 
@@ -12,17 +12,14 @@ from measured.si import Coulomb, Kilogram, Meter, Second
         (e, 1 * AtomicCharge),
         (mₑ, 1 * AtomicMass),
         (ℏ, 1 * ((AtomicLength**2 * AtomicMass) / AtomicTime)),
-        # TODO: this is failing to cancel terms fully
-        # (
-        #     kₑ,
-        #     (
-        #         1
-        #         * (
-        #             (AtomicLength**3 * AtomicMass)
-        #             / (AtomicTime**2 * AtomicCharge**2)
-        #         )
-        #     ),
-        # ),
+        (
+            kₑ,
+            (
+                1
+                * (AtomicLength**3 * AtomicMass)
+                / (AtomicTime**2 * AtomicCharge**2)
+            ),
+        ),
         (c, α**-1 * (AtomicLength / AtomicTime)),
     ],
 )

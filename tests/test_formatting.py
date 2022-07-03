@@ -105,8 +105,8 @@ def test_strings_of_quantities(quantity: Quantity, string: str) -> None:
         (5.123 * Meter / Second, "{quantity:.2f:}", "5.12 m⋅s⁻¹"),
         (5.123 * Meter / Second, "{quantity:.2f:/}", "5.12 m/s"),
         (5 * Ohm, "{quantity}", "5 Ω"),
-        (5 * Ohm, "{quantity::/}", "5 m²⋅kg/s³⋅A²"),
-        (5 * Milli * Ohm, "{quantity::/}", "0.005 m²⋅kg/s³⋅A²"),
+        (5 * Ohm, "{quantity::/}", "5 m²⋅kg/s⋅C²"),
+        (5 * Milli * Ohm, "{quantity::/}", "0.005 m²⋅kg/s⋅C²"),
     ],
 )
 def test_format_specifiers(quantity: Quantity, template: str, string: str) -> None:

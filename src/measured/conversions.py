@@ -177,36 +177,15 @@ def _collapse_by_dimension(unit: Unit) -> Quantity:
 
         by_dimension[dimension] = (current_unit, current_exponent + exponent)
 
-    # Find any units whose dimensions cancel and try to combine them.  For example,
-    # if the factors here are Ampere/Second, that's the same as Coulomb.
-    factors = {
+    final_factors = {
         unit: exponent for unit, exponent in by_dimension.values() if exponent != 0
     } or {One: 1}
-
-    to_check = set(factors.keys())
-
-    while to_check:
-        this = to_check.pop()
-        this_exponent = factors[this]
-        for other in to_check:
-            other_exponent = factors[other]
-
-            this_term = this**this_exponent
-            other_term = other**other_exponent
-
-            if (Number / other_term.dimension).is_factor(this_term.dimension):
-                del factors[this]
-                del factors[other]
-                to_check.discard(other)
-
-                factors[this_term * other_term] = 1
-                break
 
     final_dimension = Number
     for dimension in by_dimension.keys():
         final_dimension *= dimension
 
-    return Quantity(magnitude, Unit(IdentityPrefix, factors, final_dimension))
+    return Quantity(magnitude, Unit(IdentityPrefix, final_factors, final_dimension))
 
 
 @lru_cache(maxsize=None)

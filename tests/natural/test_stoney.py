@@ -2,7 +2,7 @@ import pytest
 
 from measured import Charge, Length, Mass, Quantity, Time
 from measured.natural import StoneyCharge, StoneyLength, StoneyMass, StoneyTime
-from measured.physics import G, c, e, α, ℏ
+from measured.physics import G, c, e, kₑ, α, ℏ
 from measured.si import Coulomb, Kilogram, Meter, Second
 
 
@@ -12,14 +12,13 @@ from measured.si import Coulomb, Kilogram, Meter, Second
         (c, 1 * (StoneyLength / StoneyTime)),
         (G, 1 * (StoneyLength**3 / (StoneyMass * StoneyTime**2))),
         (e, 1 * StoneyCharge),
-        # TODO: this is failing to cancel terms fully
-        # (
-        #     kₑ,
-        #     1
-        #     * (
-        #         (StoneyLength**3 * StoneyMass) / (StoneyTime**2 * StoneyCharge**2)
-        #     ),
-        # ),
+        (
+            kₑ,
+            1
+            * (
+                (StoneyLength**3 * StoneyMass) / (StoneyTime**2 * StoneyCharge**2)
+            ),
+        ),
         (ℏ, α**-1 * ((StoneyLength**2 * StoneyMass) / StoneyTime)),
     ],
 )
