@@ -1,21 +1,37 @@
 import pytest
+from hypothesis import example, given
 
-from measured import IdentityPrefix, One, Prefix
+from measured import IdentityPrefix, One, Prefix, Quantity
+from measured.hypothesis import prefixes
 from measured.iec import Bit, Kibi, Mebi
-from measured.si import Deci, Kilo, Mega, Meter, Micro, Milli, Second
+from measured.si import Ampere, Deci, Kilo, Mega, Meter, Micro, Milli, Ohm, Second, Volt
 
 
-def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
-    if "prefix" in metafunc.fixturenames:
-        examples = [Kibi, Mebi, Milli, Deci, Kilo, Mega]
-        ids = [d.name for d in examples]
-        metafunc.parametrize("prefix", examples, ids=ids)
+@pytest.fixture(scope="module")
+def identity() -> Prefix:
+    return IdentityPrefix
 
 
+@given(a=prefixes())
+def test_abelian_identity(identity: Prefix, a: Prefix) -> None:
+    assert identity * a == a
+
+
+@given(a=prefixes())
+@example(a=IdentityPrefix)
+def test_abelian_inverse(identity: Prefix, a: Prefix) -> None:
+    inverse = a**-1
+    assert inverse * a == a * inverse
+    assert inverse * a == identity
+    assert identity / a == inverse
+
+
+@given(prefix=prefixes())
 def test_repr(prefix: Prefix) -> None:
     assert repr(prefix) == f"Prefix(base={prefix.base!r}, exponent={prefix.exponent!r})"
 
 
+@given(prefix=prefixes())
 def test_repr_roundtrips(prefix: Prefix) -> None:
     assert eval(repr(prefix)) is prefix
 
@@ -96,6 +112,36 @@ def test_dividing_by_random_things() -> None:
 
     with pytest.raises(TypeError):
         Kilo / "hello"  # type: ignore
+
+
+def test_prefixed_complex_units() -> None:
+    voltage = 5 * Kilo * Volt
+    current = 2 * Milli * Ampere
+    resistance = voltage / current
+    assert resistance == 2.5 * Mega * Ohm
+    assert resistance == 2500000 * Ohm
+
+
+@pytest.mark.parametrize(
+    "root, prefix_squared, squared",
+    [
+        (
+            (5 * Kilo * Meter),
+            25 * ((Kilo * Meter) ** 2),
+            25000000 * Meter**2,
+        ),
+        (
+            (100 * Kilo * Meter) / (10 * Second),
+            (10000 * ((Kilo * Meter) ** 2)) / (100 * Second**2),
+            (10000000000 * Meter**2) / (100 * Second**2),
+        ),
+    ],
+)
+def test_prefixed_unit_exponentation(
+    root: Quantity, prefix_squared: Quantity, squared: Quantity
+) -> None:
+    assert root**2 == prefix_squared
+    assert root**2 == squared
 
 
 def test_roots() -> None:

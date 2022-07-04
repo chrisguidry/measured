@@ -582,6 +582,9 @@ class Prefix:
         name: Optional[str] = None,
         symbol: Optional[str] = None,
     ) -> "Prefix":
+        if base != 0 and exponent == 0:
+            return IdentityPrefix
+
         key = (base, exponent)
         if key in cls._known:
             return cls._known[key]
@@ -1074,7 +1077,7 @@ class Unit:
 
     def __str__(self) -> str:
         if self.symbol:
-            return f"{self.prefix}{self.symbol}"
+            return self.symbol
 
         return str(self.prefix) + "⋅".join(
             f"{unit.prefix}{unit.symbol}{superscript(exponent)}"
@@ -1570,7 +1573,7 @@ class Quantity:
         if approximation is True:
             return
 
-        assert approximation, f"No conversion between {self} and {other}"
+        assert approximation is not False, f"No conversion between {self} and {other}"
 
         message = " or ".join(
             [
