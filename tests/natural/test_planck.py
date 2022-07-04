@@ -32,7 +32,7 @@ def test_hbar() -> None:
 
 def test_length() -> None:
     assert PlanckLength.dimension is Length
-    (1 * PlanckLength).assert_approximates(1.616255e-35 * Meter)
+    (1 * PlanckLength).assert_approximates(1.616255e-35 * Meter, 1.3e-07)
 
 
 def test_mass() -> None:

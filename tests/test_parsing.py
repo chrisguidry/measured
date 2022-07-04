@@ -1,11 +1,26 @@
-import pytest
+from math import inf, nan
 
-from measured import Numeric, Quantity, Unit, systems  # noqa: F401
+import pytest
+from hypothesis import assume, example, given
+from hypothesis.strategies import floats, integers
+
+from measured import systems  # noqa: F401
+from measured import Numeric, Quantity, Unit
+from measured.hypothesis import units
 from measured.iec import Byte, Kibi
 from measured.parsing import ParseError
-from measured.si import Ampere, Hertz, Kilo, Meter, Micro, Ohm, Second
-
-ALL_UNITS = sorted(Unit.base(), key=lambda u: u.name or "")
+from measured.si import (
+    Ampere,
+    Gram,
+    Hertz,
+    Kilo,
+    Kilogram,
+    Liter,
+    Meter,
+    Micro,
+    Ohm,
+    Second,
+)
 
 
 def test_unit_symbols_should_not_have_spaces() -> None:
@@ -13,15 +28,45 @@ def test_unit_symbols_should_not_have_spaces() -> None:
         Meter.alias(symbol="the metre")
 
 
-@pytest.mark.parametrize("unit", ALL_UNITS, ids=[u.name for u in ALL_UNITS])
-def test_each_unit_parsable(unit: Unit) -> None:
+@given(unit=units())
+def test_each_unit_roundtrips(unit: Unit) -> None:
+    assume(unit is not (Kilo * Gram))  # see test below
     assert Unit.parse(str(unit)) is unit
 
 
-@pytest.mark.parametrize("magnitude", [-1e-30 - 1.1, -1, 0, 1, 1.1, 1e30])
-@pytest.mark.parametrize("unit", ALL_UNITS, ids=[u.name for u in ALL_UNITS])
-def test_int_quantity_in_each_unit_parsable(magnitude: Numeric, unit: Unit) -> None:
+def test_kilogram_converts_to_kilogram() -> None:
+    # This test is a special case for Kilo*Gram versus Kilogram, which measured will
+    # always parse to Kilogram
+    assert Unit.parse(str(Kilogram)) is Kilogram
+    assert Unit.parse(str(Kilo * Gram)) is Kilogram
+
+
+@given(
+    magnitude=integers(min_value=-1000000000000, max_value=1000000000000),
+    unit=units(),
+)
+@example(magnitude=1, unit=Liter)
+def test_small_integer_quantities_parse_exactly(magnitude: Numeric, unit: Unit) -> None:
     assert Quantity.parse(str(magnitude * unit)) == magnitude * unit
+
+
+@given(magnitude=integers(), unit=units())
+@example(magnitude=1, unit=Liter)
+def test_large_integer_quantities_are_parsable(magnitude: Numeric, unit: Unit) -> None:
+    Quantity.parse(str(magnitude * unit)).assert_approximates(magnitude * unit)
+
+
+@given(magnitude=floats(allow_infinity=False, allow_nan=False), unit=units())
+@example(magnitude=1.0, unit=Liter)
+def test_float_quantities_are_parsable(magnitude: Numeric, unit: Unit) -> None:
+    assert Quantity.parse(str(magnitude * unit)) == magnitude * unit
+
+
+@given(unit=units())
+@pytest.mark.parametrize("magnitude", [nan, inf, -inf])
+def test_unparsable_floats(magnitude: float, unit: Unit) -> None:
+    with pytest.raises(ParseError):
+        Quantity.parse(str(magnitude * unit))
 
 
 @pytest.mark.parametrize(
