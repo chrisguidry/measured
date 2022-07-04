@@ -189,7 +189,7 @@ Kilogram.equals(1000 * Gram)
 Hertz = Unit.derive(One / Second, name="hertz", symbol="Hz")
 
 Radian = PlaneAngle.unit(name="radian", symbol="rad")
-Steradian = PlaneAngle.unit(name="steradian", symbol="sr")
+Steradian = Unit.derive(Radian**2, name="steradian", symbol="sr")
 
 Newton = Unit.derive((Kilogram) * Meter / Second**2, name="newton", symbol="N")
 Joule = Unit.derive(Meter * Newton, name="joule", symbol="J")

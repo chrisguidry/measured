@@ -1,10 +1,10 @@
 from fractions import Fraction
 
 import pytest
-from hypothesis import assume, example, given, strategies
+from hypothesis import example, given, strategies
 
 from measured import Length, Number, One, Unit
-from measured.hypothesis import base_units, units
+from measured.hypothesis import base_units, units, units_with_symbols
 from measured.iec import Byte
 from measured.si import Liter, Meter, Second
 
@@ -148,8 +148,7 @@ def test_symbols_unique() -> None:
         Unit.derive(Meter / Second, name="totally unique", symbol="Ω")
 
 
-@given(unit=units())
+@given(unit=units_with_symbols())
 @example(unit=Liter)  # liter is interesting in that it includes a prefix
 def test_units_str_to_their_symbols(unit: Unit) -> None:
-    assume(unit.symbol)
     assert str(unit) == unit.symbol

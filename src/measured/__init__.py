@@ -165,10 +165,11 @@ from typing import (
 from .formatting import superscript
 
 try:
-    from icecream import ic
+    from icecream import _ic
 except ImportError:  # pragma: no cover
-    ic = lambda *a: None if not a else (a[0] if len(a) == 1 else a)  # noqa
+    _ic = lambda *a: None if not a else (a[0] if len(a) == 1 else a)  # noqa
 
+ic = _ic
 
 __version__ = version("measured")
 
@@ -1529,7 +1530,7 @@ class Quantity:
 
         return abs(ratio)
 
-    def approximates(self, other: "Quantity", within: float = 1e-6) -> bool:
+    def approximates(self, other: "Quantity", within: float = 1e-7) -> bool:
         """Indicates whether this Quantity and another Quantity are close enough to
         each other to be considered equal.
 
@@ -1549,7 +1550,7 @@ class Quantity:
 
         return bool(approximation <= within)
 
-    def assert_approximates(self, other: "Quantity", within: float = 1e-6) -> None:
+    def assert_approximates(self, other: "Quantity", within: float = 1e-7) -> None:
         """Asserts whether this Quantity and another Quantity are close enough to
         each other to be considered equal, with a helpful assertion message
 

@@ -1,25 +1,15 @@
 from typing import Any
 
 import pytest
+from hypothesis import assume, given
+from hypothesis.strategies import floats, integers, one_of
 
 from measured import Length, Numeric, One, Quantity, Unit
-from measured.si import Meter, Ohm, Second
+from measured.hypothesis import quantities
+from measured.si import Meter, Second
 
 
-def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
-    examples = [
-        5 * Meter,
-        10 * Meter / Second,
-        10.5 * Ohm,
-    ]
-
-    ids = [str(q) for q in examples]
-
-    if "quantity" in metafunc.fixturenames:
-        metafunc.parametrize("quantity", examples, ids=ids)
-
-
-@pytest.mark.parametrize("value", [-2, 5, 0.1, -0.3, 2.5])
+@given(value=one_of(floats(allow_nan=False, allow_infinity=False), integers()))
 def test_constructing_quantities_by_multiplying_units(value: Numeric) -> None:
     assert Meter * value == value * Meter
     assert value * Meter * Meter == value * Meter**2
@@ -190,6 +180,7 @@ def test_approximating() -> None:
     assert not (1 * Meter).approximates(1.0 * Second)
 
 
+@given(quantity=quantities())
 def test_repr(quantity: Quantity) -> None:
     assert (
         repr(quantity)
@@ -197,12 +188,14 @@ def test_repr(quantity: Quantity) -> None:
     )
 
 
+@given(quantity=quantities())
 def test_repr_roundtrips(quantity: Quantity) -> None:
     from measured import Dimension, Prefix, Unit  # noqa: F401
 
     assert eval(repr(quantity)) == quantity
 
 
+@given(quantity=quantities())
 def test_hashing(quantity: Quantity) -> None:
     assert isinstance(hash(quantity), int)
 
@@ -210,8 +203,9 @@ def test_hashing(quantity: Quantity) -> None:
     assert quantity is not equal
     assert hash(quantity) == hash(equal)
 
-    unequal = Quantity(quantity.magnitude - 1, quantity.unit)
+    unequal = Quantity(quantity.magnitude + 1, quantity.unit)
     assert quantity is not unequal
+    assume(hash(quantity.magnitude) != hash(unequal.magnitude))
     assert hash(quantity) != hash(unequal)
 
     assert {quantity, equal, unequal} == {quantity, unequal}

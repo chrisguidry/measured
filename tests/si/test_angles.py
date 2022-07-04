@@ -36,8 +36,8 @@ def test_steradian_is_dimensionless_but_unique() -> None:
         (2 * π * Radian, 360 * Degree),
         (1 * Arcminute, 60 * Arcsecond),
         (1 * Degree, 60 * Arcminute),
-        (1 * Arcsecond, 0.000004848136 * Radian),
-        (1 * Arcminute, 0.000290888 * Radian),
+        (1 * Arcsecond, 0.000004848136811 * Radian),
+        (1 * Arcminute, 0.000290888208665 * Radian),
     ],
 )
 def test_angle_conversions(left: Quantity, right: Quantity) -> None:
