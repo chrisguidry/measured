@@ -165,7 +165,7 @@ from typing import (
 from .formatting import superscript
 
 try:
-    from icecream import _ic
+    from icecream import ic as _ic
 except ImportError:  # pragma: no cover
     _ic = lambda *a: None if not a else (a[0] if len(a) == 1 else a)  # noqa
 
@@ -1624,6 +1624,7 @@ Frequency = Dimension.derive(Number / Time, name="frequency")
 # https://en.wikipedia.org/wiki/Newton%27s_laws_of_motion#Second
 
 Force = Dimension.derive(Mass * Acceleration, name="force")
+Pressure = Dimension.derive(Force / Area, name="pressure")
 Energy = Dimension.derive(Length * Force, name="energy")
 Power = Dimension.derive(Energy / Time, name="power")
 

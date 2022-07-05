@@ -84,3 +84,6 @@ kₑ = (4 * π * ε0) ** -1
 
 # https://en.wikipedia.org/wiki/Fine-structure_constant
 α = (e**2) / (4 * π * ε0 * ħ * c)
+
+# https://en.wikipedia.org/wiki/Standard_gravity
+gₙ = 9.80665 * Meter / Second**2

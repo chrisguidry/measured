@@ -191,7 +191,8 @@ Hertz = Unit.derive(One / Second, name="hertz", symbol="Hz")
 Radian = PlaneAngle.unit(name="radian", symbol="rad")
 Steradian = Unit.derive(Radian**2, name="steradian", symbol="sr")
 
-Newton = Unit.derive((Kilogram) * Meter / Second**2, name="newton", symbol="N")
+Newton = Unit.derive(Kilogram * Meter / Second**2, name="newton", symbol="N")
+Pascal = Unit.derive(Newton / Meter**2, name="pascal", symbol="Pa")
 Joule = Unit.derive(Meter * Newton, name="joule", symbol="J")
 Watt = Unit.derive(Joule / Second, name="watt", symbol="W")
 
