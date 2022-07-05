@@ -1,11 +1,17 @@
-from measured import Acceleration, Energy, Force, Mass, Power
-from measured.si import Gram, Joule, Kilo, Meter, Milli, Newton, Second, Watt
+from measured import Acceleration, Energy, Force, Mass, Power, Pressure
+from measured.si import Gram, Joule, Kilo, Meter, Milli, Newton, Pascal, Second, Watt
 
 
 def test_newton() -> None:
     assert Newton.name == "newton"
     assert Newton.symbol == "N"
     assert Newton.dimension is Force
+
+
+def test_pascal() -> None:
+    assert Pascal.name == "pascal"
+    assert Pascal.symbol == "Pa"
+    assert Pascal.dimension is Pressure
 
 
 def test_joule() -> None:

@@ -1,6 +1,7 @@
 import pytest
 
 from measured import (
+    Acceleration,
     Area,
     Capacitance,
     Charge,
@@ -19,6 +20,7 @@ from measured import (
     physics,
 )
 from measured.si import Coulomb, Farad, Joule, Kelvin, Kilogram, Meter, Second
+from measured.us import Foot
 
 
 @pytest.mark.parametrize(
@@ -34,6 +36,7 @@ from measured.si import Coulomb, Farad, Joule, Kelvin, Kilogram, Meter, Second
         (physics.mₑ, Mass),
         (physics.kₑ, ((Force * Area) / Charge**2)),
         (physics.α, Number),
+        (physics.gₙ, Acceleration),
     ],
 )
 def test_constants_have_expected_dimension(
@@ -63,6 +66,8 @@ def test_constants_have_expected_dimension(
             8.9875517923e9 * (Kilogram * Meter**3) / (Second**2 * Coulomb**2),
         ),
         (physics.α, 1 / 137.035999206 * One),
+        (physics.gₙ, 9.80665 * Meter / Second**2),
+        (physics.gₙ, 32.174049 * Foot / Second**2),
     ],
 )
 def test_constants_have_expected_si_values(
