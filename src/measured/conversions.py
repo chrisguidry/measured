@@ -83,7 +83,7 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
         )
 
     this = quantity.unprefixed()
-    other = (1 * other_unit).unprefixed()
+    other = other_unit.quantify()
 
     this = this.magnitude * _collapse_by_dimension(this.unit)
     other = other.magnitude * _collapse_by_dimension(other.unit)
