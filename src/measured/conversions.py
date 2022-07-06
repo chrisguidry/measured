@@ -12,6 +12,7 @@ from measured import (
     One,
     Quantity,
     Unit,
+    ic,
 )
 
 if sys.version_info < (3, 9):  # pragma: no cover
@@ -193,21 +194,19 @@ def _find_path(
     start: Unit,
     end: Unit,
 ) -> Optional[List[Tuple[Ratio, Offset, Unit]]]:
-    return _find_path_recursive(start, end)
+    return _find_path_recursive(start, end, visited=set())
 
 
 def _find_path_recursive(
     start: Unit,
     end: Unit,
-    visited: Optional[Set[Unit]] = None,
+    visited: Set[Unit],
 ) -> Optional[List[Tuple[Ratio, Offset, Unit]]]:
 
     if start is end:
         return [(1, 0, end)]
 
-    if visited is None:
-        visited = {start}
-    elif start in visited:
+    if start in visited:
         return None
     else:
         visited.add(start)
