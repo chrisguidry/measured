@@ -49,8 +49,8 @@ def equate(a: Quantity, b: Quantity) -> None:
     if a.unit == b.unit and a.unit is not One:
         raise ValueError("No need to define conversions for a unit and itself")
 
-    a = a.in_base_units()
-    b = b.in_base_units()
+    a = a.unprefixed()
+    b = b.unprefixed()
 
     _ratios[a.unit][b.unit] = b.magnitude / a.magnitude
     _ratios[b.unit][a.unit] = a.magnitude / b.magnitude
@@ -81,8 +81,8 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
             f"{other_unit} ({other_unit.dimension})"
         )
 
-    this = quantity.in_base_units()
-    other = (1 * other_unit).in_base_units()
+    this = quantity.unprefixed()
+    other = (1 * other_unit).unprefixed()
 
     this = this.magnitude * _collapse_by_dimension(this.unit)
     other = other.magnitude * _collapse_by_dimension(other.unit)

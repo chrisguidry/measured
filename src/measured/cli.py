@@ -81,7 +81,7 @@ def print_quantity(input_string: str) -> None:
         print(f"Error parsing quantity from {input_string!r}:\n{str(e)}")
         sys.exit(1)
 
-    quantity = quantity.in_base_units()
+    quantity = quantity.unprefixed()
     unit = quantity.unit
     dimension = unit.dimension
 

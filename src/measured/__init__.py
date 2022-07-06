@@ -1307,7 +1307,7 @@ class Quantity:
             unit = Unit.parse(unit)
         self.unit = unit
 
-    def in_base_units(self) -> "Quantity":
+    def unprefixed(self) -> "Quantity":
         """Reduces this Quantity into a new Quantity expressed only in base units
         without any Prefixes"""
         return self.magnitude * self.unit.quantify()
@@ -1478,8 +1478,8 @@ class Quantity:
         if self.unit.dimension != other.unit.dimension:
             return NotImplemented
 
-        this = self.in_base_units()
-        other = other.in_base_units()
+        this = self.unprefixed()
+        other = other.unprefixed()
 
         if this.unit == other.unit:
             return this.magnitude == other.magnitude
@@ -1496,8 +1496,8 @@ class Quantity:
         if self.unit.dimension != other.unit.dimension:
             return NotImplemented
 
-        this = self.in_base_units()
-        other = other.in_base_units()
+        this = self.unprefixed()
+        other = other.unprefixed()
 
         if this.unit == other.unit:
             return this.magnitude < other.magnitude
@@ -1514,8 +1514,8 @@ class Quantity:
         if self.unit.dimension != other.unit.dimension:
             return False
 
-        this = self.in_base_units()
-        other = other.in_base_units()
+        this = self.unprefixed()
+        other = other.unprefixed()
 
         if this.unit != other.unit:
             try:
@@ -1563,8 +1563,8 @@ class Quantity:
             >>> from measured.si import Meter
             >>> (0.001 * Meter).assert_approximates(0.002 * Meter, within=0.5)
         """
-        left = self.in_base_units()
-        right = other.in_base_units()
+        left = self.unprefixed()
+        right = other.unprefixed()
 
         assert (
             self.unit.dimension == other.unit.dimension
