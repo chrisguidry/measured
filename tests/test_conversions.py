@@ -1,10 +1,21 @@
 import pytest
 
-from measured import Area, Length, Mass, Number, Numeric, One, Unit, conversions
+from measured import (
+    Area,
+    Length,
+    Mass,
+    Number,
+    Numeric,
+    One,
+    Pressure,
+    Quantity,
+    Unit,
+    conversions,
+)
 from measured.conversions import ConversionNotFound
 from measured.geometry import π
-from measured.si import Degree, Meter, Minute, Radian, Second
-from measured.us import Acre, Foot, Inch
+from measured.si import Degree, Meter, Minute, Newton, Pascal, Radian, Second
+from measured.us import PSI, Acre, Foot, Inch, Pound, PoundForce
 
 
 def test_disallow_self_conversion() -> None:
@@ -133,3 +144,39 @@ def test_failing_to_collapse_dimensions() -> None:
 
     with pytest.raises(ConversionNotFound):
         ((1 * Jib) / (1 * Job)).in_unit(One)
+
+
+@pytest.mark.parametrize(
+    "equivalent",
+    [
+        10000 * Newton / Meter**2,
+        10000 * Pascal,
+        1.4503774 * PSI,
+        1.4503774 * PoundForce / Inch**2,
+        22046.226 * (Pound * Meter / Second**2) / Meter**2,
+        2048.163 * (Pound * Meter / Second**2) / Foot**2,
+        6719.689751 * (Pound * Foot / Second**2) / Foot**2,
+        46.664512 * (Pound * Foot / Second**2) / Inch**2,
+        # TODO: this test fails the assertion in conversions._find
+        # 9097695 * PoundForce / Acre,
+        # TODO: this test fails the assertion in conversions._find
+        # 89217910.67175 * (Pound * Meter / Second**2) / Acre,
+        # TODO: this test fails the assertion in conversions._find
+        # 208.849996 * PoundForce / Foot**2,
+        # TODO: this test fails the assertion in conversions._reduce_dimension
+        # 0.01296236 * (Pound * Foot / Minute**2) / Inch**2,
+    ],
+)
+def test_converting_all_terms(equivalent: Quantity) -> None:
+    quantity = 10000 * Newton / Meter**2
+    assert quantity.unit.dimension is Pressure
+
+    converted = quantity.in_unit(equivalent.unit)
+    assert converted.unit.dimension is Pressure
+    assert converted.unit is equivalent.unit
+    assert converted.magnitude == pytest.approx(equivalent.magnitude)
+
+    reversed = equivalent.in_unit(Newton / Meter**2)
+    assert reversed.unit.dimension is Pressure
+    assert reversed.unit is Newton / Meter**2
+    assert reversed.magnitude == pytest.approx(10000)

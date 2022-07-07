@@ -259,9 +259,10 @@ def _find_path_recursive(
 
 def _reduce_dimension(start: Unit, end: Unit) -> Tuple[int, Unit, Unit]:
     """Reduce the dimension of the given units to their lowest common exponents"""
-    assert (
-        start.dimension is end.dimension
-    ), f"{start} and {end} measure different dimensions"
+    assert start.dimension is end.dimension, (
+        f"{start} ({start.dimension}) and {end} ({end.dimension}) measure "
+        "different dimensions"
+    )
 
     if start.dimension is Number:
         return 1, start, end
