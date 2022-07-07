@@ -38,9 +38,19 @@ Attributes: Nautical units of length
 
 """
 
-from . import Acceleration, Area, Force, Length, Mass, Temperature, Volume, avoirdupois
+from . import (
+    Acceleration,
+    Area,
+    Force,
+    Length,
+    Mass,
+    Temperature,
+    Unit,
+    Volume,
+    avoirdupois,
+)
 from .physics import gₙ
-from .si import Gram, Kelvin, Kilo, Liter, Meter, Micro, Milli, Newton, Second
+from .si import Gram, Kelvin, Kilo, Liter, Meter, Micro, Milli, Newton, Pascal, Second
 
 # Length
 # https://en.wikipedia.org/wiki/United_States_customary_units#Length
@@ -254,6 +264,9 @@ PoundForce = Force.unit("pound-force", "lbf")
 PoundForce.equals(1 * Pound * gₙ)
 PoundForce.equals(1 * Pound * GForce)
 PoundForce.equals(4.4482216152605 * Newton)
+
+PSI = Unit.derive(PoundForce / Inch**2, "pounds per square inch", "psi")
+PSI.equals(6894.757 * Pascal)
 
 # Temperature
 # https://en.wikipedia.org/wiki/Rankine_scale
