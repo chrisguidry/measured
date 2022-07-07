@@ -2,7 +2,8 @@ import pytest
 
 from measured import Area, Length, Mass, Number, Numeric, One, Unit, conversions
 from measured.conversions import ConversionNotFound
-from measured.si import Meter, Second
+from measured.geometry import π
+from measured.si import Degree, Meter, Minute, Radian, Second
 from measured.us import Acre, Foot, Inch
 
 
@@ -51,6 +52,23 @@ def test_conversion_with_exponents() -> None:
 
     assert (1 * Foot) ** 3 == (12 * Inch) ** 3
     assert 1 * Foot**3 == 1728 * Inch**3
+
+
+def test_cancelling_units() -> None:
+    speed = 10 * Meter / Second
+    time = 1 * Minute
+    distance = speed * time
+    assert distance.in_unit(Meter) == 600 * Meter
+
+
+def test_dimensionless_units() -> None:
+    assert (π / 2 * Radian).in_unit(Degree) == 90 * Degree
+
+
+def test_conversions_applied_during_subtraction() -> None:
+    first = 2 * Meter / Second
+    second = 30 * Foot / Minute
+    assert first - second == 1.8476 * Meter / Second
 
 
 @pytest.mark.parametrize(

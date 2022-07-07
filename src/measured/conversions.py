@@ -164,9 +164,9 @@ def _collapse_by_dimension(unit: Unit) -> Quantity:
     by_dimension: Dict[Dimension, Tuple[Unit, int]] = {}
 
     # Convert units until there is only one for each dimension
-    for unit, exponent in unit.factors.items():
-        dimension = unit.dimension
-        quantified = unit.quantify()
+    for factor, exponent in unit.factors.items():
+        dimension = factor.dimension
+        quantified = factor.quantify()
 
         if dimension not in by_dimension:
             magnitude *= quantified.magnitude**exponent
@@ -189,7 +189,7 @@ def _collapse_by_dimension(unit: Unit) -> Quantity:
         by_dimension[dimension] = (current_unit, current_exponent + exponent)
 
     final_factors = {
-        unit: exponent for unit, exponent in by_dimension.values() if exponent != 0
+        factor: exponent for factor, exponent in by_dimension.values() if exponent != 0
     } or {One: 1}
 
     final_dimension = Number
