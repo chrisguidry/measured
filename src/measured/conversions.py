@@ -88,11 +88,7 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
     this = this.magnitude * _collapse_by_dimension(this.unit)
     other = other.magnitude * _collapse_by_dimension(other.unit)
 
-    ic(this)
-    ic(other)
-
     direct_path = _find_path(this.unit, other.unit)
-    ic(direct_path)
     if direct_path:
         return Quantity(
             _apply_path(this.magnitude / other.magnitude, direct_path),
