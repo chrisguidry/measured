@@ -3,6 +3,7 @@ from collections import defaultdict
 from functools import lru_cache
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
+from measured import ic  # noqa: F401
 from measured import (
     Dimension,
     FractionalDimensionError,
@@ -12,7 +13,6 @@ from measured import (
     One,
     Quantity,
     Unit,
-    ic,
 )
 
 if sys.version_info < (3, 9):  # pragma: no cover
@@ -88,6 +88,17 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
     this = this.magnitude * _collapse_by_dimension(this.unit)
     other = other.magnitude * _collapse_by_dimension(other.unit)
 
+    ic(this)
+    ic(other)
+
+    direct_path = _find_path(this.unit, other.unit)
+    ic(direct_path)
+    if direct_path:
+        return Quantity(
+            _apply_path(this.magnitude / other.magnitude, direct_path),
+            other_unit,
+        )
+
     this_numerator, this_denominator = this.unit.as_ratio()
     other_numerator, other_denominator = other.unit.as_ratio()
 
@@ -103,17 +114,19 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
             f"No conversion from {this_denominator!r} to {other_denominator!r}"
         )
 
-    numerator = this.magnitude
-    for scale, offset, _ in numerator_path:
-        numerator *= scale
-        numerator += offset
-
-    denominator = other.magnitude
-    for scale, offset, _ in denominator_path:
-        denominator *= scale
-        denominator += offset
+    numerator = _apply_path(this.magnitude, numerator_path)
+    denominator = _apply_path(other.magnitude, denominator_path)
 
     return Quantity(numerator / denominator, other_unit)
+
+
+def _apply_path(
+    magnitude: Numeric, path: Iterable[Tuple[Ratio, Offset, Unit]]
+) -> Numeric:
+    for scale, offset, _ in path:
+        magnitude *= scale
+        magnitude += offset
+    return magnitude
 
 
 @lru_cache(maxsize=None)
@@ -135,6 +148,7 @@ def _find(
             if not this_path:
                 return None
             path += this_path
+
     return path
 
 
@@ -143,7 +157,7 @@ def _terms_by_dimension(unit: Unit) -> Dict[Dimension, List[Unit]]:
     for factor, exponent in unit.factors.items():
         factor = factor**exponent
         terms[factor.dimension].append(factor)
-    return terms
+    return dict(terms)
 
 
 @lru_cache(maxsize=None)
