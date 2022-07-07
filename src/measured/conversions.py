@@ -3,6 +3,7 @@ from collections import defaultdict
 from functools import lru_cache
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
+from measured import ic  # noqa: F401
 from measured import (
     Dimension,
     FractionalDimensionError,
@@ -49,8 +50,8 @@ def equate(a: Quantity, b: Quantity) -> None:
     if a.unit == b.unit and a.unit is not One:
         raise ValueError("No need to define conversions for a unit and itself")
 
-    a = a.in_base_units()
-    b = b.in_base_units()
+    a = a.unprefixed()
+    b = b.unprefixed()
 
     _ratios[a.unit][b.unit] = b.magnitude / a.magnitude
     _ratios[b.unit][a.unit] = a.magnitude / b.magnitude
@@ -81,11 +82,18 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
             f"{other_unit} ({other_unit.dimension})"
         )
 
-    this = quantity.in_base_units()
-    other = (1 * other_unit).in_base_units()
+    this = quantity.unprefixed()
+    other = other_unit.quantify()
 
     this = this.magnitude * _collapse_by_dimension(this.unit)
     other = other.magnitude * _collapse_by_dimension(other.unit)
+
+    direct_path = _find_path(this.unit, other.unit)
+    if direct_path:
+        return Quantity(
+            _apply_path(this.magnitude / other.magnitude, direct_path),
+            other_unit,
+        )
 
     this_numerator, this_denominator = this.unit.as_ratio()
     other_numerator, other_denominator = other.unit.as_ratio()
@@ -102,17 +110,19 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
             f"No conversion from {this_denominator!r} to {other_denominator!r}"
         )
 
-    numerator = this.magnitude
-    for scale, offset, _ in numerator_path:
-        numerator *= scale
-        numerator += offset
-
-    denominator = other.magnitude
-    for scale, offset, _ in denominator_path:
-        denominator *= scale
-        denominator += offset
+    numerator = _apply_path(this.magnitude, numerator_path)
+    denominator = _apply_path(other.magnitude, denominator_path)
 
     return Quantity(numerator / denominator, other_unit)
+
+
+def _apply_path(
+    magnitude: Numeric, path: Iterable[Tuple[Ratio, Offset, Unit]]
+) -> Numeric:
+    for scale, offset, _ in path:
+        magnitude *= scale
+        magnitude += offset
+    return magnitude
 
 
 @lru_cache(maxsize=None)
@@ -134,6 +144,7 @@ def _find(
             if not this_path:
                 return None
             path += this_path
+
     return path
 
 
@@ -142,7 +153,7 @@ def _terms_by_dimension(unit: Unit) -> Dict[Dimension, List[Unit]]:
     for factor, exponent in unit.factors.items():
         factor = factor**exponent
         terms[factor.dimension].append(factor)
-    return terms
+    return dict(terms)
 
 
 @lru_cache(maxsize=None)
@@ -193,21 +204,19 @@ def _find_path(
     start: Unit,
     end: Unit,
 ) -> Optional[List[Tuple[Ratio, Offset, Unit]]]:
-    return _find_path_recursive(start, end)
+    return _find_path_recursive(start, end, visited=set())
 
 
 def _find_path_recursive(
     start: Unit,
     end: Unit,
-    visited: Optional[Set[Unit]] = None,
+    visited: Set[Unit],
 ) -> Optional[List[Tuple[Ratio, Offset, Unit]]]:
 
     if start is end:
         return [(1, 0, end)]
 
-    if visited is None:
-        visited = {start}
-    elif start in visited:
+    if start in visited:
         return None
     else:
         visited.add(start)

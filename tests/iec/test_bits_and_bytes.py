@@ -69,5 +69,5 @@ def test_bit_iec_si_compatibility(iec: Quantity, si: Quantity) -> None:
     ],
 )
 def test_byte_iec_si_compatibility(iec: Quantity, si: Quantity) -> None:
-    difference = iec.in_base_units() - si.in_base_units()
+    difference = iec.unprefixed() - si.unprefixed()
     assert iec.approximates(si), f"{iec} and {si} differ by {difference}"

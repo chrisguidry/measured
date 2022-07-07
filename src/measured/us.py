@@ -38,8 +38,19 @@ Attributes: Nautical units of length
 
 """
 
-from . import Area, Length, Mass, Temperature, Volume, avoirdupois
-from .si import Gram, Kelvin, Kilo, Liter, Meter, Micro, Milli
+from . import (
+    Acceleration,
+    Area,
+    Force,
+    Length,
+    Mass,
+    Temperature,
+    Unit,
+    Volume,
+    avoirdupois,
+)
+from .physics import gₙ
+from .si import Gram, Kelvin, Kilo, Liter, Meter, Micro, Milli, Newton, Pascal, Second
 
 # Length
 # https://en.wikipedia.org/wiki/United_States_customary_units#Length
@@ -245,6 +256,17 @@ Ton = Mass.unit("short ton", "ton")
 Ton.equals(20 * Hundredweight)
 Ton.equals(907.18474 * Kilo * Gram)
 
+GForce = Acceleration.unit("g-force", "g-force")
+GForce.equals(gₙ)
+GForce.equals(32.17405 * Foot / Second**2)
+
+PoundForce = Force.unit("pound-force", "lbf")
+PoundForce.equals(1 * Pound * gₙ)
+PoundForce.equals(1 * Pound * GForce)
+PoundForce.equals(4.4482216152605 * Newton)
+
+PSI = Unit.derive(PoundForce / Inch**2, "pounds per square inch", "psi")
+PSI.equals(6894.757 * Pascal)
 
 # Temperature
 # https://en.wikipedia.org/wiki/Rankine_scale
