@@ -12,7 +12,6 @@ from measured import (
     Unit,
     conversions,
 )
-from measured.conversions import ConversionNotFound
 from measured.geometry import π
 from measured.si import Degree, Meter, Minute, Newton, Pascal, Radian, Second
 from measured.us import PSI, Acre, Foot, Inch, Pound, PoundForce
@@ -47,7 +46,7 @@ def test_approximating_requires_units_with_conversion() -> None:
 
 
 def test_unit_conversion_must_be_in_same_dimension() -> None:
-    with pytest.raises(ConversionNotFound):
+    with pytest.raises(conversions.ConversionNotFound):
         (1 * Meter).in_unit(Second)
 
 
@@ -110,10 +109,10 @@ def test_backtracking_conversions_with_no_path() -> None:
     Hiya = Length.unit("hello", "hello")
     Mundo = Area.unit("world", "world")
 
-    with pytest.raises(ConversionNotFound):
+    with pytest.raises(conversions.ConversionNotFound):
         conversions.convert(1 * Hiya**2, Mundo)
 
-    with pytest.raises(ConversionNotFound):
+    with pytest.raises(conversions.ConversionNotFound):
         conversions.convert(1 * Mundo, Hiya**2)
 
 
@@ -121,7 +120,7 @@ def test_failing_to_convert_numerator() -> None:
     Gud = Length.unit("goodbye", "goodbye")
     Mun = Length.unit("moon", "moon")
 
-    with pytest.raises(ConversionNotFound):
+    with pytest.raises(conversions.ConversionNotFound):
         (1 * Gud).in_unit(Mun)
 
 
@@ -131,7 +130,7 @@ def test_failing_to_convert_denominator() -> None:
 
     assert (Meter / Flib).dimension is (Meter / Flob).dimension
 
-    with pytest.raises(ConversionNotFound):
+    with pytest.raises(conversions.ConversionNotFound):
         (1 * Meter / Flib).in_unit(Meter / Flob)
 
 
@@ -142,7 +141,7 @@ def test_failing_to_collapse_dimensions() -> None:
     assert (Jib / Job).dimension is Number
     assert (Job / Jib).dimension is Number
 
-    with pytest.raises(ConversionNotFound):
+    with pytest.raises(conversions.ConversionNotFound):
         ((1 * Jib) / (1 * Job)).in_unit(One)
 
 
