@@ -76,63 +76,64 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
 
     final: Quantity = reduce(operator.mul, factors)
     ic((this.magnitude / other.magnitude) * final.magnitude)
-    ic(str(final.unit), final.unit)
-    ic(str(final.unit.dimension), final.unit.dimension)
+    ic(f"{final.unit:/}", final.unit)
+    ic(f"{final.unit.dimension}", final.unit.dimension)
 
     return (this.magnitude / other.magnitude) * final
 
 
 def _plan_conversion(start: Unit, end: Unit) -> List[Tuple[Unit, Unit, int]]:
-    ic(f"planning conversion from {start} {start.dimension} to {end} {end.dimension}")
+    ic(
+        f"planning conversion from {start:/} -> {end:/}",
+        start,
+        start.dimension,
+        end,
+        end.dimension,
+    )
 
+    plan: List[Tuple[Unit, Unit, int]] = []
     start_factors = _splat(start)
     end_factors = _splat(end)
 
-    ic("before matching")
-    ic(start_factors)
-    ic(end_factors)
+    ic("start", plan, start_factors, end_factors)
 
-    plan: List[Tuple[Unit, Unit, int]] = []
-
-    ic("first pass: find 1:1 matches by dimension")
-    for dimension in list(end_factors):
-        ic(dimension)
+    ic("pass 1: find terms in start that should be cancelled")
+    for dimension in list(start_factors):
         exponent = -1 if any(e < 0 for e in dimension.exponents) else 1
-        while dimension in end_factors:
-            if not start_factors.get(dimension):
-                break
+        ic(dimension, exponent)
+        inverse = dimension**-1
+        while dimension in start_factors and inverse in start_factors:
+            end_factor = _clean_pop(start_factors, dimension)
+            start_factor = _clean_pop(start_factors, inverse)
 
+            plan.append((start_factor, end_factor, -exponent))
+            plan.append((end_factor, end_factor, exponent))
+    ic("after cancelling start_factors", plan, start_factors, end_factors)
+
+    ic("pass 2: find 1:1 matches by dimension")
+    for dimension in list(end_factors):
+        exponent = -1 if any(e < 0 for e in dimension.exponents) else 1
+        ic(dimension, exponent)
+        while dimension in end_factors and dimension in start_factors:
             end_factor = _clean_pop(end_factors, dimension)
             start_factor = _clean_pop(start_factors, dimension)
+            plan.append((start_factor, end_factor, exponent))
+    ic("after matching", plan, start_factors, end_factors)
+
+    ic("pass 3: find terms remaining in end that should be cancelled")
+    for dimension in list(end_factors):
+        exponent = -1 if any(e < 0 for e in dimension.exponents) else 1
+        ic(dimension, exponent)
+        inverse = dimension**-1
+        while dimension in end_factors and inverse in end_factors:
+            end_factor = _clean_pop(end_factors, dimension)
+            start_factor = _clean_pop(end_factors, inverse)
 
             plan.append((start_factor, end_factor, exponent))
+            plan.append((start_factor, start_factor, -exponent))
+    ic("after cancelling end_factors", plan, start_factors, end_factors)
 
-    ic("after matching")
-    ic(plan)
-    ic(start_factors)
-    ic(end_factors)
-
-    ic("second pass: find terms remaining in end that should be cancelled")
-    for dimension in list(end_factors):
-        ic(dimension)
-        exponent = -1 if any(e < 0 for e in dimension.exponents) else 1
-        while dimension in end_factors:
-            inverse = dimension**-1
-            if not end_factors.get(inverse):
-                break
-
-            end_factor = _clean_pop(end_factors, dimension)
-
-            if dimension is not Number:
-                start_factor = _clean_pop(end_factors, inverse)
-
-                plan.append((end_factor, start_factor, -exponent))
-                plan.append((end_factor, end_factor, exponent))
-
-    ic("after cancelling end_factors")
-    ic(plan)
-    ic(start_factors)
-    ic(end_factors)
+    ic("end", plan, start_factors, end_factors)
 
     assert not start_factors
     assert not end_factors
