@@ -13,8 +13,9 @@ from measured import (
     conversions,
 )
 from measured.geometry import π
+from measured.physics import gₙ
 from measured.si import Degree, Meter, Minute, Newton, Pascal, Radian, Second
-from measured.us import PSI, Acre, Foot, Inch, Pound, PoundForce
+from measured.us import PSI, Acre, Foot, Inch, Pica, Pound, PoundForce, Yard
 
 
 def test_disallow_self_conversion() -> None:
@@ -64,6 +65,12 @@ def test_conversion_with_exponents() -> None:
     assert 1 * Foot**3 == 1728 * Inch**3
 
 
+def test_conversion_navigates_multiple_steps() -> None:
+    # 1 Yard -> 36 Inch -> 216 Pica
+    (1 * Yard).assert_approximates(216 * Pica)
+    (216 * Pica).assert_approximates(1 * Yard)
+
+
 def test_cancelling_units() -> None:
     speed = 10 * Meter / Second
     time = 1 * Minute
@@ -99,9 +106,9 @@ def test_conversion_can_navigate_exponents(
     start: Unit, end: Unit, magnitude: Numeric
 ) -> None:
     converted = conversions.convert(1 * start, end)
-    assert converted == magnitude * end
     assert converted.unit == end
-    assert converted.magnitude == magnitude
+    assert converted.magnitude == pytest.approx(magnitude)
+    converted.assert_approximates(magnitude * end)
 
 
 def test_backtracking_conversions_with_no_path() -> None:
@@ -146,6 +153,15 @@ def test_failing_to_collapse_dimensions() -> None:
         ((1 * Jib) / (1 * Job)).in_unit(One)
 
 
+def test_replacing_multiple_factors() -> None:
+    left = 1 * PoundForce * PoundForce
+    right = (1 * Pound * gₙ) * (1 * Pound * gₙ)
+
+    # These comparisons require replacing the PoundForce unit multiple times
+    assert left == right
+    assert right == left
+
+
 PRESSURE_EQUIVALENTS = [
     10000 * Newton / Meter**2,
     10000 * Pascal,
@@ -167,7 +183,7 @@ PRESSURE_EQUIVALENTS = [
 
 
 @pytest.mark.parametrize("equivalent", PRESSURE_EQUIVALENTS)
-def test_converting_all_terms_forward(equivalent: Quantity) -> None:
+def test_converting_pressure_terms_forward(equivalent: Quantity) -> None:
     quantity = 10000 * Newton / Meter**2
     assert quantity.unit.dimension is Pressure
 
@@ -178,7 +194,7 @@ def test_converting_all_terms_forward(equivalent: Quantity) -> None:
 
 
 @pytest.mark.parametrize("equivalent", PRESSURE_EQUIVALENTS)
-def test_converting_all_terms_backward(equivalent: Quantity) -> None:
+def test_converting_pressure_terms_backward(equivalent: Quantity) -> None:
     quantity = 10000 * Newton / Meter**2
     assert quantity.unit.dimension is Pressure
 
