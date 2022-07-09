@@ -105,15 +105,16 @@ def test_conversion_can_navigate_exponents(
 
 
 def test_backtracking_conversions_with_no_path() -> None:
-    # Set up some arbitrary units that don't convert to one another
-    Hiya = Length.unit("hello", "hello")
-    Mundo = Area.unit("world", "world")
+    # Set up some arbitrary units that don't convert to one another, simulating the
+    # situation of acres and square inches
+    Inchy = Length.unit("inchy", "inchy")
+    Achy = Area.unit("achy", "achy")
 
     with pytest.raises(conversions.ConversionNotFound):
-        conversions.convert(1 * Hiya**2, Mundo)
+        conversions.convert(1 * Inchy**2, Achy)
 
     with pytest.raises(conversions.ConversionNotFound):
-        conversions.convert(1 * Mundo, Hiya**2)
+        conversions.convert(1 * Achy, Inchy**2)
 
 
 def test_failing_to_convert_numerator() -> None:
