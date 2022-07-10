@@ -73,7 +73,6 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
     plan = _plan_conversion(this.unit, other.unit)
 
     magnitude = this.magnitude
-    unit = One
 
     for ratio, start, end, exponent in plan:
         path = _find_path(start, end)
@@ -85,9 +84,6 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
             magnitude += offset
 
         magnitude *= ratio
-        unit *= end**exponent
-
-    assert unit.dimension is other_unit.dimension
 
     return Quantity(magnitude / other.magnitude, other_unit)
 
