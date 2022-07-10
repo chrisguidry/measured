@@ -75,37 +75,26 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
     plan = _plan_conversion(this.unit, other.unit)
     ic(plan)
 
-    factors = []
+    magnitude = this.magnitude
+    unit = One
 
     for ratio, start, end, exponent in plan:
         path = _find_path(start, end)
         if not path:
             raise ConversionNotFound(f"No conversion from {start} to {end}")
 
+        magnitude *= ratio
+
         ic(path)
-        ic(ratio, start, end, exponent)
-        magnitude = _apply_path(ratio, path) ** exponent
-        unit = end**exponent
-        factors.append(Quantity(magnitude, unit))
+        for scale, offset, _ in path:
+            magnitude *= scale**exponent
+            magnitude += offset
 
-    ic(factors)
+        unit *= end**exponent
 
-    final: Quantity = reduce(operator.mul, factors)
-    ic((this.magnitude / other.magnitude) * final.magnitude)
-    ic(f"{final.unit:/}", final.unit)
-    ic(f"{final.unit.dimension}", final.unit.dimension)
-    assert final.unit.dimension is other_unit.dimension
+    assert unit.dimension is other_unit.dimension
 
-    return (this.magnitude / other.magnitude) * (final.magnitude * other_unit)
-
-
-def _apply_path(
-    magnitude: Numeric, path: Iterable[Tuple[Ratio, Offset, Unit]]
-) -> Numeric:
-    for scale, offset, _ in path:
-        magnitude *= scale
-        magnitude += offset
-    return magnitude
+    return Quantity(magnitude / other.magnitude, other_unit)
 
 
 Exponent = int

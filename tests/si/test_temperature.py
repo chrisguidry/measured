@@ -15,8 +15,10 @@ from measured.si import Celsius, Kelvin, Kilo, Milli
     ],
 )
 def test_kelvin_equals_celsius(kelvin: Quantity, celsius: Quantity) -> None:
-    assert kelvin == celsius
-    assert celsius == kelvin
+    # assert kelvin == celsius
+    # assert celsius == kelvin
+    kelvin.assert_approximates(celsius, 0)
+    celsius.assert_approximates(kelvin, 0)
 
 
 @pytest.mark.parametrize(
