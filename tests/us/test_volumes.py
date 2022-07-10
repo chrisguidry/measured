@@ -31,8 +31,10 @@ def test_common_cooking_measures() -> None:
     [
         (1 * Foot**3, 1728 * Inch**3),
         (1 * Mile / Foot**3, 1 / 1728 * Mile / Inch**3),
-        (10 * Gallon / Mile, 2.35215 * Liter / (Kilo * Meter)),
-        (10 * Mile / Gallon, 4.25144 * (Kilo * Meter) / Liter),
+        (10 * Gallon / Mile, 0.023521459 * Liter / Meter),
+        (10 * Gallon / Mile, 23.521459 * Liter / (Kilo * Meter)),
+        (10 * Mile / Gallon, 4251.4370 * Meter / Liter),
+        (10 * Mile / Gallon, 4.2514370 * (Kilo * Meter) / Liter),
     ],
 )
 def test_volume_conversions(left: Quantity, right: Quantity) -> None:
@@ -43,8 +45,8 @@ def test_volume_conversions(left: Quantity, right: Quantity) -> None:
 def test_abe() -> None:
     abes_car = (40 * Rod) / (1 * Hogshead)
 
-    # (40 * Rod).assert_approximates(0.125 * Mile)
-    # assert 1 * Hogshead == 63 * Gallon
+    (40 * Rod).assert_approximates(0.125 * Mile)
+    assert 1 * Hogshead == 63 * Gallon
 
     abes_car.assert_approximates((0.125 / 63) * Mile / Gallon, 0)
     assert 0.00198 * Mile / Gallon <= abes_car <= 0.00199 * Mile / Gallon

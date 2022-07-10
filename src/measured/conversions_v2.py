@@ -70,6 +70,8 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
     this = quantity.unprefixed()
     other = other_unit.quantify()
 
+    ic(this, other)
+
     plan = _plan_conversion(this.unit, other.unit)
     ic(plan)
 
@@ -81,8 +83,10 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
             raise ConversionNotFound(f"No conversion from {start} to {end}")
 
         ic(path)
-        factor = ratio * ((_apply_path(1, path) * end) ** exponent)
-        factors.append(factor)
+        ic(ratio, start, end, exponent)
+        magnitude = _apply_path(ratio, path) ** exponent
+        unit = end**exponent
+        factors.append(Quantity(magnitude, unit))
 
     ic(factors)
 
@@ -133,15 +137,15 @@ def _plan_conversion(start: Unit, end: Unit) -> Plan:
 
     ic("pass 1: try to replace units with simpler ones from the conversions table")
     plan += [
-        (1 / ratio, start, end, exponent)
-        for ratio, start, end, exponent in _replace_factors(end_factors)
-    ]
-    ic("after replacing end factors", plan, start_factors, end_factors)
-    plan += [
         (ratio, end, start, exponent)
         for ratio, start, end, exponent in _replace_factors(start_factors)
     ]
     ic("after replacing start factors", plan, start_factors, end_factors)
+    plan += [
+        (1 / ratio, start, end, exponent)
+        for ratio, start, end, exponent in _replace_factors(end_factors)
+    ]
+    ic("after replacing end factors", plan, start_factors, end_factors)
 
     ic("pass 2: collect factors of the end terms from the start terms")
     plan += _match_factors(start_factors, end_factors)
@@ -224,7 +228,8 @@ def _replace_factors(factors: Dict[Dimension, List[Unit]]) -> Plan:
                 if unit_dimension not in factors:
                     factors[unit_dimension] = []
                 factors[unit_dimension].extend([unit] * abs(exponent))
-            plan.append((ratio, One, One, 1))
+
+            plan.append((ratio**overall_sign, One, One, 1))
             ic(factors)
 
     return plan
