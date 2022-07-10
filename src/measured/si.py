@@ -135,6 +135,7 @@ from . import (
     Temperature,
     Time,
     Unit,
+    Volume,
 )
 
 # https://en.wikipedia.org/wiki/Metric_prefix
@@ -225,7 +226,8 @@ Katal = Unit.derive(Mole / Second, name="katal", symbol="kat")
 # SI Accepted units
 # https://en.wikipedia.org/wiki/Non-SI_units_mentioned_in_the_SI
 
-Liter = Unit.derive((Deci * Meter) ** 3, name="liter", symbol="L")
+Liter = Volume.unit(name="liter", symbol="L")
+Liter.equals(0.001 * Meter**3)
 
 Minute = Time.unit("minute", "min")
 Minute.equals(60 * Second)

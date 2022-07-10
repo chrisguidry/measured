@@ -167,18 +167,16 @@ PRESSURE_EQUIVALENTS = [
     10000 * Pascal,
     1.4503774 * PSI,
     1.4503774 * PoundForce / Inch**2,
+    208.85434305 * PoundForce / Foot**2,
     22046.226 * (Pound * Meter / Second**2) / Meter**2,
     2048.163 * (Pound * Meter / Second**2) / Foot**2,
     6719.689751 * (Pound * Foot / Second**2) / Foot**2,
     46.664512 * (Pound * Foot / Second**2) / Inch**2,
+    167992.2432 * (Pound * Foot / Minute**2) / Inch**2,
     # TODO: this test fails the assertion in conversions._find
     # 9097695 * PoundForce / Acre,
     # TODO: this test fails the assertion in conversions._find
     # 89217910.67175 * (Pound * Meter / Second**2) / Acre,
-    # TODO: this test fails the assertion in conversions._find
-    # 208.849996 * PoundForce / Foot**2,
-    # TODO: this test fails the assertion in conversions._reduce_dimension
-    # 0.01296236 * (Pound * Foot / Minute**2) / Inch**2,
 ]
 
 

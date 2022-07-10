@@ -9,7 +9,7 @@ def test_g_force() -> None:
     assert GForce.symbol == "g-force"
     assert GForce.dimension is Acceleration
     assert 1 * GForce == gₙ
-    assert 1 * GForce == 32.17405 * Foot / Second**2
+    (1 * GForce).assert_approximates(32.17405 * Foot / Second**2, 5e-8)
 
 
 def test_poundforce() -> None:
@@ -25,5 +25,5 @@ def test_psi() -> None:
     assert PSI.name == "pounds per square inch"
     assert PSI.symbol == "psi"
     assert PSI.dimension is Pressure
-    assert (1 * PSI) == 6894.757 * Pascal
-    (1 * PSI).assert_approximates(6.894757 * Kilo * Pascal)
+    (1 * PSI).assert_approximates(6894.757 * Pascal, 5e-8)
+    (1 * PSI).assert_approximates(6.894757 * Kilo * Pascal, 5e-08)

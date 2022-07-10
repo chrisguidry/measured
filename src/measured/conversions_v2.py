@@ -110,8 +110,9 @@ Plan = List[Tuple[Ratio, Unit, Unit, Exponent]]
 
 @functools.lru_cache(maxsize=None)
 def _plan_conversion(start: Unit, end: Unit) -> Plan:
+    ic("*" * 50)
     ic(
-        f"*** planning conversion from {start:/} -> {end:/}",
+        f"##### planning conversion from {start:/} -> {end:/}",
         start,
         start.dimension,
         end,
@@ -124,31 +125,40 @@ def _plan_conversion(start: Unit, end: Unit) -> Plan:
 
     ic("start", plan, start_factors, end_factors)
 
-    ic("pass 0: try to replace units with simpler ones from the conversions table")
-    plan += _replace_factors(end_factors)
+    ic("pass 0: is there just a direct path?")
+    direct_path = _find_path(start, end)
+    if direct_path:
+        ic(direct_path)
+        return [(1, start, end, 1)]
+
+    ic("pass 1: try to replace units with simpler ones from the conversions table")
+    plan += [
+        (1 / ratio, start, end, exponent)
+        for ratio, start, end, exponent in _replace_factors(end_factors)
+    ]
     ic("after replacing end factors", plan, start_factors, end_factors)
     plan += [
-        (1 / ratio, end, start, exponent)
+        (ratio, end, start, exponent)
         for ratio, start, end, exponent in _replace_factors(start_factors)
     ]
     ic("after replacing start factors", plan, start_factors, end_factors)
 
-    ic("pass 1: collect factors of the end terms from the start terms")
+    ic("pass 2: collect factors of the end terms from the start terms")
     plan += _match_factors(start_factors, end_factors)
     ic("after matching factors", plan, start_factors, end_factors)
 
-    ic("pass 2: collect factors of the start terms from the end terms")
+    ic("pass 3: collect factors of the start terms from the end terms")
     plan += [
         (1, end, start, exponent)
         for ratio, start, end, exponent in _match_factors(end_factors, start_factors)
     ]
     ic("after matching factors", plan, start_factors, end_factors)
 
-    ic("pass 3: cancel any remaining terms of the end factors")
+    ic("pass 4: cancel any remaining terms of the end factors")
     plan += _cancel_factors(end_factors)
     ic("after cancelling end factors", plan, start_factors, end_factors)
 
-    ic("pass 4: cancel any remaining terms of the start factors")
+    ic("pass 5: cancel any remaining terms of the start factors")
     plan += _cancel_factors(start_factors, invert=True)
     ic("after cancelling start factors", plan, start_factors, end_factors)
 
@@ -163,36 +173,59 @@ def _plan_conversion(start: Unit, end: Unit) -> Plan:
 def _replace_factors(factors: Dict[Dimension, List[Unit]]) -> Plan:
     plan: Plan = []
 
-    replacements: List[Tuple[Dimension, Unit, Unit]] = []
+    # Continue looking for replacements until the plan stops changing
+    previous_plan_size = -1
+    while len(plan) != previous_plan_size:
+        previous_plan_size = len(plan)
 
-    for dimension, units in factors.items():
-        # Only try this for units in higher/derived dimensions
-        if sum(abs(e) for e in dimension.exponents) <= 1:
-            continue
+        replacements: List[Tuple[Dimension, Unit, Unit]] = []
 
-        for unit in units:
-            if not _ratios.get(unit):
+        for dimension, units in factors.items():
+            # Only try this for units in higher/derived dimensions
+            if sum(abs(e) for e in dimension.exponents) <= 1:
                 continue
 
-            # TODO: this is looking for the alternative unit with the most factors,
-            # assuming that more factors means a higher chance that these are the
-            # simplest units; is this a good assumption?
-            alternatives = sorted(
-                _ratios[unit].keys(), key=lambda u: len(u.factors), reverse=True
-            )
-            replacements.append((dimension, unit, alternatives[0]))
+            for unit in units:
+                if not _ratios.get(unit):
+                    continue
 
-    for dimension, unit, alternative in replacements:
-        ic(unit, alternative)
-        ratio = _ratios[unit][alternative]
-        _clean_remove(factors, dimension, unit)
-        for unit, exponent in alternative.factors.items():
-            sign = -1 if exponent < 0 else 1
-            unit_dimension = unit.dimension**sign
-            if unit_dimension not in factors:
-                factors[unit_dimension] = []
-            factors[unit_dimension].extend([unit] * abs(exponent))
-        plan.append((1 / ratio, One, One, 1))
+                # TODO: this is looking for the alternative unit with the most factors,
+                # assuming that more factors means a higher chance that these are the
+                # simplest units; is this a good assumption?
+                alternatives = sorted(
+                    _ratios[unit].keys(), key=lambda u: len(u.factors), reverse=True
+                )
+                for alternative in alternatives:
+                    # Consider this a better alternative if it has more factors, or it
+                    # has factors with higher exponents, and will thus "splat" out into
+                    # a larger number of smaller/more fundamental units
+                    has_more_factors = len(alternative.factors) > len(unit.factors)
+                    has_smaller_factors = sum(alternative.factors.values()) > sum(
+                        unit.factors.values()
+                    )
+
+                    if has_more_factors or has_smaller_factors:
+                        replacements.append((dimension, unit, alternative))
+                        break
+
+        for dimension, unit, alternative in replacements:
+            overall_sign = 1
+            if not unit.dimension.is_factor(dimension):
+                assert (unit**-1).dimension.is_factor(dimension)
+                overall_sign = -1
+
+            ratio = _ratios[unit][alternative]
+            ic(dimension, unit, alternative, ratio)
+
+            _clean_remove(factors, dimension, unit)
+            for unit, exponent in alternative.factors.items():
+                unit_sign = -1 if exponent < 0 else 1
+                unit_dimension = unit.dimension ** (unit_sign * overall_sign)
+                if unit_dimension not in factors:
+                    factors[unit_dimension] = []
+                factors[unit_dimension].extend([unit] * abs(exponent))
+            plan.append((ratio, One, One, 1))
+            ic(factors)
 
     return plan
 
