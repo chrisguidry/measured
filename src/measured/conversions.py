@@ -70,10 +70,7 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
     this = quantity.unprefixed()
     other = other_unit.quantify()
 
-    ic(this, other)
-
     plan = _plan_conversion(this.unit, other.unit)
-    ic(plan)
 
     magnitude = this.magnitude
     unit = One
@@ -83,13 +80,11 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
         if not path:
             raise ConversionNotFound(f"No conversion from {start} to {end}")
 
-        magnitude *= ratio
-
-        ic(path)
         for scale, offset, _ in path:
             magnitude *= scale**exponent
             magnitude += offset
 
+        magnitude *= ratio
         unit *= end**exponent
 
     assert unit.dimension is other_unit.dimension
@@ -103,59 +98,31 @@ Plan = List[Tuple[Ratio, Unit, Unit, Exponent]]
 
 @functools.lru_cache(maxsize=None)
 def _plan_conversion(start: Unit, end: Unit) -> Plan:
-    ic("*" * 50)
-    ic(
-        f"##### planning conversion from {start:/} -> {end:/}",
-        start,
-        start.dimension,
-        end,
-        end.dimension,
-    )
-
     plan: Plan = []
     start_factors = _splat(start)
     end_factors = _splat(end)
 
-    ic("start", plan, start_factors, end_factors)
-
-    ic("pass 0: is there just a direct path?")
     direct_path = _find_path(start, end)
     if direct_path:
-        ic(direct_path)
         return [(1, start, end, 1)]
 
-    ic("pass 1: try to replace units with simpler ones from the conversions table")
     plan += [
         (ratio, end, start, exponent)
         for ratio, start, end, exponent in _replace_factors(start_factors)
     ]
-    ic("after replacing start factors", plan, start_factors, end_factors)
     plan += [
         (1 / ratio, start, end, exponent)
         for ratio, start, end, exponent in _replace_factors(end_factors)
     ]
-    ic("after replacing end factors", plan, start_factors, end_factors)
 
-    ic("pass 2: collect factors of the end terms from the start terms")
     plan += _match_factors(start_factors, end_factors)
-    ic("after matching factors", plan, start_factors, end_factors)
-
-    ic("pass 3: collect factors of the start terms from the end terms")
     plan += [
         (1, end, start, exponent)
         for ratio, start, end, exponent in _match_factors(end_factors, start_factors)
     ]
-    ic("after matching factors", plan, start_factors, end_factors)
 
-    ic("pass 4: cancel any remaining terms of the end factors")
     plan += _cancel_factors(end_factors)
-    ic("after cancelling end factors", plan, start_factors, end_factors)
-
-    ic("pass 5: cancel any remaining terms of the start factors")
     plan += _cancel_factors(start_factors, invert=True)
-    ic("after cancelling start factors", plan, start_factors, end_factors)
-
-    ic("end", plan, start_factors, end_factors)
 
     assert not start_factors
     assert not end_factors
@@ -204,7 +171,6 @@ def _replace_factors(factors: Dict[Dimension, List[Unit]]) -> Plan:
                 overall_sign = -1
 
             ratio = _ratios[unit][alternative]
-            ic(dimension, unit, alternative, ratio)
 
             _clean_remove(factors, dimension, unit)
             for unit, exponent in alternative.factors.items():
@@ -215,7 +181,6 @@ def _replace_factors(factors: Dict[Dimension, List[Unit]]) -> Plan:
                 factors[unit_dimension].extend([unit] * abs(exponent))
 
             plan.append((ratio**overall_sign, One, One, 1))
-            ic(factors)
 
     return plan
 
@@ -232,8 +197,6 @@ def _match_factors(
     )
 
     for end_dimension in dimensions_to_match:
-        ic(end_dimension)
-
         # go see if you can make a complete factor of end_dimension out of the
         # dimensions available in start_factors
         dimension_factors: List[Dimension] = []
@@ -243,10 +206,8 @@ def _match_factors(
 
         remaining = end_dimension
         while dimensions_to_check:
-            ic(remaining)
             start_dimension = dimensions_to_check.pop(0)
             if start_dimension.is_factor(remaining):
-                ic(start_dimension)
                 dimension_factors.append(start_dimension)
                 remaining /= start_dimension
 
@@ -257,7 +218,6 @@ def _match_factors(
             continue
 
         discovered_dimension = reduce(operator.mul, dimension_factors)
-        ic(end_dimension, discovered_dimension, discovered_dimension is end_dimension)
         if discovered_dimension is not end_dimension:
             continue
 
@@ -280,7 +240,6 @@ def _cancel_factors(factors: Dict[Dimension, List[Unit]], invert: bool = False) 
 
     for dimension in list(factors):
         exponent = -1 if any(e < 0 for e in dimension.exponents) else 1
-        ic(dimension, exponent)
         inverse = dimension**-1
         while dimension in factors and inverse in factors:
             end_factor = _clean_pop(factors, dimension)
