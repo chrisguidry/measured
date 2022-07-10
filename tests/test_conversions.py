@@ -173,10 +173,8 @@ PRESSURE_EQUIVALENTS = [
     6719.689751 * (Pound * Foot / Second**2) / Foot**2,
     46.664512 * (Pound * Foot / Second**2) / Inch**2,
     167992.2432 * (Pound * Foot / Minute**2) / Inch**2,
-    # TODO: this test fails the assertion in conversions._find
-    # 9097695 * PoundForce / Acre,
-    # TODO: this test fails the assertion in conversions._find
-    # 89217910.67175 * (Pound * Meter / Second**2) / Acre,
+    9097695 * PoundForce / Acre,
+    89217910.67175 * (Pound * Meter / Second**2) / Acre,
 ]
 
 
