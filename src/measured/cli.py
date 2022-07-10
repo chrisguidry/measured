@@ -94,7 +94,7 @@ def print_quantity(input_string: str) -> None:
         all_equivalents(quantity), key=lambda q: abs(q.magnitude), reverse=True
     )
     for magnitude_string, unit in dot_aligned(equivalents):
-        print(f"{magnitude_string} {unit.name}")
+        print(f"{magnitude_string} {unit.name or unit.__format__('/')}")
 
 
 def main() -> None:
