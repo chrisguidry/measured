@@ -1,13 +1,13 @@
-import sys
+import functools
+import operator
 from collections import defaultdict
-from functools import lru_cache
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from functools import reduce
+from typing import Dict, Iterable, List, Set, Tuple, TypeVar
 
 from measured import ic  # noqa: F401
 from measured import (
     Dimension,
     FractionalDimensionError,
-    IdentityPrefix,
     Number,
     Numeric,
     One,
@@ -15,26 +15,7 @@ from measured import (
     Unit,
 )
 
-if sys.version_info < (3, 9):  # pragma: no cover
-    # math.gcd changed in Python 3.8 from a two-argument for to a variable argument form
-    import math
-
-    from typing_extensions import SupportsIndex
-
-    def recursive_gcd(*integers: SupportsIndex) -> int:
-        if len(integers) <= 2:
-            return math.gcd(*integers)
-        return math.gcd(integers[0], gcd(*integers[1:]))
-
-    gcd = recursive_gcd
-
-else:  # pragma: no cover
-    from math import gcd
-
-
-class ConversionNotFound(ValueError):
-    pass
-
+from .compat import gcd
 
 Ratio = Numeric
 Offset = Numeric
@@ -73,6 +54,10 @@ def translate(scale: Unit, zero: Quantity) -> None:
     _offsets[scale][degree] = +offset
 
 
+class ConversionNotFound(ValueError):
+    pass
+
+
 def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
     """Converts the given quantity into another unit, if possible"""
     if quantity.unit.dimension != other_unit.dimension:
@@ -83,127 +68,241 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
         )
 
     this = quantity.unprefixed()
-    other = other_unit.quantify()
 
-    this = this.magnitude * _collapse_by_dimension(this.unit)
-    other = other.magnitude * _collapse_by_dimension(other.unit)
+    plan = _plan_conversion(quantity.unit, other_unit)
 
-    direct_path = _find_path(this.unit, other.unit)
-    if direct_path:
-        return Quantity(
-            _apply_path(this.magnitude / other.magnitude, direct_path),
-            other_unit,
-        )
+    magnitude = this.magnitude
 
-    this_numerator, this_denominator = this.unit.as_ratio()
-    other_numerator, other_denominator = other.unit.as_ratio()
-
-    numerator_path = _find(this_numerator, other_numerator)
-    if not numerator_path:
-        raise ConversionNotFound(
-            f"No conversion from {this_numerator!r} to {other_numerator!r}"
-        )
-
-    denominator_path = _find(this_denominator, other_denominator)
-    if not denominator_path:
-        raise ConversionNotFound(
-            f"No conversion from {this_denominator!r} to {other_denominator!r}"
-        )
-
-    numerator = _apply_path(this.magnitude, numerator_path)
-    denominator = _apply_path(other.magnitude, denominator_path)
-
-    return Quantity(numerator / denominator, other_unit)
-
-
-def _apply_path(
-    magnitude: Numeric, path: Iterable[Tuple[Ratio, Offset, Unit]]
-) -> Numeric:
-    for scale, offset, _ in path:
-        magnitude *= scale
-        magnitude += offset
-    return magnitude
-
-
-@lru_cache(maxsize=None)
-def _find(
-    start: Unit,
-    end: Unit,
-) -> Optional[Iterable[Tuple[Ratio, Offset, Unit]]]:
-    start_terms = _terms_by_dimension(start)
-    end_terms = _terms_by_dimension(end)
-
-    assert (
-        start_terms.keys() == end_terms.keys()
-    ), f"{start_terms.keys()} != {end_terms.keys()}"
-
-    path: List[Tuple[Ratio, Offset, Unit]] = []
-    for dimension in start_terms:
-        for s, e in zip(start_terms[dimension], end_terms[dimension]):
-            this_path = _find_path(s, e)
-            if not this_path:
-                return None
-            path += this_path
-
-    return path
-
-
-def _terms_by_dimension(unit: Unit) -> Dict[Dimension, List[Unit]]:
-    terms = defaultdict(list)
-    for factor, exponent in unit.factors.items():
-        factor = factor**exponent
-        terms[factor.dimension].append(factor)
-    return dict(terms)
-
-
-@lru_cache(maxsize=None)
-def _collapse_by_dimension(unit: Unit) -> Quantity:
-    """Return a new quantity with at most a single unit in each dimension, by
-    converting individual terms"""
-    magnitude: Numeric = 1
-    by_dimension: Dict[Dimension, Tuple[Unit, int]] = {}
-
-    # Convert units until there is only one for each dimension
-    for factor, exponent in unit.factors.items():
-        dimension = factor.dimension
-        quantified = factor.quantify()
-
-        if dimension not in by_dimension:
-            magnitude *= quantified.magnitude**exponent
-            by_dimension[dimension] = (quantified.unit, exponent)
-            continue
-
-        current_unit, current_exponent = by_dimension[dimension]
-
-        path = _find_path(quantified.unit, current_unit)
-        if not path:
-            raise ConversionNotFound(
-                f"No conversion between {dimension} units {quantified.unit} "
-                f"and {current_unit}"
-            )
-
+    for ratio, path, exponent in plan:
+        magnitude *= ratio
         for scale, offset, _ in path:
             magnitude *= scale**exponent
             magnitude += offset
 
-        by_dimension[dimension] = (current_unit, current_exponent + exponent)
-
-    final_factors = {
-        factor: exponent for factor, exponent in by_dimension.values() if exponent != 0
-    } or {One: 1}
-
-    final_dimension = Number
-    for dimension in by_dimension.keys():
-        final_dimension *= dimension
-
-    return Quantity(magnitude, Unit(IdentityPrefix, final_factors, final_dimension))
+    return Quantity(magnitude, other_unit)
 
 
-@lru_cache(maxsize=None)
+Exponent = int
+Path = List[Tuple[Ratio, Offset, Unit]]
+RoughPlan = List[Tuple[Ratio, Unit, Unit, Exponent]]
+Plan = List[Tuple[Ratio, Path, Exponent]]
+
+
+@functools.lru_cache(maxsize=None)
+def _plan_conversion(start: Unit, end: Unit) -> Plan:
+    unprefixed = end.quantify()
+    plan: RoughPlan = [(1 / unprefixed.magnitude, One, One, 1)]
+
+    start_factors = _splat(start)
+    end_factors = _splat(end)
+
+    direct_path = _find_path(start, end)
+    if direct_path:
+        return _inline_paths(plan) + [(1, direct_path, 1)]
+
+    plan += [
+        (ratio, end, start, exponent)
+        for ratio, start, end, exponent in _replace_factors(start_factors)
+    ]
+    plan += [
+        (1 / ratio, start, end, exponent)
+        for ratio, start, end, exponent in _replace_factors(end_factors)
+    ]
+
+    plan += _match_factors(start_factors, end_factors)
+    plan += [
+        (1, end, start, exponent)
+        for ratio, start, end, exponent in _match_factors(end_factors, start_factors)
+    ]
+
+    plan += _cancel_factors(end_factors)
+    plan += _cancel_factors(start_factors, invert=True)
+
+    assert not start_factors
+    assert not end_factors
+
+    return _inline_paths(plan)
+
+
+def _inline_paths(plan: List[Tuple[Ratio, Unit, Unit, Exponent]]) -> Plan:
+    inlined: Plan = []
+    for ratio, start, end, exponent in plan:
+        path = _find_path(start, end)
+        if not path:
+            raise ConversionNotFound(f"No conversion from {start} to {end}")
+        inlined.append((ratio, path, exponent))
+    return inlined
+
+
+def _replace_factors(factors: Dict[Dimension, List[Unit]]) -> RoughPlan:
+    plan: RoughPlan = []
+
+    # Continue looking for replacements until the plan stops changing
+    previous_plan_size = -1
+    while len(plan) != previous_plan_size:
+        previous_plan_size = len(plan)
+
+        replacements: List[Tuple[Dimension, Unit, Unit]] = []
+
+        for dimension, units in factors.items():
+            # Only try this for units in higher/derived dimensions
+            if sum(abs(e) for e in dimension.exponents) <= 1:
+                continue
+
+            for unit in units:
+                alternatives = sorted(
+                    _ratios[unit].keys(),
+                    key=lambda u: len(u.factors) + sum(u.factors.values()),
+                    reverse=True,
+                )
+                for alternative in alternatives:
+                    # Consider this a better alternative if it has more factors, or it
+                    # has factors with higher exponents, and will thus "splat" out into
+                    # a larger number of smaller/more fundamental units
+                    has_more_factors = len(alternative.factors) > len(unit.factors)
+                    has_smaller_factors = sum(alternative.factors.values()) > sum(
+                        unit.factors.values()
+                    )
+
+                    if has_more_factors or has_smaller_factors:
+                        replacements.append((dimension, unit, alternative))
+                        break
+
+        for dimension, unit, alternative in replacements:
+            overall_sign = 1
+            if not unit.dimension.is_factor(dimension):
+                assert (unit**-1).dimension.is_factor(dimension)
+                overall_sign = -1
+
+            ratio = _ratios[unit][alternative]
+
+            _clean_remove(factors, dimension, unit)
+            for unit, exponent in alternative.factors.items():
+                unit_sign = -1 if exponent < 0 else 1
+                unit_dimension = unit.dimension ** (unit_sign * overall_sign)
+                if unit_dimension not in factors:
+                    factors[unit_dimension] = []
+                factors[unit_dimension].extend([unit] * abs(exponent))
+
+            plan.append((ratio**overall_sign, One, One, 1))
+
+    return plan
+
+
+def _match_factors(
+    start_factors: Dict[Dimension, List[Unit]],
+    end_factors: Dict[Dimension, List[Unit]],
+) -> RoughPlan:
+
+    plan: RoughPlan = []
+
+    dimensions_to_match = _by_complex_first(
+        dimension for dimension, factors in end_factors.items() for _ in factors
+    )
+
+    for end_dimension in dimensions_to_match:
+        # go see if you can make a complete factor of end_dimension out of the
+        # dimensions available in start_factors
+        dimension_factors: List[Dimension] = []
+        dimensions_to_check = _by_complex_first(
+            dimension for dimension, factors in start_factors.items() for _ in factors
+        )
+
+        remaining = end_dimension
+        while dimensions_to_check:
+            start_dimension = dimensions_to_check.pop(0)
+            if start_dimension.is_factor(remaining):
+                dimension_factors.append(start_dimension)
+                remaining /= start_dimension
+
+            if remaining is Number:
+                break
+
+        if not dimension_factors:
+            continue
+
+        discovered_dimension = reduce(operator.mul, dimension_factors)
+        if discovered_dimension is not end_dimension:
+            continue
+
+        combined_start_factor: Unit = reduce(
+            operator.mul,
+            [_clean_pop(start_factors, d) for d in dimension_factors],
+        )
+        end_factor = _clean_pop(end_factors, end_dimension)
+
+        # TODO: this doesn't seem right in light of complex units with mixed exponents
+        exponent = -1 if any(e < 0 for e in end_dimension.exponents) else 1
+
+        plan.append((1, combined_start_factor, end_factor, exponent))
+
+    return plan
+
+
+def _cancel_factors(
+    factors: Dict[Dimension, List[Unit]], invert: bool = False
+) -> RoughPlan:
+    plan: RoughPlan = []
+
+    for dimension in list(factors):
+        exponent = -1 if any(e < 0 for e in dimension.exponents) else 1
+        inverse = dimension**-1
+        while dimension in factors and inverse in factors:
+            end_factor = _clean_pop(factors, dimension)
+            if dimension is inverse:
+                continue
+            start_factor = _clean_pop(factors, inverse)
+
+            if invert:
+                plan.append((1, start_factor, end_factor, -exponent))
+                plan.append((1, end_factor, end_factor, exponent))
+            else:
+                plan.append((1, start_factor, end_factor, exponent))
+                plan.append((1, start_factor, start_factor, -exponent))
+
+    return plan
+
+
+def _splat(unit: Unit) -> Dict[Dimension, List[Unit]]:
+    splatted: Dict[Dimension, List[Unit]] = defaultdict(list)
+
+    for factor, exponent in unit.factors.items():
+        if exponent < 0:
+            splatted[factor.dimension**-1].extend([factor] * abs(exponent))
+        else:
+            splatted[factor.dimension].extend([factor] * exponent)
+
+    return dict(splatted)
+
+
+def _by_complex_first(dimensions: Iterable[Dimension]) -> List[Dimension]:
+    return sorted(
+        dimensions, key=lambda d: sum(abs(e) for e in d.exponents), reverse=True
+    )
+
+
+K = TypeVar("K")
+V = TypeVar("V")
+
+
+def _clean_pop(dictionary: Dict[K, List[V]], key: K) -> V:
+    value = dictionary[key].pop(0)
+    if not dictionary[key]:
+        dictionary.pop(key)
+    return value
+
+
+def _clean_remove(dictionary: Dict[K, List[V]], key: K, item: V) -> None:
+    dictionary[key].remove(item)
+    if not dictionary[key]:
+        dictionary.pop(key)
+
+
+@functools.lru_cache(maxsize=None)
 def _find_path(
     start: Unit,
     end: Unit,
-) -> Optional[List[Tuple[Ratio, Offset, Unit]]]:
+) -> Path:
     return _find_path_recursive(start, end, visited=set())
 
 
@@ -211,28 +310,19 @@ def _find_path_recursive(
     start: Unit,
     end: Unit,
     visited: Set[Unit],
-) -> Optional[List[Tuple[Ratio, Offset, Unit]]]:
+) -> Path:
 
     if start is end:
         return [(1, 0, end)]
 
     if start in visited:
-        return None
+        return []
     else:
         visited.add(start)
 
     exponent, start, end = _reduce_dimension(start, end)
 
-    if sum(start.factors.values()) > sum(end.factors.values()):
-        # This is a conversion like m² -> acre, where the end dimension is defined
-        # directly in the higher exponent and there isn't a lower-power unit (e.g.
-        # there's no unit that represents the square root of an acre that we can
-        # compare the meter to); in this case, perform the search in reverse and it
-        # should be able to find available conversions
-        backtracked = _backtrack(_find_path(end, start), exponent, end)
-        return backtracked
-
-    best_path = None
+    best_path: Path = []
 
     for intermediate, scale in _ratios[start].items():
         offset = _offsets[start].get(intermediate, 0)
@@ -254,7 +344,7 @@ def _find_path_recursive(
     if best_path:
         return best_path
 
-    return None
+    return []
 
 
 def _reduce_dimension(start: Unit, end: Unit) -> Tuple[int, Unit, Unit]:
@@ -276,25 +366,3 @@ def _reduce_dimension(start: Unit, end: Unit) -> Tuple[int, Unit, Unit]:
         return 1, start, end
 
     return exponent, start_root, end_root
-
-
-def _backtrack(
-    path: Optional[Iterable[Tuple[Ratio, Offset, Unit]]],
-    exponent: int,
-    end: Unit,
-) -> Optional[List[Tuple[Ratio, Offset, Unit]]]:
-    """Given a path to convert a start unit to an end unit, produce the reverse
-    path, which would convert the end unit to the start unit"""
-    if path is None:
-        return None
-
-    path = list(reversed(list(path)))
-
-    units = [u for _, _, u in path[1:]] + [end]
-    scales_and_offsets = [(s, o) for s, o, _ in path]
-
-    backtracked = [
-        (1 / (scale**exponent), -(offset**exponent), unit**exponent)
-        for (scale, offset), unit in zip(scales_and_offsets, units)
-    ]
-    return backtracked
