@@ -68,39 +68,37 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
         )
 
     this = quantity.unprefixed()
-    other = other_unit.quantify()
 
-    plan = _plan_conversion(this.unit, other.unit)
+    plan = _plan_conversion(quantity.unit, other_unit)
 
     magnitude = this.magnitude
 
-    for ratio, start, end, exponent in plan:
-        path = _find_path(start, end)
-        if not path:
-            raise ConversionNotFound(f"No conversion from {start} to {end}")
-
+    for ratio, path, exponent in plan:
+        magnitude *= ratio
         for scale, offset, _ in path:
             magnitude *= scale**exponent
             magnitude += offset
 
-        magnitude *= ratio
-
-    return Quantity(magnitude / other.magnitude, other_unit)
+    return Quantity(magnitude, other_unit)
 
 
 Exponent = int
-Plan = List[Tuple[Ratio, Unit, Unit, Exponent]]
+Path = List[Tuple[Ratio, Offset, Unit]]
+RoughPlan = List[Tuple[Ratio, Unit, Unit, Exponent]]
+Plan = List[Tuple[Ratio, Path, Exponent]]
 
 
 @functools.lru_cache(maxsize=None)
 def _plan_conversion(start: Unit, end: Unit) -> Plan:
-    plan: Plan = []
+    unprefixed = end.quantify()
+    plan: RoughPlan = [(1 / unprefixed.magnitude, One, One, 1)]
+
     start_factors = _splat(start)
     end_factors = _splat(end)
 
     direct_path = _find_path(start, end)
     if direct_path:
-        return [(1, start, end, 1)]
+        return _inline_paths(plan) + [(1, direct_path, 1)]
 
     plan += [
         (ratio, end, start, exponent)
@@ -123,11 +121,21 @@ def _plan_conversion(start: Unit, end: Unit) -> Plan:
     assert not start_factors
     assert not end_factors
 
-    return plan
+    return _inline_paths(plan)
 
 
-def _replace_factors(factors: Dict[Dimension, List[Unit]]) -> Plan:
-    plan: Plan = []
+def _inline_paths(plan: List[Tuple[Ratio, Unit, Unit, Exponent]]) -> Plan:
+    inlined: Plan = []
+    for ratio, start, end, exponent in plan:
+        path = _find_path(start, end)
+        if not path:
+            raise ConversionNotFound(f"No conversion from {start} to {end}")
+        inlined.append((ratio, path, exponent))
+    return inlined
+
+
+def _replace_factors(factors: Dict[Dimension, List[Unit]]) -> RoughPlan:
+    plan: RoughPlan = []
 
     # Continue looking for replacements until the plan stops changing
     previous_plan_size = -1
@@ -184,9 +192,9 @@ def _replace_factors(factors: Dict[Dimension, List[Unit]]) -> Plan:
 def _match_factors(
     start_factors: Dict[Dimension, List[Unit]],
     end_factors: Dict[Dimension, List[Unit]],
-) -> Plan:
+) -> RoughPlan:
 
-    plan: Plan = []
+    plan: RoughPlan = []
 
     dimensions_to_match = _by_complex_first(
         dimension for dimension, factors in end_factors.items() for _ in factors
@@ -231,8 +239,10 @@ def _match_factors(
     return plan
 
 
-def _cancel_factors(factors: Dict[Dimension, List[Unit]], invert: bool = False) -> Plan:
-    plan: Plan = []
+def _cancel_factors(
+    factors: Dict[Dimension, List[Unit]], invert: bool = False
+) -> RoughPlan:
+    plan: RoughPlan = []
 
     for dimension in list(factors):
         exponent = -1 if any(e < 0 for e in dimension.exponents) else 1
@@ -286,9 +296,6 @@ def _clean_remove(dictionary: Dict[K, List[V]], key: K, item: V) -> None:
     dictionary[key].remove(item)
     if not dictionary[key]:
         dictionary.pop(key)
-
-
-Path = List[Tuple[Ratio, Offset, Unit]]
 
 
 @functools.lru_cache(maxsize=None)
