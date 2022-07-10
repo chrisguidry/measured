@@ -3,7 +3,7 @@
 `measured` is a library for measurements and quantities.
 
 [![PyPi](https://img.shields.io/pypi/v/measured)](https://pypi.org/project/measured)
-[![Build and test](https://github.com/chrisguidry/measured/actions/workflows/build-and-test.yml/badge.svg?event=push)](https://github.com/chrisguidry/measured/actions)
+[![Build and test](https://github.com/chrisguidry/measured/actions/workflows/test.yml/badge.svg?event=push)](https://github.com/chrisguidry/measured/actions)
 [![Code Coverage](https://img.shields.io/codecov/c/github/chrisguidry/measured?flag=python-3.10)](https://app.codecov.io/gh/chrisguidry/measured/)
 [![Documentation Status](https://readthedocs.org/projects/measured/badge/?version=latest)](https://measured.readthedocs.io/en/latest/?badge=latest)
 
