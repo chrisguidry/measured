@@ -275,6 +275,5 @@ PSI.equals(6894.757 * Pascal)
 Rankine = Temperature.unit("Rankine", "R")
 Rankine.equals(5 / 9 * Kelvin)
 
-Fahrenheit = Temperature.unit(name="fahrenheit", symbol="°F")
+Fahrenheit = Temperature.scale(+459.67 * Rankine, name="fahrenheit", symbol="°F")
 Fahrenheit.alias(symbol="degF")
-Fahrenheit.zero(+459.67 * Rankine)

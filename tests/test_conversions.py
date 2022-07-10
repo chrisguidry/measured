@@ -31,9 +31,6 @@ def test_disallow_self_conversion() -> None:
 
 def test_disallow_self_zeroing() -> None:
     with pytest.raises(ValueError, match="unit and itself"):
-        Meter.zero(1 * Meter)
-
-    with pytest.raises(ValueError, match="unit and itself"):
         conversions.translate(Meter, 1 * Meter)
 
 

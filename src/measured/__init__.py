@@ -370,6 +370,12 @@ class Dimension:
         """Define a new unit of this dimension"""
         return Unit.define(self, name, symbol)
 
+    def scale(self, zero: "Quantity", name: str, symbol: str) -> "Unit":
+        """Define a new scale of this dimension, setting a zero point of another unit"""
+        unit = self.unit(name, symbol)
+        conversions.translate(unit, zero)
+        return unit
+
     # Pickle support
 
     def __getnewargs_ex__(self) -> Tuple[Tuple[Tuple[int, ...]], Dict[str, Any]]:
@@ -925,12 +931,6 @@ class Unit:
         if other.unit == self and self is not One:
             raise ValueError("No need to define conversions for a unit and itself")
         conversions.equate(1 * self, other)
-
-    def zero(self, zero: "Quantity") -> None:
-        """Defines this unit as a scale with a zero point at another Quantity"""
-        if zero.unit == self:
-            raise ValueError("No need to define conversions for a unit and itself")
-        conversions.translate(self, zero)
 
     def alias(self, name: Optional[str] = None, symbol: Optional[str] = None) -> None:
         """Adds an alternative name and/or symbol to the unit"""
