@@ -179,14 +179,10 @@ def _replace_factors(factors: Dict[Dimension, List[Unit]]) -> Plan:
                 continue
 
             for unit in units:
-                if not _ratios.get(unit):
-                    continue
-
-                # TODO: this is looking for the alternative unit with the most factors,
-                # assuming that more factors means a higher chance that these are the
-                # simplest units; is this a good assumption?
                 alternatives = sorted(
-                    _ratios[unit].keys(), key=lambda u: len(u.factors), reverse=True
+                    _ratios[unit].keys(),
+                    key=lambda u: len(u.factors) + sum(u.factors.values()),
+                    reverse=True,
                 )
                 for alternative in alternatives:
                     # Consider this a better alternative if it has more factors, or it

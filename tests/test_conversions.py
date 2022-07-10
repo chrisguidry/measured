@@ -100,6 +100,11 @@ def test_conversions_applied_during_subtraction() -> None:
         (Inch**2, Foot**2, 0.006944444444444444),
         (Foot**2, Acre, 0.00002295684113865932),
         (Inch**2, Acre, 0.006944444444444444 * 0.00002295684113865932),
+        (
+            Inch**2 * Foot**2,
+            Acre**2,
+            (0.006944444444444444 * 0.00002295684113865932) / 43560.0,
+        ),
     ],
 )
 def test_conversion_can_navigate_exponents(
@@ -130,6 +135,29 @@ def test_failing_to_convert_numerator() -> None:
 
     with pytest.raises(conversions.ConversionNotFound):
         (1 * Gud).in_unit(Mun)
+
+
+def test_replacing_complex_factors_when_there_are_no_alternatives() -> None:
+    # This cover a particular branch through conversions._replace_factors, where there
+    # are no alternatives for a given unit
+    Krikey = Area.unit("krikey", "krikey")
+    Mate = Area.unit("mate", "mate")
+
+    with pytest.raises(conversions.ConversionNotFound):
+        (1 * Krikey * Krikey).in_unit(Mate * Mate)
+
+
+def test_alternatives_available_but_not_better() -> None:
+    # This cover a particular branch through conversions._replace_factors, where there
+    # are multiple alternatives, but none is particularly better
+    Oy = Area.unit("oy", "oy")
+    Vey = Area.unit("vey", "vey")
+    Oof = Area.unit("oof", "oof")
+
+    Oy.equals(1 * Oof)
+    Vey.equals(1 * Oof)
+
+    assert 1 * Oof * Second == 1 * Oy * Second
 
 
 def test_failing_to_convert_denominator() -> None:

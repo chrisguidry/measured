@@ -1656,7 +1656,7 @@ IdentityPrefix = Prefix(0, 0)
 One = Number.unit(name="one", symbol="1")
 
 
-from . import conversions_v2 as conversions  # noqa: E402
+from . import conversions  # noqa: E402
 from .parsing import parser  # noqa: E402
 
 One.equals(1 * One)
