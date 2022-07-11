@@ -1,1 +1,12 @@
-from measured import astronomical, avoirdupois, iec, natural, si, troy, us  # noqa: F401
+from measured import (  # noqa: F401
+    astronomical,
+    avoirdupois,
+    computing,
+    eu,
+    fff,
+    iec,
+    natural,
+    si,
+    troy,
+    us,
+)

@@ -1,8 +1,12 @@
 import pytest
 
-from measured import Quantity
-from measured.si import Kilo, Liter, Meter, Milli
+from measured import Quantity, Volume
+from measured.si import Centi, Kilo, Liter, Meter, Milli
 from measured.us import (
+    Acre,
+    AcreFoot,
+    BoardFoot,
+    Cord,
     Cup,
     FluidOunce,
     Foot,
@@ -10,6 +14,7 @@ from measured.us import (
     Hogshead,
     Inch,
     Mile,
+    Rick,
     Rod,
     Tablespoon,
     Teaspoon,
@@ -50,3 +55,27 @@ def test_abe() -> None:
 
     abes_car.assert_approximates((0.125 / 63) * Mile / Gallon, 0)
     assert 0.00198 * Mile / Gallon <= abes_car <= 0.00199 * Mile / Gallon
+
+
+def test_boardfoot() -> None:
+    assert BoardFoot.dimension is Volume
+    assert BoardFoot.name == "boardfoot"
+    assert BoardFoot.symbol == "FBM"
+    assert 1 * BoardFoot == 12 * 12 * 1 * Inch**3
+    (1 * BoardFoot).assert_approximates(2359.737 * (Centi * Meter) ** 3)
+    (1 * BoardFoot).assert_approximates(0.002359737 * Meter**3)
+    (1 * BoardFoot).assert_approximates(2.359737 * Liter)
+
+
+def test_cord_and_rick() -> None:
+    assert (1 * Cord) == (3 * Rick)
+    (1 * Cord).assert_approximates(3.623 * Meter**3, within=5e-4)
+
+
+def test_acrefoot() -> None:
+    assert AcreFoot.dimension is Volume
+    assert AcreFoot.name == "acre-foot"
+    assert AcreFoot.symbol == "acre-ft."
+    assert 1 * AcreFoot == 1 * Acre * Foot
+    (1 * AcreFoot).assert_approximates(325851 * Gallon, within=2e-6)
+    (1 * AcreFoot).assert_approximates(1233 * Meter**3, within=4e-4)

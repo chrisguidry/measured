@@ -19,7 +19,19 @@ from measured import (
     Volume,
     physics,
 )
-from measured.si import Coulomb, Farad, Joule, Kelvin, Kilogram, Meter, Second
+from measured.si import (
+    Coulomb,
+    Dalton,
+    ElectronVolt,
+    Farad,
+    Joule,
+    Kelvin,
+    Kilogram,
+    Mega,
+    Meter,
+    Second,
+    Volt,
+)
 from measured.us import Foot
 
 
@@ -60,6 +72,7 @@ def test_constants_have_expected_dimension(
         (physics.e, 1.602176634e-19 * Coulomb),
         (physics.ε0, 8.8541878128e-12 * Farad / Meter),
         (physics.mₑ, 9.1093837015e-31 * Kilogram),
+        (physics.mₑ, 0.0005485799090649074 * Dalton),
         (physics.e, 1.602176634e-19 * Coulomb),
         (
             physics.kₑ,
@@ -74,3 +87,12 @@ def test_constants_have_expected_si_values(
     constant: Quantity, expected: Quantity
 ) -> None:
     constant.assert_approximates(expected)
+
+
+def test_electronvolt() -> None:
+    c = physics.c
+    e = physics.e
+
+    assert (1 * ElectronVolt) == e * Volt
+    (1 * ElectronVolt / c**2).assert_approximates(1.78266192e-36 * Kilogram)
+    (1 * (Mega * ElectronVolt) / c**2).assert_approximates(0.0010735441 * Dalton)

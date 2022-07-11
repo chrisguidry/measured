@@ -66,6 +66,10 @@ Inch = Length.unit(name="inch", symbol="in.")
 Inch.equals(6 * Pica)
 Inch.equals(25.4 * Milli * Meter)
 
+# https://en.wikipedia.org/wiki/Hand_(unit)
+Hand = Length.unit(name="hand", symbol="hh")
+Hand.equals(4 * Inch)
+
 Foot = Length.unit(name="foot", symbol="ft.")
 Foot.equals(12 * Inch)
 Foot.equals(0.3048 * Meter)
@@ -147,10 +151,19 @@ SurveyTownship.equals(4 * League**2)
 # Volume
 # https://en.wikipedia.org/wiki/United_States_customary_units#Volume
 
+BoardFoot = Volume.unit(name="boardfoot", symbol="FBM")
+BoardFoot.equals(1 * Foot * 1 * Foot * 1 * Inch)
+
+Rick = Volume.unit(name="rick", symbol="rick")
+Rick.equals(4 * Foot * 8 * Foot * 16 * Inch)
+
+Cord = Volume.unit(name="cord", symbol="cord")
+Cord.equals(4 * Foot * 8 * Foot * 4 * Foot)
+
 AcreFoot = Volume.unit(name="acre-foot", symbol="acre-ft.")
 AcreFoot.equals(43560 * Foot**3)
 
-# Fluid Volumes
+# Fluid Volume
 # https://en.wikipedia.org/wiki/United_States_customary_units#Fluid_volume
 
 Minim = Volume.unit(name="minim", symbol="min.")
