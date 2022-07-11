@@ -38,11 +38,14 @@ Attributes: Units of mass
 from measured import Length, Mass, Time, Unit, si
 from measured.geometry import π
 from measured.physics import c
-from measured.si import Kilogram, Meter
+from measured.si import Kilogram, Meter, Second
 
 # Measures of Time
 
 Day = Unit.derive(si.Day, name="day", symbol="D")
+
+SiderealDay = Time.unit("sidereal day", "SD")
+SiderealDay.equals(86164.0905 * Second)
 
 JulianYear = Time.unit("Julian year", "a")
 JulianYear.equals(365.25 * Day)
@@ -59,6 +62,10 @@ LightYear.equals((c * JulianYear).in_unit(Meter))
 # https://en.wikipedia.org/wiki/Parsec#Calculating_the_value_of_a_parsec
 Parsec = Length.unit("parsec", "pc")
 Parsec.equals(96939420213600600 / π * Meter)
+
+# https://en.wikipedia.org/wiki/Siriometer
+Siriometer = Length.unit("seriometer", "sir")
+Siriometer.equals(1000000 * AstronomicalUnit)
 
 # Measures of Mass
 

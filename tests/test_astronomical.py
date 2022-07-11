@@ -5,11 +5,18 @@ from measured.astronomical import (
     JupiterMass,
     LightYear,
     Parsec,
+    SiderealDay,
+    Siriometer,
     SolarMass,
 )
 from measured.geometry import π
 from measured.physics import G
-from measured.si import Meter
+from measured.si import Hour, Meter
+
+
+def test_astronomical_unit() -> None:
+    (1 * AstronomicalUnit).assert_approximates(1.495978707e11 * Meter)
+    (1 * Siriometer).assert_approximates(1e6 * AstronomicalUnit)
 
 
 def test_parsec() -> None:
@@ -36,3 +43,7 @@ def test_solar_system_masses() -> None:
     (1 * SolarMass).assert_approximates(1047.348644 * JupiterMass, within=3e-4)
     (1 * SolarMass).assert_approximates(332946.0487 * EarthMass, within=3e-5)
     (1 * JupiterMass).assert_approximates(317.82838 * EarthMass, within=3e-6)
+
+
+def test_sidereal_day() -> None:
+    (1 * SiderealDay).assert_approximates(23.9344696 * Hour, within=7e-10)

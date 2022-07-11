@@ -125,7 +125,9 @@ from measured.geometry import π
 
 from . import (
     AmountOfSubstance,
+    Area,
     Charge,
+    Energy,
     Length,
     LuminousIntensity,
     Mass,
@@ -235,6 +237,9 @@ Hour = Time.unit("hour", "h")
 Hour.equals(3600 * Second)
 Hour.equals(60 * Minute)
 
+Dalton = Mass.unit("dalton", "Da")
+Dalton.equals(1.66053906660e-27 * Kilogram)
+
 # This is the SI-compatible "day" as a unit of measure, defined as 86,400 seconds.
 # https://en.wikipedia.org/wiki/Day#International_System_of_Units_(SI)
 Day = Time.unit("day", "d")
@@ -254,3 +259,25 @@ Arcsecond = PlaneAngle.unit("arcsecond", "arcsec")
 Arcsecond.equals(π / (180 * 3600) * Radian)
 Arcsecond.equals(1 / 3600 * Degree)
 Arcsecond.equals(1 / 60 * Arcminute)
+
+
+# Specialized units compatible with SI
+
+# From the domain of High-energy physics
+# https://en.wikipedia.org/wiki/Barn_(unit)
+# https://en.wikipedia.org/wiki/Shake_(unit)
+
+Barn = Area.unit("barn", "barn")
+Barn.equals(1e-28 * Meter**2)
+
+Outhouse = Area.unit("outhouse", "outhouse")
+Outhouse.equals(1e-34 * Meter**2)
+
+Shed = Area.unit("shed", "shed")
+Shed.equals(1e-52 * Meter**2)
+
+Shake = Time.unit("shake", "shake")
+Shake.equals(1e-8 * Second)
+
+ElectronVolt = Energy.unit("electron-volt", "eV")
+ElectronVolt.equals(1.602176634e-19 * Joule)

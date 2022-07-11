@@ -10,6 +10,8 @@ Attributes: Base Units
 
     Bit (Unit):
 
+    Rack Unit (Unit):  The height unit of a standard electronics rack
+
 Attributes: Derived Units
 
     Byte (Unit): 8 bits
@@ -29,7 +31,10 @@ Attributes: Prefixes (base 2)
 
 # https://en.wikipedia.org/wiki/Binary_prefix#Adoption_by_IEC,_NIST_and_ISO
 
-from . import Information, Prefix, Unit
+from measured.si import Meter
+from measured.us import Inch
+
+from . import Information, Length, Prefix, Unit
 
 Kibi = Prefix(2, 10, name="kibi", symbol="Ki")
 Mebi = Prefix(2, 20, name="mebi", symbol="Mi")
@@ -44,3 +49,10 @@ Shannon = Information.unit(name="shannon", symbol="Sh")
 Bit = Information.unit(name="bit", symbol="b")
 Bit.equals(1 * Shannon)
 Byte = Unit.derive(Bit.scale(Prefix(2, 3)), name="byte", symbol="B")
+
+# https://en.wikipedia.org/wiki/Rack_unit
+# IEC 60297 Mechanical structures for electronic equipment
+
+RackUnit = Length.unit("rack unit", "U")
+RackUnit.equals(1.75 * Inch)
+RackUnit.equals(0.04445 * Meter)
