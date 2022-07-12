@@ -35,10 +35,10 @@ Attributes: Units of mass
     JupiterMass (Unit): The mass of Jupiter
 """
 
-from measured import Length, Mass, Time, Unit, si
+from measured import Area, Length, Mass, Power, Time, Unit, si
 from measured.geometry import π
 from measured.physics import c
-from measured.si import Kilogram, Meter, Second
+from measured.si import Kilogram, Meter, Second, Watt
 
 # Measures of Time
 
@@ -59,6 +59,10 @@ AstronomicalUnit.equals(149597870700 * Meter)
 LightYear = Length.unit("light-year", "ly")
 LightYear.equals((c * JulianYear).in_unit(Meter))
 
+# https://en.wikipedia.org/wiki/Spat_(distance_unit)
+Spat = Length.unit("spat", "spat")
+Spat.equals(1e12 * Meter)
+
 # https://en.wikipedia.org/wiki/Parsec#Calculating_the_value_of_a_parsec
 Parsec = Length.unit("parsec", "pc")
 Parsec.equals(96939420213600600 / π * Meter)
@@ -78,3 +82,9 @@ EarthMass.equals(5.9722e24 * Kilogram)
 
 JupiterMass = Mass.unit("jupiter mass", "M-jup")
 JupiterMass.equals(1.89813e27 * Kilogram)
+
+
+# Derived
+
+Jansky = (Power * Time / Area).unit("jansky", "Jy")
+Jansky.equals(1e-26 * Watt * Second / Meter**2)

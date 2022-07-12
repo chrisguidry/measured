@@ -1,7 +1,7 @@
 import pytest
 
 from measured import Quantity
-from measured.si import Day, Hour, Minute, Nano, Second, Shake
+from measured.si import Day, Hour, Minute, Second
 
 
 @pytest.mark.parametrize(
@@ -32,7 +32,3 @@ def test_time_conversions(
     seconds.assert_approximates(days)
     assert seconds == hours
     assert seconds == minutes
-
-
-def test_shake() -> None:
-    assert 1 * Shake == 10 * Nano * Second

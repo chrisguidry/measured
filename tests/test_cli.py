@@ -42,9 +42,9 @@ def test_can_print_conversions() -> None:
 
 
 def test_can_handle_no_conversions() -> None:
-    output = run("measured 1 hertz")
+    output = run("measured 1 steradian")
     assert "Magnitude: 1" in output
-    assert "Unit: hertz" in output
+    assert "Unit: steradian" in output
 
 
 def test_handles_parse_errors_gracefully() -> None:

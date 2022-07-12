@@ -227,22 +227,20 @@ Katal = Unit.derive(Mole / Second, name="katal", symbol="kat")
 # SI Accepted units
 # https://en.wikipedia.org/wiki/Non-SI_units_mentioned_in_the_SI
 
+# Length, Area, Volume
+Hectare = Area.unit(name="hectare", symbol="ha")
+Hectare.equals(1 * (Hecto * Meter) ** 2)
+
 Liter = Volume.unit(name="liter", symbol="L")
 Liter.equals(0.001 * Meter**3)
 
+# Time
 Minute = Time.unit("minute", "min")
 Minute.equals(60 * Second)
 
 Hour = Time.unit("hour", "h")
 Hour.equals(3600 * Second)
 Hour.equals(60 * Minute)
-
-Dalton = Mass.unit("dalton", "Da")
-Dalton.equals(1.66053906660e-27 * Kilogram)
-
-UnifiedAtomicMass = Mass.unit("unified atomic mass", "u")
-UnifiedAtomicMass.equals(1.660538782e-27 * Kilogram)
-
 
 # This is the SI-compatible "day" as a unit of measure, defined as 86,400 seconds.
 # https://en.wikipedia.org/wiki/Day#International_System_of_Units_(SI)
@@ -251,6 +249,20 @@ Day.equals(86400 * Second)
 Day.equals(1440 * Minute)
 Day.equals(24 * Hour)
 
+# Mass
+Dalton = Mass.unit("dalton", "Da")
+Dalton.equals(1.66053906660e-27 * Kilogram)
+
+Tonne = Mass.unit("tonne", "t")
+Tonne.equals(1000 * Kilogram)
+
+ElectronVolt = Energy.unit("electron-volt", "eV")
+ElectronVolt.equals(1.602176634e-19 * Joule)
+
+UnifiedAtomicMass = Mass.unit("unified atomic mass", "u")
+UnifiedAtomicMass.equals(1.660538782e-27 * Kilogram)
+
+# Angles
 Degree = PlaneAngle.unit("degree", "°")
 Degree.alias(symbol="deg")
 Degree.equals(π / 180 * Radian)
@@ -263,30 +275,3 @@ Arcsecond = PlaneAngle.unit("arcsecond", "arcsec")
 Arcsecond.equals(π / (180 * 3600) * Radian)
 Arcsecond.equals(1 / 3600 * Degree)
 Arcsecond.equals(1 / 60 * Arcminute)
-
-
-# Specialized units compatible with SI and accepted for use with it by either
-# the BIPM or NIST
-# https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-5-units-outside-si
-
-# From the domain of high-energy and atomic physics
-# https://en.wikipedia.org/wiki/Barn_(unit)
-# https://en.wikipedia.org/wiki/Shake_(unit)
-
-Ångström = Length.unit("Ångström", symbol="Å")
-Ångström.equals(1e-10 * Meter)
-
-Barn = Area.unit("barn", "barn")
-Barn.equals(1e-28 * Meter**2)
-
-Outhouse = Area.unit("outhouse", "outhouse")
-Outhouse.equals(1e-34 * Meter**2)
-
-Shed = Area.unit("shed", "shed")
-Shed.equals(1e-52 * Meter**2)
-
-Shake = Time.unit("shake", "shake")
-Shake.equals(1e-8 * Second)
-
-ElectronVolt = Energy.unit("electron-volt", "eV")
-ElectronVolt.equals(1.602176634e-19 * Joule)
