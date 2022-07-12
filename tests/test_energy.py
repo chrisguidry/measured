@@ -1,7 +1,7 @@
 import pytest
 
 from measured import Quantity
-from measured.energy import BritishThermalUnit, Calorie, TonneOfTNT
+from measured.energy import BritishThermalUnit, Calorie, TonneOfTNT, TonOfRefrigeration
 from measured.si import ElectronVolt, Hour, Joule, Kilo, Watt
 from measured.us import Foot, PoundForce
 
@@ -32,6 +32,14 @@ def test_calorie(equivalent: Quantity, within: float) -> None:
 def test_btus(equivalent: Quantity, within: float) -> None:
     (1 * BritishThermalUnit).assert_approximates(equivalent, within=within)
     equivalent.assert_approximates(1 * BritishThermalUnit, within=within)
+
+
+def test_refrigeration() -> None:
+    (1 * TonOfRefrigeration).assert_approximates(12000 * BritishThermalUnit / Hour, 0)
+    (1 * TonOfRefrigeration).assert_approximates(3.51685 * Kilo * Watt, 0)
+    (1 * TonOfRefrigeration).assert_approximates(
+        3025.97 * (Kilo * Calorie) / Hour, 2e-7
+    )
 
 
 @pytest.mark.parametrize(
