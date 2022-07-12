@@ -1606,6 +1606,7 @@ Information = Dimension.define(name="information", symbol="B")  # TODO
 
 Area = Dimension.derive(Length * Length, name="area")
 Volume = Dimension.derive(Area * Length, name="volume")
+VolumetricFlow = Dimension.derive(Volume / Time, name="flow")
 
 PlaneAngle = Length / Length
 SolidAngle = Area / Area
@@ -1637,6 +1638,7 @@ Inductance = Dimension.derive(Potential * Time / Current, name="inductance")
 
 MagneticFlux = Dimension.derive(Potential * Time, name="magnetic flux")
 MagneticBField = Dimension.derive(Potential * Time / Area, name="magnetic B-field")
+
 
 LuminousFlux = LuminousIntensity * SolidAngle
 Illuminance = Dimension.derive(LuminousIntensity / Area, name="illuminance")

@@ -1,6 +1,7 @@
 from measured.astronomical import (
     AstronomicalUnit,
     EarthMass,
+    Jansky,
     JulianYear,
     JupiterMass,
     LightYear,
@@ -11,7 +12,7 @@ from measured.astronomical import (
 )
 from measured.geometry import π
 from measured.physics import G
-from measured.si import Hour, Meter
+from measured.si import Hertz, Hour, Meter, Watt
 
 
 def test_astronomical_unit() -> None:
@@ -47,3 +48,7 @@ def test_solar_system_masses() -> None:
 
 def test_sidereal_day() -> None:
     (1 * SiderealDay).assert_approximates(23.9344696 * Hour, within=7e-10)
+
+
+def test_jansky() -> None:
+    assert 1 * Jansky == 1e-26 * Watt / Meter**2 / Hertz
