@@ -26,4 +26,4 @@ def test_psi() -> None:
     assert PSI.symbol == "psi"
     assert PSI.dimension is Pressure
     (1 * PSI).assert_approximates(6894.757 * Pascal, 5e-8)
-    (1 * PSI).assert_approximates(6.894757 * Kilo * Pascal, 5e-08)
+    (1 * PSI).assert_approximates(6.894757 * Kilo * Pascal, 5e-8)

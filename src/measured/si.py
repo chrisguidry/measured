@@ -240,6 +240,10 @@ Hour.equals(60 * Minute)
 Dalton = Mass.unit("dalton", "Da")
 Dalton.equals(1.66053906660e-27 * Kilogram)
 
+UnifiedAtomicMass = Mass.unit("unified atomic mass", "u")
+UnifiedAtomicMass.equals(1.660538782e-27 * Kilogram)
+
+
 # This is the SI-compatible "day" as a unit of measure, defined as 86,400 seconds.
 # https://en.wikipedia.org/wiki/Day#International_System_of_Units_(SI)
 Day = Time.unit("day", "d")
@@ -261,11 +265,16 @@ Arcsecond.equals(1 / 3600 * Degree)
 Arcsecond.equals(1 / 60 * Arcminute)
 
 
-# Specialized units compatible with SI
+# Specialized units compatible with SI and accepted for use with it by either
+# the BIPM or NIST
+# https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-5-units-outside-si
 
-# From the domain of High-energy physics
+# From the domain of high-energy and atomic physics
 # https://en.wikipedia.org/wiki/Barn_(unit)
 # https://en.wikipedia.org/wiki/Shake_(unit)
+
+Ångström = Length.unit("Ångström", symbol="Å")
+Ångström.equals(1e-10 * Meter)
 
 Barn = Area.unit("barn", "barn")
 Barn.equals(1e-28 * Meter**2)
