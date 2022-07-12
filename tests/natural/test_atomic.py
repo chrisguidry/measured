@@ -45,4 +45,4 @@ def test_time() -> None:
 
 def test_charge() -> None:
     assert AtomicCharge.dimension is Charge
-    (1 * AtomicCharge).assert_approximates(1.6022e-19 * Coulomb, within=2e-05)
+    (1 * AtomicCharge).assert_approximates(1.6022e-19 * Coulomb, within=2e-5)

@@ -50,7 +50,19 @@ from . import (
     avoirdupois,
 )
 from .physics import gₙ
-from .si import Gram, Kelvin, Kilo, Liter, Meter, Micro, Milli, Newton, Pascal, Second
+from .si import (
+    Gram,
+    Hour,
+    Kelvin,
+    Kilo,
+    Liter,
+    Meter,
+    Micro,
+    Milli,
+    Newton,
+    Pascal,
+    Second,
+)
 
 # Length
 # https://en.wikipedia.org/wiki/United_States_customary_units#Length
@@ -131,6 +143,7 @@ Cable.equals(3429 / 15625 * Kilo * Meter)
 NauticalMile = Length.unit(name="nautical mile", symbol="nmi.")
 NauticalMile.equals(1852 * Meter)
 
+Knot = Unit.derive(NauticalMile / Hour, name="knot", symbol="kn")
 
 # Area
 # https://en.wikipedia.org/wiki/United_States_customary_units#Area

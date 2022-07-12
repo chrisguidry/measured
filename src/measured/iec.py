@@ -31,7 +31,7 @@ Attributes: Prefixes (base 2)
 
 # https://en.wikipedia.org/wiki/Binary_prefix#Adoption_by_IEC,_NIST_and_ISO
 
-from measured.si import Meter
+from measured.si import Meter, Second
 from measured.us import Inch
 
 from . import Information, Length, Prefix, Unit
@@ -46,8 +46,12 @@ Zebi = Prefix(2, 70, name="zebi", symbol="Zi")
 Yobi = Prefix(2, 80, name="yobi", symbol="Yi")
 
 Shannon = Information.unit(name="shannon", symbol="Sh")
+
 Bit = Information.unit(name="bit", symbol="b")
 Bit.equals(1 * Shannon)
+
+Baud = Unit.derive(Bit / Second, name="baud", symbol="Bd")
+
 Byte = Unit.derive(Bit.scale(Prefix(2, 3)), name="byte", symbol="B")
 
 # https://en.wikipedia.org/wiki/Rack_unit

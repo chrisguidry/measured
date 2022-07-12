@@ -30,7 +30,7 @@ def test_point() -> None:
     assert 1 * Point == (1 / 12) * Pica
     (1 * Point).assert_approximates((1 / 72) * Inch)
     assert 1 * Point == (127 / 360 * Milli * Meter)
-    (1 * Point).assert_approximates(352.778 * Micro * Meter, within=7e-07)
+    (1 * Point).assert_approximates(352.778 * Micro * Meter, within=7e-7)
 
 
 def test_pica() -> None:

@@ -22,7 +22,7 @@ SUPERSCRIPT_EXPONENT: ["⁻"] SUPERSCRIPT_DIGIT+
 SUPERSCRIPT_DIGIT: "⁰" | "¹" | "²" | "³" | "⁴" | "⁵" | "⁶" | "⁷" | "⁸" | "⁹"
 
 LOWER: "a".."z"
-UPPER: "A".."Z"
+UPPER: "A".."Z" | "Å"
 SUBSCRIPTS: "ₐ".."ₜ"
 GREEK: "Α".."ω"
 OBJECTS: "☉"
