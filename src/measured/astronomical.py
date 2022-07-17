@@ -38,7 +38,7 @@ Attributes: Units of mass
 from measured import Area, Length, Mass, Power, Time, Unit, Volume, si
 from measured.geometry import π
 from measured.physics import c
-from measured.si import Kilo, Kilogram, Mega, Meter, Second, Watt
+from measured.si import Kilogram, Mega, Meter, Second, Watt
 
 # Measures of Time
 
@@ -99,7 +99,7 @@ Crab.equals(2.4e-11 * Watt / Meter**2)
 
 # https://en.wikipedia.org/wiki/Hubble%27s_law#Time-dependence_of_Hubble_parameter
 # H0 is today's value of the Hubble parameter
-H0 = 67.4 * (((Kilo * Meter) / Second) / (Mega * Parsec))
+H0 = 67400 * ((Meter / Second) / (Mega * Parsec))
 
 # https://en.wikipedia.org/wiki/Hubble%27s_law#Units_derived_from_the_Hubble_constant
 HubbleTime = Time.unit("hubble time", "hubble-time")
