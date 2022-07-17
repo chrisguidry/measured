@@ -1,7 +1,14 @@
 import pytest
 
 from measured import Quantity
-from measured.energy import BritishThermalUnit, Calorie, TonneOfTNT, TonOfRefrigeration
+from measured.energy import (
+    BritishThermalUnit,
+    Calorie,
+    Donkeypower,
+    Horsepower,
+    TonneOfTNT,
+    TonOfRefrigeration,
+)
 from measured.si import ElectronVolt, Hour, Joule, Kilo, Watt
 from measured.us import Foot, PoundForce
 
@@ -55,3 +62,11 @@ def test_refrigeration() -> None:
 def test_tnt_equivalent(equivalent: Quantity, within: float) -> None:
     (1 * TonneOfTNT).assert_approximates(equivalent, within=within)
     equivalent.assert_approximates(1 * TonneOfTNT, within=within)
+
+
+def test_horsepower() -> None:
+    (1 * Horsepower).assert_approximates(745.69987 * Watt)
+
+
+def test_donkeypower() -> None:
+    (1 * Donkeypower).assert_approximates(1 / 3 * Horsepower)

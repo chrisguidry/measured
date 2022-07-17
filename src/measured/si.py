@@ -229,7 +229,7 @@ Katal = Unit.derive(Mole / Second, name="katal", symbol="kat")
 
 # Length, Area, Volume
 Hectare = Area.unit(name="hectare", symbol="ha")
-Hectare.equals(1 * (Hecto * Meter) ** 2)
+Hectare.equals(10000 * Meter**2)
 
 Liter = Volume.unit(name="liter", symbol="L")
 Liter.equals(0.001 * Meter**3)

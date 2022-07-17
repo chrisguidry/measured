@@ -26,7 +26,7 @@ UPPER: "A".."Z" | "Å"
 SUBSCRIPTS: "ₐ".."ₜ"
 GREEK: "Α".."ω"
 OBJECTS: "☉"
-PUNCTUATION: "." | "°" | "-"
+PUNCTUATION: "." | "°" | "-" | "(" | ")"
 SYMBOL: ("1" | LOWER | UPPER | SUBSCRIPTS | GREEK | OBJECTS | PUNCTUATION)+
 
 %import common.SIGNED_INT
