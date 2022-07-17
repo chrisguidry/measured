@@ -35,10 +35,10 @@ Attributes: Units of mass
     JupiterMass (Unit): The mass of Jupiter
 """
 
-from measured import Area, Length, Mass, Power, Time, Unit, si
+from measured import Area, Length, Mass, Power, Time, Unit, Volume, si
 from measured.geometry import π
 from measured.physics import c
-from measured.si import Kilogram, Meter, Second, Watt
+from measured.si import Kilogram, Mega, Meter, Second, Watt
 
 # Measures of Time
 
@@ -86,5 +86,29 @@ JupiterMass.equals(1.89813e27 * Kilogram)
 
 # Derived
 
+# https://en.wikipedia.org/wiki/Jansky
 Jansky = (Power * Time / Area).unit("jansky", "Jy")
 Jansky.equals(1e-26 * Watt * Second / Meter**2)
+
+# https://en.wikipedia.org/wiki/Crab_(unit)
+Crab = (Power / Area).unit("crab", "crab")
+Crab.equals(2.4e-11 * Watt / Meter**2)
+
+
+# Hubble's Law
+
+# https://en.wikipedia.org/wiki/Hubble%27s_law#Time-dependence_of_Hubble_parameter
+# H0 is today's value of the Hubble parameter
+H0 = 67400 * ((Meter / Second) / (Mega * Parsec))
+
+# https://en.wikipedia.org/wiki/Hubble%27s_law#Units_derived_from_the_Hubble_constant
+HubbleTime = Time.unit("hubble time", "hubble-time")
+HubbleTime.equals(H0**-1)
+HubbleTime.equals((H0**-1).in_unit(Second))
+
+HubbleLength = Length.unit("hubble length", "hubble-length")
+HubbleLength.equals(c / H0)
+HubbleLength.equals(c * HubbleTime)
+
+HubbleVolume = Volume.unit("hubble volume", "hubble-volume")
+HubbleVolume.equals(4 / 3 * π * (1 * HubbleLength) ** 3)

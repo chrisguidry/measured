@@ -11,7 +11,7 @@ from measured import systems  # noqa: F401
 from measured import Dimension, Prefix, Quantity, Unit
 
 DIMENSIONS = sorted(Dimension.fundamental(), key=lambda d: d.exponents)
-PREFIXES = sorted(Prefix._known.values(), key=lambda p: (p.base, p.exponent))
+PREFIXES = sorted(Prefix._by_name.values(), key=lambda p: (p.base, p.exponent))
 BASE_UNITS = sorted(Unit.base(), key=lambda u: u.name or "")
 UNITS = sorted(Unit._known.values(), key=lambda u: u.name or "")
 for this in BASE_UNITS:
