@@ -158,3 +158,8 @@ def test_only_integer_roots() -> None:
 def test_whole_power_roots_only() -> None:
     with pytest.raises(ValueError):
         Deci.root(3)
+
+
+def test_prefixes_invert_properly() -> None:
+    assert Mega * (Meter**-1) == (Micro * Meter) ** -1
+    assert (Micro * Meter) ** -1 == Mega * (Meter**-1)

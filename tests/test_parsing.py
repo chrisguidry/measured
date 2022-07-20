@@ -16,6 +16,7 @@ from measured.si import (
     Kilo,
     Kilogram,
     Liter,
+    Mega,
     Meter,
     Micro,
     Ohm,
@@ -46,6 +47,7 @@ def test_kilogram_converts_to_kilogram() -> None:
     unit=units(),
 )
 @example(magnitude=1, unit=Liter)
+@example(magnitude=1, unit=Mega * (Meter**-1))
 def test_small_integer_quantities_parse_exactly(magnitude: Numeric, unit: Unit) -> None:
     assert Quantity.parse(str(magnitude * unit)) == magnitude * unit
 

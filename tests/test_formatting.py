@@ -12,7 +12,7 @@ from measured import (
     Volume,
 )
 from measured.formatting import superscript
-from measured.si import Hertz, Kilo, Meter, Milli, Ohm, Second
+from measured.si import Hertz, Kilo, Mega, Meter, Milli, Ohm, Second
 
 
 @pytest.mark.parametrize(
@@ -89,7 +89,10 @@ def test_strings_of_units(unit: Unit, string: str) -> None:
         (5 * Meter, "5 m"),
         (5.1 * Meter**2, "5.1 m²"),
         (5 * (Kilo * Meter), "5 km"),
+        (5.1 * (Kilo * (Meter**2) / Second), "5.1 km²⋅s⁻¹"),
         (5.1 * (Kilo * Meter**2) / Second, "5.1 km²⋅s⁻¹"),
+        (5.1 * (Kilo * Meter) ** 2 / Second, "5.1 Mm²⋅s⁻¹"),
+        (5.1 * (Mega * Meter**-1), "5.1 μm⁻¹"),
     ],
 )
 def test_strings_of_quantities(quantity: Quantity, string: str) -> None:

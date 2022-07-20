@@ -1080,9 +1080,20 @@ class Unit:
         if self.symbol:
             return self.symbol
 
-        return str(self.prefix) + "⋅".join(
-            f"{unit.prefix}{unit.symbol}{superscript(exponent)}"
+        # In order to handle cases like `Mega * (Meter**-1)`, which naively becomes
+        # "Mm⁻¹", which looks like it should parse to `(Mega*Meter)**-1`, take this
+        # unit's prefix and push it down as the prefix of the first factor
+        first, *rest = [
+            (unit.prefix, unit.symbol, exponent)
             for unit, exponent in self.factors.items()
+        ]
+        prefix, symbol, exponent = first
+        sign = 1 if exponent >= 0 else -1
+        first = ((self.prefix * prefix) ** sign, symbol, exponent)
+
+        return "⋅".join(
+            f"{prefix}{symbol}{superscript(exponent)}"
+            for prefix, symbol, exponent in [first, *rest]
         )
 
     def __format__(self, format_specifier: str) -> str:
