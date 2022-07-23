@@ -1,6 +1,6 @@
 import pytest
 
-from measured import Number, One, PlaneAngle, Quantity, SolidAngle
+from measured import Number, One, PlaneAngle, Quantity, SolidAngle, approximately
 from measured.geometry import π
 from measured.si import Arcminute, Arcsecond, Degree, Radian, Steradian
 
@@ -41,5 +41,5 @@ def test_steradian_is_dimensionless_but_unique() -> None:
     ],
 )
 def test_angle_conversions(left: Quantity, right: Quantity) -> None:
-    left.assert_approximates(right)
-    right.assert_approximates(left)
+    assert left == approximately(right)
+    assert right == approximately(left)

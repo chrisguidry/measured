@@ -10,6 +10,7 @@ from measured import (
     Pressure,
     Quantity,
     Unit,
+    approximately,
     conversions,
 )
 from measured.geometry import π
@@ -40,7 +41,8 @@ def test_approximating_requires_units_with_conversion() -> None:
     one = 1 * Meter
     other = 1 * Bogus
 
-    assert not one.approximates(other)
+    assert one != other
+    assert one != approximately(other)
 
 
 def test_unit_conversion_must_be_in_same_dimension() -> None:
@@ -64,8 +66,8 @@ def test_conversion_with_exponents() -> None:
 
 def test_conversion_navigates_multiple_steps() -> None:
     # 1 Yard -> 36 Inch -> 216 Pica
-    (1 * Yard).assert_approximates(216 * Pica)
-    (216 * Pica).assert_approximates(1 * Yard)
+    assert 1 * Yard == approximately(216 * Pica)
+    assert 216 * Pica == approximately(1 * Yard)
 
 
 def test_cancelling_units() -> None:
@@ -110,7 +112,7 @@ def test_conversion_can_navigate_exponents(
     converted = conversions.convert(1 * start, end)
     assert converted.unit == end
     assert converted.magnitude == pytest.approx(magnitude)
-    converted.assert_approximates(magnitude * end)
+    assert converted == approximately(magnitude * end)
 
 
 def test_backtracking_conversions_with_no_path() -> None:

@@ -4,8 +4,7 @@ import pytest
 from hypothesis import assume, example, given
 from hypothesis.strategies import floats, integers
 
-from measured import systems  # noqa: F401
-from measured import Numeric, Quantity, Unit
+from measured import Numeric, Quantity, Unit, approximately, systems  # noqa: F401
 from measured.hypothesis import units
 from measured.iec import Byte, Kibi
 from measured.parsing import ParseError
@@ -55,7 +54,7 @@ def test_small_integer_quantities_parse_exactly(magnitude: Numeric, unit: Unit) 
 @given(magnitude=integers(), unit=units())
 @example(magnitude=1, unit=Liter)
 def test_large_integer_quantities_are_parsable(magnitude: Numeric, unit: Unit) -> None:
-    Quantity.parse(str(magnitude * unit)).assert_approximates(magnitude * unit)
+    assert Quantity.parse(str(magnitude * unit)) == approximately(magnitude * unit)
 
 
 @given(magnitude=floats(allow_infinity=False, allow_nan=False), unit=units())

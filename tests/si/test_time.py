@@ -1,6 +1,6 @@
 import pytest
 
-from measured import Quantity
+from measured import Quantity, approximately
 from measured.si import Day, Hour, Minute, Second
 
 
@@ -21,14 +21,14 @@ def test_time_conversions(
     assert days == minutes
     assert days == seconds
 
-    hours.assert_approximates(days)
+    assert hours == approximately(days)
     assert hours == minutes
     assert hours == seconds
 
-    minutes.assert_approximates(days)
+    assert minutes == approximately(days)
     assert minutes == hours
     assert minutes == seconds
 
-    seconds.assert_approximates(days)
+    assert seconds == approximately(days)
     assert seconds == hours
     assert seconds == minutes

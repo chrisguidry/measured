@@ -1,6 +1,6 @@
 import pytest
 
-from measured import Quantity
+from measured import Quantity, approximately
 from measured.si import Celsius, Kelvin, Kilo, Milli
 
 
@@ -15,10 +15,8 @@ from measured.si import Celsius, Kelvin, Kilo, Milli
     ],
 )
 def test_kelvin_equals_celsius(kelvin: Quantity, celsius: Quantity) -> None:
-    # assert kelvin == celsius
-    # assert celsius == kelvin
-    kelvin.assert_approximates(celsius, 0)
-    celsius.assert_approximates(kelvin, 0)
+    assert kelvin == approximately(celsius, 0)
+    assert celsius == approximately(kelvin, 0)
 
 
 @pytest.mark.parametrize(
@@ -29,5 +27,5 @@ def test_kelvin_equals_celsius(kelvin: Quantity, celsius: Quantity) -> None:
     ],
 )
 def test_kelvin_approximates_celsius(kelvin: Quantity, celsius: Quantity) -> None:
-    kelvin.assert_approximates(celsius)
-    celsius.assert_approximates(kelvin)
+    assert kelvin == approximately(celsius)
+    assert celsius == approximately(kelvin)

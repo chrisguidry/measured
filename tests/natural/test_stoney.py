@@ -1,6 +1,6 @@
 import pytest
 
-from measured import Charge, Length, Mass, Quantity, Time
+from measured import Charge, Length, Mass, Quantity, Time, approximately
 from measured.natural import StoneyCharge, StoneyLength, StoneyMass, StoneyTime
 from measured.physics import G, c, e, kₑ, α, ℏ
 from measured.si import Coulomb, Kilogram, Meter, Second
@@ -23,25 +23,25 @@ from measured.si import Coulomb, Kilogram, Meter, Second
     ],
 )
 def test_unity(fundamental_constant: Quantity, unity: Quantity) -> None:
-    fundamental_constant.assert_approximates(unity)
-    unity.assert_approximates(fundamental_constant)
+    assert fundamental_constant == approximately(unity)
+    assert unity == approximately(fundamental_constant)
 
 
 def test_length() -> None:
     assert StoneyLength.dimension is Length
-    (1 * StoneyLength).assert_approximates(1.3807e-36 * Meter, within=2e-5)
+    assert 1 * StoneyLength == approximately(1.3807e-36 * Meter, within=2e-5)
 
 
 def test_mass() -> None:
     assert StoneyMass.dimension is Mass
-    (1 * StoneyMass).assert_approximates(1.8592e-9 * Kilogram, within=5e-6)
+    assert 1 * StoneyMass == approximately(1.8592e-9 * Kilogram, within=5e-6)
 
 
 def test_time() -> None:
     assert StoneyTime.dimension is Time
-    (1 * StoneyTime).assert_approximates(4.6054e-45 * Second, within=2e-5)
+    assert 1 * StoneyTime == approximately(4.6054e-45 * Second, within=2e-5)
 
 
 def test_charge() -> None:
     assert StoneyCharge.dimension is Charge
-    (1 * StoneyCharge).assert_approximates(1.6022e-19 * Coulomb, within=2e-5)
+    assert 1 * StoneyCharge == approximately(1.6022e-19 * Coulomb, within=2e-5)

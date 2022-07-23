@@ -1,6 +1,6 @@
 import pytest
 
-from measured import Quantity
+from measured import Quantity, approximately
 from measured.si import Kilo, Meter
 from measured.us import (
     Acre,
@@ -47,5 +47,5 @@ def test_areas_equal(left: Quantity, right: Quantity) -> None:
     ],
 )
 def test_areas_approximate(left: Quantity, right: Quantity, within: float) -> None:
-    left.assert_approximates(right, within)
-    right.assert_approximates(left, within)
+    assert left == approximately(right, within)
+    assert right == approximately(left, within)

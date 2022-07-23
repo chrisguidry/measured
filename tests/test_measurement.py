@@ -4,7 +4,7 @@ from typing import Any
 import pytest
 from pytest import approx
 
-from measured import Measurement, approximately
+from measured import Measurement, Quantity, approximately
 from measured.si import Meter, Second
 from measured.us import Foot
 
@@ -186,7 +186,9 @@ def test_exponentation_only_with_integers(other: Any) -> None:
         (Measurement(9.9 * Meter, 0.1), Measurement(10.1 * Meter, 0.1)),
         (Measurement(9.8 * Meter, 0.2), Measurement(10.2 * Meter, 0.2)),
         (Measurement(10 * Meter, 1), Measurement(11 * Meter, 1)),
+        (Measurement(0 * Meter, 0.01), 0 * Meter),
         (Measurement(9.9 * Meter, 0.01), 9.9 * Meter),
+        (Measurement(-9.9 * Meter, 0.01), -9.9 * Meter),
     ],
 )
 def test_equality(left: Measurement, right: Measurement) -> None:
@@ -285,3 +287,18 @@ def test_unrecognized_format_specifier() -> None:
     speed = Measurement(1234.5678 * Meter / Second, 0.234)
     with pytest.raises(ValueError, match="Unrecognized uncertainty style '🤷'"):
         speed.__format__("🤷")
+
+
+@pytest.mark.parametrize(
+    "quantity",
+    [
+        -10 * Meter,
+        -10.0 * Meter,
+        0 * Meter,
+        0.0 * Meter,
+        10 * Meter,
+        10.0 * Meter,
+    ],
+)
+def test_quantities_always_approximate_themselves(quantity: Quantity) -> None:
+    assert quantity == approximately(quantity)

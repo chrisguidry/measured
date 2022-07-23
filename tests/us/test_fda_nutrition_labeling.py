@@ -5,25 +5,26 @@
 # means 30 mL, and 1 oz in weight means 28 g.
 # [pp 23]
 
+from measured import approximately
 from measured.si import Gram, Liter, Milli
 from measured.us import Cup, FluidOunce, Ounce, Tablespoon, Teaspoon
 
 
 def test_teaspoon_is_about_5mL() -> None:
-    (1 * Teaspoon).assert_approximates(5 * Milli * Liter, within=0.015)
+    assert 1 * Teaspoon == approximately(5 * Milli * Liter, within=0.015)
 
 
 def test_tablespoon_is_about_15mL() -> None:
-    (1 * Tablespoon).assert_approximates(15 * Milli * Liter, within=0.015)
+    assert 1 * Tablespoon == approximately(15 * Milli * Liter, within=0.015)
 
 
 def test_cup_is_about_240mL() -> None:
-    (1 * Cup).assert_approximates(240 * Milli * Liter, within=0.015)
+    assert 1 * Cup == approximately(240 * Milli * Liter, within=0.015)
 
 
 def test_fluid_ounce_is_about_30mL() -> None:
-    (1 * FluidOunce).assert_approximates(30 * Milli * Liter, within=0.015)
+    assert 1 * FluidOunce == approximately(30 * Milli * Liter, within=0.015)
 
 
 def test_dry_ounce_is_about_28g() -> None:
-    (1 * Ounce).assert_approximates(28 * Gram, within=0.013)
+    assert 1 * Ounce == approximately(28 * Gram, within=0.013)
