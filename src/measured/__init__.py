@@ -1593,12 +1593,12 @@ class Measurement:
     uncertainty: Quantity
 
     def __init__(
-        self, measureand: Quantity, uncertainty: Union[Numeric, Quantity]
+        self, measurand: Quantity, uncertainty: Union[Numeric, Quantity]
     ) -> None:
-        self.measurand = measureand
+        self.measurand = measurand
         if not isinstance(uncertainty, Quantity):
-            uncertainty = Quantity(uncertainty, measureand.unit)
-        assert uncertainty.unit is measureand.unit
+            uncertainty = Quantity(uncertainty, measurand.unit)
+        assert uncertainty.unit is measurand.unit
         self.uncertainty = abs(uncertainty)
 
     @property
@@ -1625,11 +1625,6 @@ class Measurement:
         other_lower = other.measurand - other.uncertainty
         self_upper = self.measurand + self.uncertainty
         other_upper = other.measurand + other.uncertainty
-
-        ic(self_lower)
-        ic(other_lower)
-        ic(self_upper)
-        ic(other_upper)
 
         try:
             overlaps_lower = self_lower <= other_lower <= self_upper
@@ -1723,9 +1718,9 @@ class Measurement:
         if not isinstance(other, Measurement):
             return NotImplemented
 
-        measureand = self.measurand + other.measurand
+        measurand = self.measurand + other.measurand
         uncertainty = (self.uncertainty**2 + other.uncertainty**2).root(2)
-        return Measurement(measureand, uncertainty)
+        return Measurement(measurand, uncertainty)
 
     __radd__ = __add__
 
@@ -1736,9 +1731,9 @@ class Measurement:
         if not isinstance(other, Measurement):
             return NotImplemented
 
-        measureand = self.measurand - other.measurand
+        measurand = self.measurand - other.measurand
         uncertainty = (self.uncertainty**2 + other.uncertainty**2).root(2)
-        return Measurement(measureand, uncertainty)
+        return Measurement(measurand, uncertainty)
 
     def __rsub__(self, other: Union["Measurement", Quantity]) -> "Measurement":
         if isinstance(other, Quantity):
@@ -1756,15 +1751,15 @@ class Measurement:
         if not isinstance(other, Measurement):
             return NotImplemented
 
-        measureand = self.measurand * other.measurand
+        measurand = self.measurand * other.measurand
         uncertainty = sqrt(
-            measureand.magnitude**2
+            measurand.magnitude**2
             * (
                 (self.uncertainty.magnitude**2 / self.measurand.magnitude**2)
                 + (other.uncertainty.magnitude**2 / other.measurand.magnitude**2)
             )
         )
-        return Measurement(measureand, uncertainty)
+        return Measurement(measurand, uncertainty)
 
     __rmul__ = __mul__
 
@@ -1775,15 +1770,15 @@ class Measurement:
         if not isinstance(other, Measurement):
             return NotImplemented
 
-        measureand = self.measurand / other.measurand
+        measurand = self.measurand / other.measurand
         uncertainty = sqrt(
-            measureand.magnitude**2
+            measurand.magnitude**2
             * (
                 (self.uncertainty.magnitude**2 / self.measurand.magnitude**2)
                 + (other.uncertainty.magnitude**2 / other.measurand.magnitude**2)
             )
         )
-        return Measurement(measureand, uncertainty)
+        return Measurement(measurand, uncertainty)
 
     def __rtruediv__(self, other: Union["Measurement", Quantity]) -> "Measurement":
         if isinstance(other, Quantity):
@@ -1798,11 +1793,11 @@ class Measurement:
         if not isinstance(exponent, int):
             return NotImplemented
 
-        measureand = self.measurand**exponent
+        measurand = self.measurand**exponent
         uncertainty = sqrt(
             (exponent * self.measurand.magnitude**2 * self.uncertainty.magnitude) ** 2
         )
-        return Measurement(measureand, uncertainty)
+        return Measurement(measurand, uncertainty)
 
 
 def approximately(quantity: Quantity, within: float = 1e-7) -> Measurement:
