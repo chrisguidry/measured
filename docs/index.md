@@ -25,3 +25,11 @@
 ::: measured.Quantity
     options:
         show_root_heading: true
+
+::: measured.Measurement
+    options:
+        show_root_heading: true
+
+::: measured.approximately
+    options:
+        show_root_heading: true

@@ -144,7 +144,7 @@ import functools
 from collections import defaultdict
 from functools import lru_cache, total_ordering
 from importlib.metadata import version
-from math import log
+from math import log, sqrt
 from typing import (
     Any,
     Callable,
@@ -1596,6 +1596,295 @@ class Quantity:
 
         message += f" (off by {approximation})"
         assert approximation <= within, message
+
+
+class Measurement:
+    """Measurement represents an uncertain measurement of some Quantity, and will
+    propagate that uncertainty through arithmetic operations with Quantities and other
+    Measurements.
+
+    Attributes:
+
+        measurand (Quantity): the measured value
+
+        uncertainty (Quantity | Numeric): the uncertainty of the measurement
+
+    Examples:
+
+        All of the arithmetic operations are supported with Quantities and Measurements:
+
+        >>> from measured import Measurement
+        >>> from measured.si import Meter, Second
+        >>> length = Measurement(2 * Meter, uncertainty=0.1)
+        >>> width = Measurement(3 * Meter, uncertainty=0.2)
+        >>> depth = 4 * Meter
+
+        The uncertainty of the measurements propagate through arithmetic operations
+        assuming that they are Gaussian, normally-distributed errors.
+
+        >>> area = length * width
+        >>> assert isinstance(area, Measurement)
+        >>> assert area.measurand == 6 * Meter**2
+        >>> assert area.uncertainty == 0.5 * Meter**2
+
+        Quantities are treated as if they have an uncertainty of 0:
+
+        >>> volume = area * depth
+        >>> assert isinstance(volume, Measurement)
+        >>> assert volume.measurand == 24 * Meter**3
+        >>> assert volume.uncertainty == 2.0 * Meter**3
+
+        When formatting a [`Measurement`][measured.Measurement], you can specify up to
+        three separate format specifiers, separated by a `:`.  The first specifier
+        controls how the uncertainty will be formatted.
+
+        >>> speed = Measurement(10.0 * Meter / Second, 0.1)
+
+        Uncertainties can be formatted as a ± interval using either the "±" or "+"
+        specifier (the default)
+
+        >>> f"{speed}"
+        '10.0±0.1 m⋅s⁻¹'
+
+        They can also be formatted as percentages using the "%" specifier:
+
+        >>> f"{speed:%}"
+        '10.0±1.00% m⋅s⁻¹'
+
+        In any of those cases, the significant digits of the uncertainty can also be
+        specified:
+
+        >>> f"{speed:%.4f}"
+        '10.0±1.0000% m⋅s⁻¹'
+        >>> f"{speed:±.4f}"
+        '10.0±0.1000 m⋅s⁻¹'
+        >>> f"{speed:+.4f}"
+        '10.0±0.1000 m⋅s⁻¹'
+
+        The second and third specifiers are used to format the measurand and follow the
+        same conventions as with [`Quantity`][measured.Quantity].
+
+        >>> f"{speed:%.4f:.3f:/}"
+        '10.000±1.0000% m/s'
+    """
+
+    measurand: Quantity
+    uncertainty: Quantity
+
+    def __init__(
+        self, measureand: Quantity, uncertainty: Union[Numeric, Quantity]
+    ) -> None:
+        self.measurand = measureand
+        if not isinstance(uncertainty, Quantity):
+            uncertainty = Quantity(uncertainty, measureand.unit)
+        assert uncertainty.unit is measureand.unit
+        self.uncertainty = uncertainty
+
+    @property
+    def uncertainty_ratio(self) -> float:
+        """The uncertainty, expressed as a fraction of the magnitude of the measurand"""
+        return self.uncertainty.magnitude / self.measurand.magnitude
+
+    @property
+    def uncertainty_percent(self) -> float:
+        """The uncertainty, expressed as a percent of the magnitude of the measurand"""
+        return self.uncertainty_ratio * 100
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Quantity):
+            other = Measurement(other, 0)
+
+        if not isinstance(other, Measurement):
+            return False
+
+        self_lower = self.measurand - self.uncertainty
+        other_lower = other.measurand - other.uncertainty
+        self_upper = self.measurand + self.uncertainty
+        other_upper = other.measurand + other.uncertainty
+
+        overlaps_lower = self_lower <= other_lower <= self_upper
+        overlaps_upper = self_lower <= other_upper <= self_upper
+        return overlaps_lower or overlaps_upper
+
+    def __lt__(self, other: object) -> bool:
+        if isinstance(other, Quantity):
+            other = Measurement(other, 0)
+
+        if not isinstance(other, Measurement):
+            return NotImplemented
+
+        self_lower = self.measurand - self.uncertainty
+        other_lower = other.measurand - other.uncertainty
+        return self_lower < other_lower
+
+    def __le__(self, other: object) -> bool:
+        if isinstance(other, Quantity):
+            other = Measurement(other, 0)
+
+        if not isinstance(other, Measurement):
+            return NotImplemented
+
+        self_lower = self.measurand - self.uncertainty
+        other_lower = other.measurand - other.uncertainty
+        return self_lower <= other_lower
+
+    def __gt__(self, other: object) -> bool:
+        if isinstance(other, Quantity):
+            other = Measurement(other, 0)
+
+        if not isinstance(other, Measurement):
+            return NotImplemented
+
+        self_upper = self.measurand + self.uncertainty
+        other_upper = other.measurand + other.uncertainty
+        return self_upper > other_upper
+
+    def __ge__(self, other: object) -> bool:
+        if isinstance(other, Quantity):
+            other = Measurement(other, 0)
+
+        if not isinstance(other, Measurement):
+            return NotImplemented
+
+        self_upper = self.measurand + self.uncertainty
+        other_upper = other.measurand + other.uncertainty
+        return self_upper >= other_upper
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}("
+            f"measurand={self.measurand!r}, "
+            f"uncertainty={self.uncertainty.magnitude!r}"
+            ")"
+        )
+
+    def __str__(self) -> str:
+        return self.__format__("")
+
+    def __format__(self, format_specifier: str) -> str:
+        uncertainty_format, _, quantity_format = format_specifier.partition(":")
+
+        style, magnitude_format = "", ""
+        if uncertainty_format:
+            style, magnitude_format = uncertainty_format[0], uncertainty_format[1:]
+
+        if style in ("", "+", "±"):
+            magnitude = self.uncertainty.magnitude.__format__(magnitude_format)
+            uncertainty = f"±{magnitude}"
+        elif style == "%":
+            magnitude_format = magnitude_format or ".2f"
+            percent = self.uncertainty_percent.__format__(magnitude_format)
+            uncertainty = f"±{percent}%"
+        else:
+            raise ValueError(f"Unrecognized uncertainty style {style!r}")
+
+        magnitude_format, _, unit_format = quantity_format.partition(":")
+        magnitude = self.measurand.magnitude.__format__(magnitude_format)
+        unit = self.measurand.unit.__format__(unit_format)
+        return f"{magnitude}{uncertainty} {unit}"
+
+    def __add__(self, other: Union["Measurement", Quantity]) -> "Measurement":
+        if isinstance(other, Quantity):
+            other = Measurement(other, 0)
+
+        if not isinstance(other, Measurement):
+            return NotImplemented
+
+        measureand = self.measurand + other.measurand
+        uncertainty = (self.uncertainty**2 + other.uncertainty**2).root(2)
+        return Measurement(measureand, uncertainty)
+
+    __radd__ = __add__
+
+    def __sub__(self, other: Union["Measurement", Quantity]) -> "Measurement":
+        if isinstance(other, Quantity):
+            other = Measurement(other, 0)
+
+        if not isinstance(other, Measurement):
+            return NotImplemented
+
+        measureand = self.measurand - other.measurand
+        uncertainty = (self.uncertainty**2 + other.uncertainty**2).root(2)
+        return Measurement(measureand, uncertainty)
+
+    def __rsub__(self, other: Union["Measurement", Quantity]) -> "Measurement":
+        if isinstance(other, Quantity):
+            other = Measurement(other, 0)
+
+        if not isinstance(other, Measurement):
+            return NotImplemented
+
+        return other - self
+
+    def __mul__(self, other: Union["Measurement", Quantity]) -> "Measurement":
+        if isinstance(other, Quantity):
+            other = Measurement(other, 0)
+
+        if not isinstance(other, Measurement):
+            return NotImplemented
+
+        measureand = self.measurand * other.measurand
+        uncertainty = sqrt(
+            measureand.magnitude**2
+            * (
+                (self.uncertainty.magnitude**2 / self.measurand.magnitude**2)
+                + (other.uncertainty.magnitude**2 / other.measurand.magnitude**2)
+            )
+        )
+        return Measurement(measureand, uncertainty)
+
+    __rmul__ = __mul__
+
+    def __truediv__(self, other: Union["Measurement", Quantity]) -> "Measurement":
+        if isinstance(other, Quantity):
+            other = Measurement(other, 0)
+
+        if not isinstance(other, Measurement):
+            return NotImplemented
+
+        measureand = self.measurand / other.measurand
+        uncertainty = sqrt(
+            measureand.magnitude**2
+            * (
+                (self.uncertainty.magnitude**2 / self.measurand.magnitude**2)
+                + (other.uncertainty.magnitude**2 / other.measurand.magnitude**2)
+            )
+        )
+        return Measurement(measureand, uncertainty)
+
+    def __rtruediv__(self, other: Union["Measurement", Quantity]) -> "Measurement":
+        if isinstance(other, Quantity):
+            other = Measurement(other, 0)
+
+        if not isinstance(other, Measurement):
+            return NotImplemented
+
+        return other / self
+
+    def __pow__(self, exponent: int) -> "Measurement":
+        if not isinstance(exponent, int):
+            return NotImplemented
+
+        measureand = self.measurand**exponent
+        uncertainty = sqrt(
+            (exponent * self.measurand.magnitude**2 * self.uncertainty.magnitude) ** 2
+        )
+        return Measurement(measureand, uncertainty)
+
+
+def approximately(quantity: Quantity, uncertainty: Numeric = 1e-6) -> Measurement:
+    """
+    Shortcut for creating a Measurement for use in test assertions.
+
+    Examples:
+
+        >>> from measured import approximately
+        >>> from measured.si import Meter
+        >>> assert 5.2 * Meter == approximately(5 * Meter, 0.3)
+        >>> assert 5.2 * Meter < approximately(6 * Meter, 0.5)
+    """
+
+    return Measurement(quantity, uncertainty)
 
 
 # https://en.wikipedia.org/wiki/Dimensional_analysis#Definition
