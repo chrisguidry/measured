@@ -1,6 +1,6 @@
 import pytest
 
-from measured import Information, One, Quantity
+from measured import Information, One, Quantity, approximately
 from measured.iec import Bit, Byte, Gibi, Kibi, Mebi, Shannon
 from measured.si import Giga, Kilo, Mega, Second
 
@@ -69,5 +69,4 @@ def test_bit_iec_si_compatibility(iec: Quantity, si: Quantity) -> None:
     ],
 )
 def test_byte_iec_si_compatibility(iec: Quantity, si: Quantity) -> None:
-    difference = iec.unprefixed() - si.unprefixed()
-    assert iec.approximates(si), f"{iec} and {si} differ by {difference}"
+    assert iec.unprefixed() == approximately(si.unprefixed())

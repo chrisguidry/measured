@@ -4,7 +4,7 @@ import pytest
 from hypothesis import assume, given
 from hypothesis.strategies import floats, integers, one_of
 
-from measured import Length, Numeric, One, Quantity, Unit
+from measured import Length, Numeric, One, Quantity, Unit, approximately
 from measured.hypothesis import quantities
 from measured.si import Meter, Second
 
@@ -76,7 +76,7 @@ def test_roots() -> None:
     assert (10 * Meter).root(0) == 1 * One
     assert ((10 * Meter) ** 2).root(2) == 10 * Meter
     assert (100 * Meter**2).root(2) == 10 * Meter
-    (64 * Meter**3).root(3).assert_approximates(4 * Meter)
+    assert (64 * Meter**3).root(3) == approximately(4 * Meter)
 
 
 def test_cannot_multiply_by_random_types() -> None:
@@ -172,12 +172,12 @@ def test_sorting() -> None:
 
 
 def test_approximating() -> None:
-    (1 * Meter).assert_approximates(1.0 * Meter)
-    (1 * Meter).assert_approximates(1 * Meter)
-    (1.0 * Meter).assert_approximates(1.0 * Meter)
-    (1 * Meter).assert_approximates(1.0000000001 * Meter)
-    assert not (1 * Meter).approximates(1.01 * Meter)
-    assert not (1 * Meter).approximates(1.0 * Second)
+    assert 1 * Meter == approximately(1.0 * Meter)
+    assert 1 * Meter == approximately(1 * Meter)
+    assert 1.0 * Meter == approximately(1.0 * Meter)
+    assert 1 * Meter == approximately(1.0000000001 * Meter)
+    assert 1 * Meter != approximately(1.01 * Meter)
+    assert 1 * Meter != approximately(1.0 * Second)
 
 
 @given(quantity=quantities())

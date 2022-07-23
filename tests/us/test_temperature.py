@@ -1,6 +1,6 @@
 import pytest
 
-from measured import Quantity
+from measured import Quantity, approximately
 from measured.si import Kelvin, Kilo, Milli
 from measured.us import Fahrenheit, Rankine
 
@@ -37,8 +37,8 @@ def test_kelvin_and_rankine(kelvin: Quantity, rankine: Quantity) -> None:
     ],
 )
 def test_kelvin_approximates_rankine(kelvin: Quantity, rankine: Quantity) -> None:
-    kelvin.assert_approximates(rankine)
-    rankine.assert_approximates(kelvin)
+    assert kelvin == approximately(rankine)
+    assert rankine == approximately(kelvin)
 
 
 @pytest.mark.parametrize(
@@ -64,5 +64,5 @@ def test_rankine_equals_fahrenheit(rankine: Quantity, fahrenheit: Quantity) -> N
 def test_rankine_approximates_fahrenheit(
     rankine: Quantity, fahrenheit: Quantity
 ) -> None:
-    rankine.assert_approximates(fahrenheit)
-    fahrenheit.assert_approximates(rankine)
+    assert rankine == approximately(fahrenheit)
+    assert fahrenheit == approximately(rankine)

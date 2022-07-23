@@ -1,7 +1,7 @@
 import pytest
 from hypothesis import assume, given
 
-from measured import One, Quantity
+from measured import One, Quantity, approximately
 from measured.hypothesis import quantities
 
 
@@ -12,7 +12,7 @@ def identity() -> Quantity:
 
 @given(a=quantities(), b=quantities(), c=quantities())
 def test_associativity(a: Quantity, b: Quantity, c: Quantity) -> None:
-    ((a * b) * c).assert_approximates(a * (b * c))
+    assert (a * b) * c == approximately(a * (b * c))
 
 
 @given(a=quantities())
@@ -27,8 +27,8 @@ def test_inverse(identity: Quantity, a: Quantity) -> None:
 
     inverse = a**-1
     assert inverse * a == a * inverse
-    (inverse * a).assert_approximates(identity)
-    (identity / a).assert_approximates(inverse)
+    assert inverse * a == approximately(identity)
+    assert identity / a == approximately(inverse)
 
 
 @given(a=quantities(), b=quantities())

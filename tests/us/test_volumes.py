@@ -1,6 +1,6 @@
 import pytest
 
-from measured import Quantity, Volume
+from measured import Quantity, Volume, approximately
 from measured.si import Centi, Kilo, Liter, Meter, Milli
 from measured.us import (
     Acre,
@@ -43,17 +43,17 @@ def test_common_cooking_measures() -> None:
     ],
 )
 def test_volume_conversions(left: Quantity, right: Quantity) -> None:
-    left.assert_approximates(right)
-    right.assert_approximates(left)
+    assert left == approximately(right)
+    assert right == approximately(left)
 
 
 def test_abe() -> None:
     abes_car = (40 * Rod) / (1 * Hogshead)
 
-    (40 * Rod).assert_approximates(0.125 * Mile)
+    assert (40 * Rod) == approximately(0.125 * Mile)
     assert 1 * Hogshead == 63 * Gallon
 
-    abes_car.assert_approximates((0.125 / 63) * Mile / Gallon, 0)
+    assert abes_car == approximately((0.125 / 63) * Mile / Gallon, 0)
     assert 0.00198 * Mile / Gallon <= abes_car <= 0.00199 * Mile / Gallon
 
 
@@ -62,14 +62,14 @@ def test_boardfoot() -> None:
     assert BoardFoot.name == "boardfoot"
     assert BoardFoot.symbol == "FBM"
     assert 1 * BoardFoot == 12 * 12 * 1 * Inch**3
-    (1 * BoardFoot).assert_approximates(2359.737 * (Centi * Meter) ** 3)
-    (1 * BoardFoot).assert_approximates(0.002359737 * Meter**3)
-    (1 * BoardFoot).assert_approximates(2.359737 * Liter)
+    assert 1 * BoardFoot == approximately(2359.737 * (Centi * Meter) ** 3)
+    assert 1 * BoardFoot == approximately(0.002359737 * Meter**3)
+    assert 1 * BoardFoot == approximately(2.359737 * Liter)
 
 
 def test_cord_and_rick() -> None:
-    assert (1 * Cord) == (3 * Rick)
-    (1 * Cord).assert_approximates(3.623 * Meter**3, within=5e-4)
+    assert 1 * Cord == 3 * Rick
+    assert 1 * Cord == approximately(3.623 * Meter**3, within=5e-4)
 
 
 def test_acrefoot() -> None:
@@ -77,5 +77,5 @@ def test_acrefoot() -> None:
     assert AcreFoot.name == "acre-foot"
     assert AcreFoot.symbol == "acre-ft."
     assert 1 * AcreFoot == 1 * Acre * Foot
-    (1 * AcreFoot).assert_approximates(325851 * Gallon, within=2e-6)
-    (1 * AcreFoot).assert_approximates(1233 * Meter**3, within=4e-4)
+    assert 1 * AcreFoot == approximately(325851 * Gallon, within=2e-6)
+    assert 1 * AcreFoot == approximately(1233 * Meter**3, within=4e-4)

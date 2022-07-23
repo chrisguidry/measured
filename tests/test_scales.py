@@ -1,6 +1,6 @@
 import pytest
 
-from measured import Quantity
+from measured import Quantity, approximately
 from measured.si import Celsius, Kelvin
 from measured.us import Fahrenheit, Rankine
 
@@ -32,11 +32,11 @@ from measured.us import Fahrenheit, Rankine
 def test_temperature_conversion_scale(
     kelvin: Quantity, celsius: Quantity, fahrenheit: Quantity, rankine: Quantity
 ) -> None:
-    kelvin.assert_approximates(celsius)
-    celsius.assert_approximates(kelvin)
-    celsius.assert_approximates(fahrenheit)
-    fahrenheit.assert_approximates(celsius)
-    fahrenheit.assert_approximates(rankine)
-    rankine.assert_approximates(kelvin)
-    rankine.assert_approximates(celsius)
-    kelvin.assert_approximates(rankine)
+    assert kelvin == approximately(celsius)
+    assert celsius == approximately(kelvin)
+    assert celsius == approximately(fahrenheit)
+    assert fahrenheit == approximately(celsius)
+    assert fahrenheit == approximately(rankine)
+    assert rankine == approximately(kelvin)
+    assert rankine == approximately(celsius)
+    assert kelvin == approximately(rankine)

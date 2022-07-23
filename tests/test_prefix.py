@@ -1,7 +1,7 @@
 import pytest
 from hypothesis import example, given
 
-from measured import IdentityPrefix, One, Prefix, Quantity
+from measured import IdentityPrefix, One, Prefix, Quantity, approximately
 from measured.hypothesis import prefixes
 from measured.iec import Bit, Kibi, Mebi
 from measured.si import Ampere, Deci, Kilo, Mega, Meter, Micro, Milli, Ohm, Second, Volt
@@ -71,9 +71,9 @@ def test_can_multiply_prefixes_with_same_base() -> None:
 def test_can_multiply_prefixes_with_different_bases() -> None:
     iec_first = 5 * (Kibi * Mega) * Meter
     si_first = 5 * (Mega * Kibi) * Meter
-    iec_first.assert_approximates(si_first)
-    iec_first.assert_approximates(5120000000 * Meter)
-    si_first.assert_approximates(5120000000 * Meter)
+    assert iec_first == approximately(si_first)
+    assert iec_first == approximately(5120000000 * Meter)
+    assert si_first == approximately(5120000000 * Meter)
 
 
 def test_can_divide_prefixes_with_same_base() -> None:
@@ -81,8 +81,8 @@ def test_can_divide_prefixes_with_same_base() -> None:
 
 
 def test_can_divide_prefixes_with_different_bases() -> None:
-    (5 * (Mebi / Kilo) * Meter).assert_approximates(5242.88 * Meter)
-    (5 * (Mega / Kibi) * Meter).assert_approximates(4882.8125 * Meter)
+    assert 5 * (Mebi / Kilo) * Meter == approximately(5242.88 * Meter)
+    assert 5 * (Mega / Kibi) * Meter == approximately(4882.8125 * Meter)
 
 
 def test_multiplying_produces_number_quantities() -> None:

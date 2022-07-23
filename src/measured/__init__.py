@@ -1518,85 +1518,6 @@ class Quantity:
         except conversions.ConversionNotFound:
             return NotImplemented
 
-    def _approximation(self, other: "Quantity") -> Union[Numeric, bool]:
-        if self == other:
-            return True
-
-        if self.unit.dimension != other.unit.dimension:
-            return False
-
-        this = self.unprefixed()
-        other = other.unprefixed()
-
-        if this.unit != other.unit:
-            try:
-                this = this.in_unit(other.unit)
-            except conversions.ConversionNotFound:
-                return False
-
-        if other.magnitude == 0:
-            ratio = this.magnitude
-        else:
-            ratio = 1 - this.magnitude / other.magnitude
-
-        return abs(ratio)
-
-    def approximates(self, other: "Quantity", within: float = 1e-7) -> bool:
-        """Indicates whether this Quantity and another Quantity are close enough to
-        each other to be considered equal.
-
-        Parameters:
-            other (Quantity): the other quantity to compare this quantity to
-            within (float): the tolerance as a ratio; e.g. 5% would be within=0.05
-
-        Examples:
-
-            >>> from measured.si import Meter
-            >>> assert (0.001 * Meter).approximates(0.002 * Meter, within=0.5)
-            >>> assert not (0.001 * Meter).approximates(0.002 * Meter, within=0.01)
-        """
-        approximation = self._approximation(other)
-        if approximation is True or approximation is False:
-            return approximation
-
-        return bool(approximation <= within)
-
-    def assert_approximates(self, other: "Quantity", within: float = 1e-7) -> None:
-        """Asserts whether this Quantity and another Quantity are close enough to
-        each other to be considered equal, with a helpful assertion message
-
-        Parameters:
-            other (Quantity): the other quantity to compare this quantity to
-            within (float): the tolerance as a ratio; e.g. 5% would be within=0.05
-
-        Examples:
-
-            >>> from measured.si import Meter
-            >>> (0.001 * Meter).assert_approximates(0.002 * Meter, within=0.5)
-        """
-        left = self.unprefixed()
-        right = other.unprefixed()
-
-        assert (
-            self.unit.dimension == other.unit.dimension
-        ), f"{self.unit.dimension} != {other.unit.dimension}"
-
-        approximation = self._approximation(other)
-        if approximation is True:
-            return
-
-        assert approximation is not False, f"No conversion between {self} and {other}"
-
-        message = " or ".join(
-            [
-                f"{left} !~ {right.in_unit(left.unit)}",
-                f"{right} !~ {left.in_unit(right.unit)}",
-            ]
-        )
-
-        message += f" (off by {approximation})"
-        assert approximation <= within, message
-
 
 class Measurement:
     """Measurement represents an uncertain measurement of some Quantity, and will
@@ -1672,13 +1593,13 @@ class Measurement:
     uncertainty: Quantity
 
     def __init__(
-        self, measureand: Quantity, uncertainty: Union[Numeric, Quantity]
+        self, measurand: Quantity, uncertainty: Union[Numeric, Quantity]
     ) -> None:
-        self.measurand = measureand
+        self.measurand = measurand
         if not isinstance(uncertainty, Quantity):
-            uncertainty = Quantity(uncertainty, measureand.unit)
-        assert uncertainty.unit is measureand.unit
-        self.uncertainty = uncertainty
+            uncertainty = Quantity(uncertainty, measurand.unit)
+        assert uncertainty.unit is measurand.unit
+        self.uncertainty = abs(uncertainty)
 
     @property
     def uncertainty_ratio(self) -> float:
@@ -1697,13 +1618,20 @@ class Measurement:
         if not isinstance(other, Measurement):
             return False
 
+        if self.measurand.unit.dimension is not other.measurand.unit.dimension:
+            return False
+
         self_lower = self.measurand - self.uncertainty
         other_lower = other.measurand - other.uncertainty
         self_upper = self.measurand + self.uncertainty
         other_upper = other.measurand + other.uncertainty
 
-        overlaps_lower = self_lower <= other_lower <= self_upper
-        overlaps_upper = self_lower <= other_upper <= self_upper
+        try:
+            overlaps_lower = self_lower <= other_lower <= self_upper
+            overlaps_upper = self_lower <= other_upper <= self_upper
+        except TypeError:
+            return False
+
         return overlaps_lower or overlaps_upper
 
     def __lt__(self, other: object) -> bool:
@@ -1790,9 +1718,9 @@ class Measurement:
         if not isinstance(other, Measurement):
             return NotImplemented
 
-        measureand = self.measurand + other.measurand
+        measurand = self.measurand + other.measurand
         uncertainty = (self.uncertainty**2 + other.uncertainty**2).root(2)
-        return Measurement(measureand, uncertainty)
+        return Measurement(measurand, uncertainty)
 
     __radd__ = __add__
 
@@ -1803,9 +1731,9 @@ class Measurement:
         if not isinstance(other, Measurement):
             return NotImplemented
 
-        measureand = self.measurand - other.measurand
+        measurand = self.measurand - other.measurand
         uncertainty = (self.uncertainty**2 + other.uncertainty**2).root(2)
-        return Measurement(measureand, uncertainty)
+        return Measurement(measurand, uncertainty)
 
     def __rsub__(self, other: Union["Measurement", Quantity]) -> "Measurement":
         if isinstance(other, Quantity):
@@ -1823,15 +1751,15 @@ class Measurement:
         if not isinstance(other, Measurement):
             return NotImplemented
 
-        measureand = self.measurand * other.measurand
+        measurand = self.measurand * other.measurand
         uncertainty = sqrt(
-            measureand.magnitude**2
+            measurand.magnitude**2
             * (
                 (self.uncertainty.magnitude**2 / self.measurand.magnitude**2)
                 + (other.uncertainty.magnitude**2 / other.measurand.magnitude**2)
             )
         )
-        return Measurement(measureand, uncertainty)
+        return Measurement(measurand, uncertainty)
 
     __rmul__ = __mul__
 
@@ -1842,15 +1770,15 @@ class Measurement:
         if not isinstance(other, Measurement):
             return NotImplemented
 
-        measureand = self.measurand / other.measurand
+        measurand = self.measurand / other.measurand
         uncertainty = sqrt(
-            measureand.magnitude**2
+            measurand.magnitude**2
             * (
                 (self.uncertainty.magnitude**2 / self.measurand.magnitude**2)
                 + (other.uncertainty.magnitude**2 / other.measurand.magnitude**2)
             )
         )
-        return Measurement(measureand, uncertainty)
+        return Measurement(measurand, uncertainty)
 
     def __rtruediv__(self, other: Union["Measurement", Quantity]) -> "Measurement":
         if isinstance(other, Quantity):
@@ -1865,16 +1793,24 @@ class Measurement:
         if not isinstance(exponent, int):
             return NotImplemented
 
-        measureand = self.measurand**exponent
+        measurand = self.measurand**exponent
         uncertainty = sqrt(
             (exponent * self.measurand.magnitude**2 * self.uncertainty.magnitude) ** 2
         )
-        return Measurement(measureand, uncertainty)
+        return Measurement(measurand, uncertainty)
 
 
-def approximately(quantity: Quantity, uncertainty: Numeric = 1e-6) -> Measurement:
+def approximately(quantity: Quantity, within: float = 1e-7) -> Measurement:
     """
-    Shortcut for creating a Measurement for use in test assertions.
+    An approximation used mostly for making test assertions.  This special type of
+    measurement uses a relative value for uncertainty and overrides its repr to be
+    more useful for test assertions.
+
+    Parameters:
+
+        quantity (Quantity): the quantity to approximate
+
+        within (float): An uncertainty of the measurement relative to the quantity
 
     Examples:
 
@@ -1884,7 +1820,7 @@ def approximately(quantity: Quantity, uncertainty: Numeric = 1e-6) -> Measuremen
         >>> assert 5.2 * Meter < approximately(6 * Meter, 0.5)
     """
 
-    return Measurement(quantity, uncertainty)
+    return Measurement(quantity, uncertainty=(quantity.magnitude or 1.0) * within)
 
 
 # https://en.wikipedia.org/wiki/Dimensional_analysis#Definition

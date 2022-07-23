@@ -17,6 +17,7 @@ from measured import (
     Temperature,
     Time,
     Volume,
+    approximately,
     physics,
 )
 from measured.si import (
@@ -86,13 +87,13 @@ def test_constants_have_expected_dimension(
 def test_constants_have_expected_si_values(
     constant: Quantity, expected: Quantity
 ) -> None:
-    constant.assert_approximates(expected)
+    assert constant == approximately(expected)
 
 
 def test_electronvolt() -> None:
     c = physics.c
     e = physics.e
 
-    assert (1 * ElectronVolt) == e * Volt
-    (1 * ElectronVolt / c**2).assert_approximates(1.78266192e-36 * Kilogram)
-    (1 * (Mega * ElectronVolt) / c**2).assert_approximates(0.0010735441 * Dalton)
+    assert 1 * ElectronVolt == e * Volt
+    assert 1 * ElectronVolt / c**2 == approximately(1.78266192e-36 * Kilogram)
+    assert 1 * (Mega * ElectronVolt) / c**2 == approximately(0.0010735441 * Dalton)

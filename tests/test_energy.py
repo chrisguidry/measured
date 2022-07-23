@@ -1,6 +1,6 @@
 import pytest
 
-from measured import Quantity
+from measured import Quantity, approximately
 from measured.energy import (
     BritishThermalUnit,
     Calorie,
@@ -22,8 +22,8 @@ from measured.us import Foot, PoundForce
     ],
 )
 def test_calorie(equivalent: Quantity, within: float) -> None:
-    (1 * Calorie).assert_approximates(equivalent, within=within)
-    equivalent.assert_approximates(1 * Calorie, within=within)
+    assert 1 * Calorie == approximately(equivalent, within=within)
+    assert equivalent == approximately(1 * Calorie, within=within)
 
 
 @pytest.mark.parametrize(
@@ -37,14 +37,14 @@ def test_calorie(equivalent: Quantity, within: float) -> None:
     ],
 )
 def test_btus(equivalent: Quantity, within: float) -> None:
-    (1 * BritishThermalUnit).assert_approximates(equivalent, within=within)
-    equivalent.assert_approximates(1 * BritishThermalUnit, within=within)
+    assert 1 * BritishThermalUnit == approximately(equivalent, within=within)
+    assert equivalent == approximately(1 * BritishThermalUnit, within=within)
 
 
 def test_refrigeration() -> None:
-    (1 * TonOfRefrigeration).assert_approximates(12000 * BritishThermalUnit / Hour, 0)
-    (1 * TonOfRefrigeration).assert_approximates(3.51685 * Kilo * Watt, 0)
-    (1 * TonOfRefrigeration).assert_approximates(
+    assert 1 * TonOfRefrigeration == approximately(12000 * BritishThermalUnit / Hour, 0)
+    assert 1 * TonOfRefrigeration == approximately(3.51685 * Kilo * Watt, 0)
+    assert 1 * TonOfRefrigeration == approximately(
         3025.97 * (Kilo * Calorie) / Hour, 2e-7
     )
 
@@ -60,13 +60,13 @@ def test_refrigeration() -> None:
     ],
 )
 def test_tnt_equivalent(equivalent: Quantity, within: float) -> None:
-    (1 * TonneOfTNT).assert_approximates(equivalent, within=within)
-    equivalent.assert_approximates(1 * TonneOfTNT, within=within)
+    assert 1 * TonneOfTNT == approximately(equivalent, within=within)
+    assert equivalent == approximately(1 * TonneOfTNT, within=within)
 
 
 def test_horsepower() -> None:
-    (1 * Horsepower).assert_approximates(745.69987 * Watt)
+    assert 1 * Horsepower == approximately(745.69987 * Watt)
 
 
 def test_donkeypower() -> None:
-    (1 * Donkeypower).assert_approximates(1 / 3 * Horsepower)
+    assert 1 * Donkeypower == approximately(1 / 3 * Horsepower)

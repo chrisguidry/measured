@@ -1,6 +1,6 @@
 import pytest
 
-from measured import Length, Quantity
+from measured import Length, Quantity, approximately
 from measured.si import Kilo, Meter, Micro, Milli
 from measured.us import (
     Cable,
@@ -28,9 +28,9 @@ def test_point() -> None:
     assert Point.dimension is Length
 
     assert 1 * Point == (1 / 12) * Pica
-    (1 * Point).assert_approximates((1 / 72) * Inch)
+    assert 1 * Point == approximately((1 / 72) * Inch)
     assert 1 * Point == (127 / 360 * Milli * Meter)
-    (1 * Point).assert_approximates(352.778 * Micro * Meter, within=7e-7)
+    assert 1 * Point == approximately(352.778 * Micro * Meter, within=7e-7)
 
 
 def test_pica() -> None:
@@ -40,7 +40,7 @@ def test_pica() -> None:
 
     assert 1 * Pica == 12 * Point
     assert 1 * Pica == (1 / 6) * Inch
-    (1 * Pica).assert_approximates(4.233 * Milli * Meter, within=8e-5)
+    assert 1 * Pica == approximately(4.233 * Milli * Meter, within=8e-5)
 
 
 def test_inch() -> None:
@@ -60,7 +60,7 @@ def test_foot() -> None:
     assert Foot.symbol == "ft."
     assert Foot.dimension is Length
 
-    (1 * Foot).assert_approximates(864 * Point)
+    assert 1 * Foot == approximately(864 * Point)
     assert 1 * Foot == 72 * Pica
     assert 1 * Foot == 12 * Inch
     assert 1 * Foot == (1 / 3) * Yard
@@ -98,25 +98,25 @@ def test_ordering() -> None:
 
 def test_survey_measures() -> None:
     assert 1 * Link == 792 / 3937 * Meter
-    (1 * Link).assert_approximates(0.2011684 * Meter)
+    assert 1 * Link == approximately(0.2011684 * Meter)
 
     assert 1 * SurveyFoot == 1200 / 3937 * Meter
-    (1 * SurveyFoot).assert_approximates(0.3048006 * Meter)
+    assert 1 * SurveyFoot == approximately(0.3048006 * Meter)
 
     assert 1 * Rod == (19800 / 3937) * Meter
-    (1 * Rod).assert_approximates(5.0292100 * Meter)
+    assert 1 * Rod == approximately(5.0292100 * Meter)
 
     assert 1 * Chain == (79200 / 3937) * Meter
-    (1 * Chain).assert_approximates(20.1168402 * Meter)
+    assert 1 * Chain == approximately(20.1168402 * Meter)
 
     assert 1 * Furlong == (792 / 3937) * Kilo * Meter
-    (1 * Furlong).assert_approximates(201.1684023 * Meter)
+    assert 1 * Furlong == approximately(201.1684023 * Meter)
 
     assert 1 * StatuteMile == (6336 / 3937) * Kilo * Meter
-    (1 * StatuteMile).assert_approximates(1609.3472186 * Meter)
+    assert 1 * StatuteMile == approximately(1609.3472186 * Meter)
 
     assert 1 * League == (19008 / 3937) * Kilo * Meter
-    (1 * League).assert_approximates(4828.0416560 * Meter)
+    assert 1 * League == approximately(4828.0416560 * Meter)
 
 
 @pytest.mark.parametrize(
@@ -142,5 +142,5 @@ def test_nautical_measures_equal(left: Quantity, right: Quantity) -> None:
 def test_nautical_measures_approximate(
     left: Quantity, right: Quantity, within: float
 ) -> None:
-    left.assert_approximates(right, within)
-    right.assert_approximates(left, within)
+    assert left == approximately(right, within)
+    assert right == approximately(left, within)
