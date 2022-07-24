@@ -1,15 +1,30 @@
+from io import StringIO
+from reprlib import Repr
+
 import pytest
+
+pytest.importorskip("IPython")
+
+# flake8: noqa: E402 (imports not at top of file)
+
+from typing import Union
+from xml.etree import ElementTree
+
+from IPython.lib.pretty import RepresentationPrinter
 
 from measured import (
     Area,
     Dimension,
     Frequency,
     Length,
+    Measurement,
     Number,
     Prefix,
     Quantity,
+    Time,
     Unit,
     Volume,
+    VolumetricFlow,
 )
 from measured.formatting import superscript
 from measured.si import Hertz, Kilo, Mega, Meter, Milli, Ohm, Second
@@ -119,3 +134,113 @@ def test_format_specifiers(quantity: Quantity, template: str, string: str) -> No
 def test_unrecognized_unit_format_specifier() -> None:
     with pytest.raises(ValueError):
         "{quantity::nope}".format(quantity=5 * Meter)
+
+
+Formattable = Union[Dimension, Prefix, Unit, Quantity, Measurement]
+
+
+@pytest.fixture
+def pretty() -> RepresentationPrinter:
+    return RepresentationPrinter(output=StringIO())
+
+
+@pytest.mark.parametrize(
+    "formattable",
+    [
+        Length,
+        Area,
+        VolumetricFlow,
+        Kilo,
+        Prefix(10, 4),
+        Meter,
+        Kilo * Meter,
+        Prefix(10, 4) * Meter,
+        Ohm,
+        5 * Meter,
+        Measurement(5 * Meter, 0.1),
+    ],
+)
+def test_pretty_repr_includes_string_and_repr_of_self(
+    formattable: Formattable, pretty: RepresentationPrinter
+) -> None:
+    formattable._repr_pretty_(pretty, False)
+    assert str(formattable) in pretty.output.getvalue()
+    assert repr(formattable) in pretty.output.getvalue()
+
+
+@pytest.mark.parametrize(
+    "formattable, specifier",
+    [
+        (Kilo * Meter / Second, "/"),
+        (5 * Meter / Second, ":/"),
+        (Measurement(5 * Meter / Second, 0.1), "::/"),
+    ],
+)
+def test_pretty_repr_includes_string_of_self(
+    formattable: Formattable, specifier: str, pretty: RepresentationPrinter
+) -> None:
+    formattable._repr_pretty_(pretty, False)
+    assert formattable.__format__(specifier) in pretty.output.getvalue()
+
+
+@pytest.mark.parametrize(
+    "formattable",
+    [
+        Length,
+        Area,
+        VolumetricFlow,
+        Kilo,
+        Prefix(10, 4),
+        Meter,
+        Kilo * Meter,
+        Prefix(10, 4) * Meter,
+        Ohm,
+        Kilo * Meter / Second,
+        5 * Meter,
+        5 * Meter / Second,
+        Measurement(5 * Meter, 0.1),
+        Measurement(5 * Meter / Second, 0.1),
+    ],
+)
+def test_html_is_mathml(formattable: Formattable) -> None:
+    math = ElementTree.fromstring(formattable._repr_html_())
+    assert math.tag == "math"
+
+
+@pytest.mark.parametrize(
+    "formattable",
+    [
+        Length / Time,
+        Meter / Second,
+    ],
+)
+def test_mathml_root_is_fraction(formattable: Formattable) -> None:
+    math = ElementTree.fromstring(formattable._repr_html_())
+    assert math[0].tag == "mfrac"
+
+
+@pytest.mark.parametrize(
+    "formattable",
+    [
+        Kilo,
+        Meter,
+        Hertz,
+    ],
+)
+def test_mathml_root_is_identifier(formattable: Formattable) -> None:
+    math = ElementTree.fromstring(formattable._repr_html_())
+    assert math[0].tag == "mi"
+
+
+@pytest.mark.parametrize(
+    "formattable",
+    [
+        Length,
+        Length * Time,
+        (Kilo * Meter),
+        Meter * Second,
+    ],
+)
+def test_mathml_root_is_subexpression(formattable: Formattable) -> None:
+    math = ElementTree.fromstring(formattable._repr_html_())
+    assert math[0].tag == "mrow"
