@@ -1,3 +1,4 @@
+from functools import wraps
 from typing import TYPE_CHECKING, Callable, TypeVar, Union
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -37,6 +38,7 @@ def superscript(exponent: Union[int, float]) -> str:
 
 
 def from_superscript(string: str) -> int:
+    """Given a Unicode superscript string, return it as an integer."""
     return int("".join(DIGITS[c] for c in string))
 
 
@@ -44,6 +46,11 @@ M = TypeVar("M")
 
 
 def mathml(function: Callable[[M], str]) -> Callable[[M], str]:
+    """Wraps the given MathML-producing function to produce a self-contained
+    MathML tag.  This allows for composable MathML functions that can produce both
+    expressions and root MathML tag."""
+
+    @wraps(function)
     def inner(measured_object: M) -> str:
         return f"<math>{function(measured_object)}</math>"
 
@@ -51,6 +58,7 @@ def mathml(function: Callable[[M], str]) -> Callable[[M], str]:
 
 
 def dimension_repr(dimension: "Dimension") -> str:
+    """Formats the given Dimension as a Python `repr`"""
     return (
         "Dimension("
         f"exponents={dimension.exponents!r}, "
@@ -60,6 +68,7 @@ def dimension_repr(dimension: "Dimension") -> str:
 
 
 def dimension_str(dimension: "Dimension") -> str:
+    """Formats the given Dimension as a plaintext string"""
     if dimension.symbol:
         return dimension.symbol
 
@@ -76,6 +85,7 @@ def dimension_str(dimension: "Dimension") -> str:
 def dimension_pretty(
     dimension: "Dimension", pretty: "RepresentationPrinter", cycle: bool
 ) -> None:
+    """Formats the given Dimension to the provided pretty printer"""
     with pretty.group():
         pretty.text(str(dimension))
         with pretty.group(indent=2):
@@ -87,6 +97,7 @@ def dimension_pretty(
 
 
 def dimension_mathml(dimension: "Dimension") -> str:
+    """Formats the given Dimension as a MathML expression"""
     numerator, denominator = dimension.as_ratio()
 
     n = (
@@ -125,10 +136,12 @@ def dimension_mathml(dimension: "Dimension") -> str:
 
 
 def prefix_repr(prefix: "Prefix") -> str:
+    """Formats the given Prefix as a Python `repr`"""
     return f"Prefix(base={prefix.base!r}, exponent={prefix.exponent!r})"
 
 
 def prefix_str(prefix: "Prefix") -> str:
+    """Formats the given Prefix as a plaintext string"""
     if prefix.symbol:
         return prefix.symbol
     if prefix.exponent == 0:
@@ -139,6 +152,7 @@ def prefix_str(prefix: "Prefix") -> str:
 def prefix_pretty(
     prefix: "Prefix", pretty: "RepresentationPrinter", cycle: bool
 ) -> None:
+    """Formats the given Prefix to the provided pretty printer"""
     with pretty.group():
         pretty.text(str(prefix))
         with pretty.group(indent=2):
@@ -149,6 +163,7 @@ def prefix_pretty(
 
 
 def prefix_mathml(prefix: "Prefix") -> str:
+    """Formats the given Prefix as a MathML expression"""
     if prefix.symbol:
         return f"<mi>{prefix.symbol}</mi>"
 
@@ -159,6 +174,7 @@ def prefix_mathml(prefix: "Prefix") -> str:
 
 
 def unit_repr(unit: "Unit") -> str:
+    """Formats the given Unit as a Python `repr`"""
     if unit.name:
         return f"Unit.named({unit.name!r})"
 
@@ -173,6 +189,7 @@ def unit_repr(unit: "Unit") -> str:
 
 
 def unit_str(unit: "Unit") -> str:
+    """Formats the given Unit as a plaintext string"""
     if unit.symbol:
         return unit.symbol
 
@@ -198,6 +215,8 @@ def unit_str(unit: "Unit") -> str:
 
 
 def unit_format(unit: "Unit", format_specifier: str) -> str:
+    """Formats the given Unit as a plaintext string, using the provided format
+    specifier to control the output"""
     from measured import One
 
     if not format_specifier:
@@ -213,6 +232,7 @@ def unit_format(unit: "Unit", format_specifier: str) -> str:
 
 
 def unit_pretty(unit: "Unit", pretty: "RepresentationPrinter", cycle: bool) -> None:
+    """Formats the given Unit to the provided pretty printer"""
     with pretty.group():
         if unit.symbol:
             pretty.text(f"{unit.symbol} ({unit:/})")
@@ -230,6 +250,7 @@ def unit_pretty(unit: "Unit", pretty: "RepresentationPrinter", cycle: bool) -> N
 
 
 def unit_mathml(unit: "Unit") -> str:
+    """Formats the given Unit as a MathML expression"""
     if unit.symbol:
         return f"<mi>{unit.symbol}</mi>"
 
@@ -284,14 +305,18 @@ def unit_mathml(unit: "Unit") -> str:
 
 
 def quantity_repr(quantity: "Quantity") -> str:
+    """Formats the given Quantity as a Python `repr`"""
     return f"Quantity(magnitude={quantity.magnitude!r}, unit={quantity.unit!r})"
 
 
 def quantity_str(quantity: "Quantity") -> str:
+    """Formats the given Quantity as a plaintext string"""
     return f"{quantity.magnitude} {quantity.unit}"
 
 
 def quantity_format(quantity: "Quantity", format_specifier: str) -> str:
+    """Formats the given Quantity as a plaintext string, using the provided format
+    specifier to control the output"""
     magnitude_format, _, unit_format = format_specifier.partition(":")
     magnitude = quantity.magnitude.__format__(magnitude_format)
     unit = quantity.unit.__format__(unit_format)
@@ -301,6 +326,7 @@ def quantity_format(quantity: "Quantity", format_specifier: str) -> str:
 def quantity_pretty(
     quantity: "Quantity", pretty: "RepresentationPrinter", cycle: bool
 ) -> None:
+    """Formats the given Quantity to the provided pretty printer"""
     with pretty.group():
         pretty.text(f"{quantity::/}")
         with pretty.group(indent=2):
@@ -313,6 +339,7 @@ def quantity_pretty(
 
 
 def quantity_mathml(quantity: "Quantity") -> str:
+    """Formats the given Quantity as a MathML expression"""
     return (
         "<mrow>"
         f"<mn>{quantity.magnitude}</mn>"
@@ -323,6 +350,7 @@ def quantity_mathml(quantity: "Quantity") -> str:
 
 
 def measurement_repr(measurement: "Measurement") -> str:
+    """Formats the given Measurement as a Python `repr`"""
     return (
         f"Measurement("
         f"measurand={measurement.measurand!r}, "
@@ -332,10 +360,13 @@ def measurement_repr(measurement: "Measurement") -> str:
 
 
 def measurement_str(measurement: "Measurement") -> str:
+    """Formats the given Measurement as a plaintext string"""
     return measurement_format(measurement, "")
 
 
 def measurement_format(measurement: "Measurement", format_specifier: str) -> str:
+    """Formats the given Measurement as a plaintext string, using the provided format
+    specifier to control the output"""
     uncertainty_format, _, quantity_format = format_specifier.partition(":")
 
     style, magnitude_format = "", ""
@@ -361,6 +392,7 @@ def measurement_format(measurement: "Measurement", format_specifier: str) -> str
 def measurement_pretty(
     measurement: "Measurement", pretty: "RepresentationPrinter", cycle: bool
 ) -> None:
+    """Formats the given Measurement to the provided pretty printer"""
     with pretty.group():
         pretty.text(f"{measurement:::/}")
         with pretty.group(indent=2):
@@ -375,6 +407,7 @@ def measurement_pretty(
 
 
 def measurement_mathml(measurement: "Measurement") -> str:
+    """Formats the given Measurement as a MathML expression"""
     return (
         "<mrow>"
         f"<mn>{measurement.measurand.magnitude}</mn>"
