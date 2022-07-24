@@ -162,7 +162,7 @@ from typing import (
     overload,
 )
 
-from .formatting import superscript
+from . import formatting
 
 try:
     from icecream import ic as _ic
@@ -429,12 +429,14 @@ class Dimension:
 
         return (
             "⋅".join(
-                f"{dimension.symbol}{superscript(self.exponents[i])}"
+                f"{dimension.symbol}{formatting.superscript(self.exponents[i])}"
                 for i, dimension in enumerate(self._fundamental)
                 if self.exponents[i] != 0
             )
             or "?"
         )
+
+    _repr_html_ = formatting.dimension_mathml
 
     # https://en.wikipedia.org/wiki/Dimensional_analysis#Dimensional_homogeneity
     #
@@ -675,7 +677,7 @@ class Prefix:
             return self.symbol
         if self.exponent == 0:
             return ""
-        return f"{self.base}{superscript(self.exponent)}"
+        return f"{self.base}{formatting.superscript(self.exponent)}"
 
     def quantify(self) -> Numeric:
         return cast(Numeric, self.base**self.exponent)
@@ -1092,7 +1094,7 @@ class Unit:
         first = ((self.prefix * prefix) ** sign, symbol, exponent)
 
         return "⋅".join(
-            f"{prefix}{symbol}{superscript(exponent)}"
+            f"{prefix}{symbol}{formatting.superscript(exponent)}"
             for prefix, symbol, exponent in [first, *rest]
         )
 
