@@ -162,7 +162,7 @@ from typing import (
     overload,
 )
 
-from .formatting import superscript
+from . import formatting
 
 try:
     from icecream import ic as _ic
@@ -415,26 +415,10 @@ class Dimension:
 
         raise ValueError(f"No conversion from {value!r} to Dimension")
 
-    def __repr__(self) -> str:
-        return (
-            "Dimension("
-            f"exponents={self.exponents!r}, "
-            f"name={self.name!r}, symbol={self.symbol!r}"
-            ")"
-        )
-
-    def __str__(self) -> str:
-        if self.symbol:
-            return self.symbol
-
-        return (
-            "⋅".join(
-                f"{dimension.symbol}{superscript(self.exponents[i])}"
-                for i, dimension in enumerate(self._fundamental)
-                if self.exponents[i] != 0
-            )
-            or "?"
-        )
+    __repr__ = formatting.dimension_repr
+    __str__ = formatting.dimension_str
+    _repr_pretty_ = formatting.dimension_pretty
+    _repr_html_ = formatting.mathml(formatting.dimension_mathml)
 
     # https://en.wikipedia.org/wiki/Dimensional_analysis#Dimensional_homogeneity
     #
@@ -622,6 +606,11 @@ class Prefix:
         if symbol:
             self._by_symbol[symbol] = self
 
+    @classmethod
+    def resolve_symbol(cls, symbol: str) -> "Prefix":
+        """Returns the Prefix with the given symbol"""
+        return cls._by_symbol[symbol]
+
     # Pickle support
 
     def __getnewargs_ex__(self) -> Tuple[Tuple[int, Numeric], Dict[str, Any]]:
@@ -650,11 +639,6 @@ class Prefix:
         yield cls.validate
 
     @classmethod
-    def resolve_symbol(cls, symbol: str) -> "Prefix":
-        """Returns the Prefix with the given symbol"""
-        return cls._by_symbol[symbol]
-
-    @classmethod
     def validate(cls, value: Union[str, "Prefix"]) -> "Prefix":
         if isinstance(value, str):
             if value not in cls._by_name:
@@ -667,15 +651,10 @@ class Prefix:
 
         raise ValueError(f"No conversion from {value!r} to Prefix")
 
-    def __repr__(self) -> str:
-        return f"Prefix(base={self.base!r}, exponent={self.exponent!r})"
-
-    def __str__(self) -> str:
-        if self.symbol:
-            return self.symbol
-        if self.exponent == 0:
-            return ""
-        return f"{self.base}{superscript(self.exponent)}"
+    __repr__ = formatting.prefix_repr
+    __str__ = formatting.prefix_str
+    _repr_pretty_ = formatting.prefix_pretty
+    _repr_html_ = formatting.mathml(formatting.prefix_mathml)
 
     def quantify(self) -> Numeric:
         return cast(Numeric, self.base**self.exponent)
@@ -709,7 +688,7 @@ class Prefix:
             return Prefix(base, exponent)
 
         if isinstance(other, Unit):
-            return other.scale(self)
+            return Unit(other.prefix * self, other.factors, other.dimension)
 
         if isinstance(other, NUMERIC_CLASSES):
             return (other * One) * self.quantify()
@@ -1011,37 +990,11 @@ class Unit:
 
         raise ValueError(f"No conversion from {value!r} to Unit")
 
-    def scale(self, prefix: Prefix) -> "Unit":
-        """Given a Prefix, creates a new unit scaled by that Prefix"""
-        return self.__class__(self.prefix * prefix, self.factors, self.dimension)
-
-    @lru_cache(maxsize=None)
-    def quantify(self) -> "Quantity":
-        """Produce a Quantity of this Unit, including the Prefix.
-
-        Examples:
-
-            >>> from measured.si import Kilo, Meter
-            >>> assert Kilo * Meter != 1000 * Meter
-            >>> assert 1 * Kilo * Meter == 1000 * Meter
-            >>> assert (Kilo * Meter).quantify() == 1000 * Meter
-        """
-        return self.prefix.quantify() * Unit(
-            IdentityPrefix, self.factors, self.dimension
-        )
-
-    def __repr__(self) -> str:
-        if self.name:
-            return f"Unit.named({self.name!r})"
-
-        return (
-            "Unit("
-            f"prefix={self.prefix!r}, "
-            f"factors={self.factors!r}, "
-            f"dimension={self.dimension!r}, "
-            f"name={self.name!r}, symbol={self.symbol!r}"
-            ")"
-        )
+    __repr__ = formatting.unit_repr
+    __str__ = formatting.unit_str
+    __format__ = formatting.unit_format
+    _repr_pretty_ = formatting.unit_pretty
+    _repr_html_ = formatting.mathml(formatting.unit_mathml)
 
     @classmethod
     def parse(cls, string: str) -> "Unit":
@@ -1076,38 +1029,6 @@ class Unit:
         """
         return cast(Unit, parser.parse(string, start="unit"))
 
-    def __str__(self) -> str:
-        if self.symbol:
-            return self.symbol
-
-        # In order to handle cases like `Mega * (Meter**-1)`, which naively becomes
-        # "Mm⁻¹", which looks like it should parse to `(Mega*Meter)**-1`, take this
-        # unit's prefix and push it down as the prefix of the first factor
-        first, *rest = [
-            (unit.prefix, unit.symbol, exponent)
-            for unit, exponent in self.factors.items()
-        ]
-        prefix, symbol, exponent = first
-        sign = 1 if exponent >= 0 else -1
-        first = ((self.prefix * prefix) ** sign, symbol, exponent)
-
-        return "⋅".join(
-            f"{prefix}{symbol}{superscript(exponent)}"
-            for prefix, symbol, exponent in [first, *rest]
-        )
-
-    def __format__(self, format_specifier: str) -> str:
-        if not format_specifier:
-            return str(self)
-
-        if format_specifier == "/":
-            numerator, denominator = self.as_ratio()
-            if denominator == One:
-                return str(self)
-            return str(numerator) + "/" + str(denominator)
-
-        raise ValueError(f"Unrecognized format specifier {format_specifier!r}")
-
     @classmethod
     def _simplify(cls, factors: Mapping["Unit", int]) -> Dict["Unit", int]:
         simplified = {
@@ -1116,6 +1037,21 @@ class Unit:
             if unit is not One and exponent != 0
         }
         return simplified or {One: 1}
+
+    @lru_cache(maxsize=None)
+    def quantify(self) -> "Quantity":
+        """Produce a Quantity of this Unit, including the Prefix.
+
+        Examples:
+
+            >>> from measured.si import Kilo, Meter
+            >>> assert Kilo * Meter != 1000 * Meter
+            >>> assert 1 * Kilo * Meter == 1000 * Meter
+            >>> assert (Kilo * Meter).quantify() == 1000 * Meter
+        """
+        return self.prefix.quantify() * Unit(
+            IdentityPrefix, self.factors, self.dimension
+        )
 
     def __add__(self, other: "Unit") -> "Unit":
         if self is not other:
@@ -1371,8 +1307,11 @@ class Quantity:
         """
         return self.magnitude, str(self.unit)
 
-    def __repr__(self) -> str:
-        return f"Quantity(magnitude={self.magnitude!r}, unit={self.unit!r})"
+    __repr__ = formatting.quantity_repr
+    __str__ = formatting.quantity_str
+    __format__ = formatting.quantity_format
+    _repr_pretty_ = formatting.quantity_pretty
+    _repr_html_ = formatting.mathml(formatting.quantity_mathml)
 
     @classmethod
     def parse(cls, string: str) -> "Quantity":
@@ -1405,15 +1344,6 @@ class Quantity:
             >>> assert Quantity.parse('2 m^2*s') == Quantity.parse('2 m²⋅s')
         """
         return cast(Quantity, parser.parse(string, start="quantity"))
-
-    def __str__(self) -> str:
-        return f"{self.magnitude} {self.unit}"
-
-    def __format__(self, format_specifier: str) -> str:
-        magnitude_format, _, unit_format = format_specifier.partition(":")
-        magnitude = self.magnitude.__format__(magnitude_format)
-        unit = self.unit.__format__(unit_format)
-        return f"{magnitude} {unit}"
 
     def __hash__(self) -> int:
         return hash((self.magnitude, self.unit))
@@ -1611,6 +1541,12 @@ class Measurement:
         """The uncertainty, expressed as a percent of the magnitude of the measurand"""
         return self.uncertainty_ratio * 100
 
+    __repr__ = formatting.measurement_repr
+    __str__ = formatting.measurement_str
+    __format__ = formatting.measurement_format
+    _repr_pretty_ = formatting.measurement_pretty
+    _repr_html_ = formatting.mathml(formatting.measurement_mathml)
+
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Quantity):
             other = Measurement(other, 0)
@@ -1677,39 +1613,6 @@ class Measurement:
         self_upper = self.measurand + self.uncertainty
         other_upper = other.measurand + other.uncertainty
         return self_upper >= other_upper
-
-    def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}("
-            f"measurand={self.measurand!r}, "
-            f"uncertainty={self.uncertainty.magnitude!r}"
-            ")"
-        )
-
-    def __str__(self) -> str:
-        return self.__format__("")
-
-    def __format__(self, format_specifier: str) -> str:
-        uncertainty_format, _, quantity_format = format_specifier.partition(":")
-
-        style, magnitude_format = "", ""
-        if uncertainty_format:
-            style, magnitude_format = uncertainty_format[0], uncertainty_format[1:]
-
-        if style in ("", "+", "±"):
-            magnitude = self.uncertainty.magnitude.__format__(magnitude_format)
-            uncertainty = f"±{magnitude}"
-        elif style == "%":
-            magnitude_format = magnitude_format or ".2f"
-            percent = self.uncertainty_percent.__format__(magnitude_format)
-            uncertainty = f"±{percent}%"
-        else:
-            raise ValueError(f"Unrecognized uncertainty style {style!r}")
-
-        magnitude_format, _, unit_format = quantity_format.partition(":")
-        magnitude = self.measurand.magnitude.__format__(magnitude_format)
-        unit = self.measurand.unit.__format__(unit_format)
-        return f"{magnitude}{uncertainty} {unit}"
 
     def __add__(self, other: Union["Measurement", Quantity]) -> "Measurement":
         if isinstance(other, Quantity):

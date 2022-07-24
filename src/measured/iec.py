@@ -52,7 +52,8 @@ Bit.equals(1 * Shannon)
 
 Baud = Unit.derive(Bit / Second, name="baud", symbol="Bd")
 
-Byte = Unit.derive(Bit.scale(Prefix(2, 3)), name="byte", symbol="B")
+Eight = Prefix(2, 3)
+Byte = Unit.derive(Eight * Bit, name="byte", symbol="B")
 
 # https://en.wikipedia.org/wiki/Rack_unit
 # IEC 60297 Mechanical structures for electronic equipment
