@@ -31,10 +31,12 @@ Attributes: Prefixes (base 2)
 
 # https://en.wikipedia.org/wiki/Binary_prefix#Adoption_by_IEC,_NIST_and_ISO
 
-from measured.si import Meter, Second
+from math import e
+
+from measured.si import Deci, Meter, Second
 from measured.us import Inch
 
-from . import Information, Length, Prefix, Unit
+from . import Information, Length, Logarithm, Prefix, Unit
 
 Kibi = Prefix(2, 10, name="kibi", symbol="Ki")
 Mebi = Prefix(2, 20, name="mebi", symbol="Mi")
@@ -61,3 +63,12 @@ Byte = Unit.derive(Eight * Bit, name="byte", symbol="B")
 RackUnit = Length.unit("rack unit", "U")
 RackUnit.equals(1.75 * Inch)
 RackUnit.equals(0.04445 * Meter)
+
+
+# Logarithmic units
+# https://en.wikipedia.org/wiki/Decibel
+# https://en.wikipedia.org/wiki/Neper
+
+Bel = Logarithm(base=10, name="bel", symbol="bel")
+Decibel = (Deci * Bel).alias(name="decibel", symbol="dB")
+Neper = Logarithm(base=e, name="neper", symbol="Np", power_ratio=2)

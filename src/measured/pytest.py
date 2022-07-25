@@ -2,11 +2,11 @@ from typing import Any, List, Optional, Union
 
 from _pytest.config import Config
 
-from measured import Measurement, Quantity
+from measured import Level, Measurement, Quantity
 from measured.conversions import ConversionNotFound
 
-Comparable = Union[Quantity, Measurement]
-COMPARABLE = (Quantity, Measurement)
+Comparable = Union[Quantity, Level, Measurement]
+COMPARABLE = (Quantity, Level, Measurement)
 
 
 class MeasuredPlugin:
@@ -21,17 +21,27 @@ class MeasuredPlugin:
         difference = ""
 
         if isinstance(left, COMPARABLE) and isinstance(right, COMPARABLE):
-            left_quantity = left.measurand if isinstance(left, Measurement) else left
-            right_quantity = (
-                right.measurand if isinstance(right, Measurement) else right
-            )
+            if isinstance(left, Level):
+                left_quantity = left.quantify()
+            elif isinstance(left, Measurement):
+                left_quantity = left.measurand
+            elif isinstance(left, Quantity):
+                left_quantity = left
+
+            if isinstance(right, Level):
+                right_quantity = right.quantify()
+            elif isinstance(right, Measurement):
+                right_quantity = right.measurand
+            elif isinstance(right, Quantity):
+                right_quantity = right
+
             left_unit = left_quantity.unit
 
             right_comparison = right
 
-            if isinstance(right, Quantity):
+            if isinstance(right, Level):
                 try:
-                    right_comparison = right.in_unit(left_unit)
+                    right_comparison = right_quantity.in_unit(left_unit)
                     difference = str(left_quantity - right_comparison)
                 except ConversionNotFound:
                     difference = "(conversion not found)"
@@ -43,6 +53,13 @@ class MeasuredPlugin:
                         uncertainty=right.uncertainty.in_unit(left_unit),
                     )
                     difference = str(left_quantity - right_comparison.measurand)
+                except ConversionNotFound:
+                    difference = "(conversion not found)"
+
+            elif isinstance(right, Quantity):
+                try:
+                    right_comparison = right.in_unit(left_unit)
+                    difference = str(left_quantity - right_comparison)
                 except ConversionNotFound:
                     difference = "(conversion not found)"
 

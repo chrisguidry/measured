@@ -140,7 +140,6 @@ Attributes: Base Units
 
 """
 
-import functools
 from collections import defaultdict
 from functools import lru_cache, total_ordering
 from importlib.metadata import version
@@ -485,7 +484,7 @@ class Dimension:
 
         return Dimension(tuple(s // degree for s in self.exponents))
 
-    @functools.lru_cache(maxsize=None)
+    @lru_cache(maxsize=None)
     def as_ratio(self) -> Tuple["Dimension", "Dimension"]:
         """Returns this dimension, split into a numerator and denominator"""
         numerator = tuple(e if e >= 0 else 0 for e in self.exponents)
@@ -1151,7 +1150,7 @@ class Unit:
         )
         return Unit(prefix, factors, dimension)
 
-    @functools.lru_cache(maxsize=None)
+    @lru_cache(maxsize=None)
     def as_ratio(self) -> Tuple["Unit", "Unit"]:
         """Returns this unit, split into a numerator and denominator"""
         numerator, denominator = self.dimension.as_ratio()
@@ -1449,6 +1448,136 @@ class Quantity:
             return NotImplemented
 
 
+class Logarithm:
+    _known: ClassVar[Dict[Tuple[float, int, Prefix], "Logarithm"]] = {}
+    _initialized: bool
+
+    base: float
+    power_ratio: int
+    prefix: Prefix
+
+    def __new__(
+        cls,
+        base: float,
+        power_ratio: int = 1,
+        prefix: Prefix = Prefix(0, 0),
+        name: Optional[str] = None,
+        symbol: Optional[str] = None,
+    ) -> "Logarithm":
+        if (base, power_ratio, prefix) in cls._known:
+            return cls._known[(base, power_ratio, prefix)]
+
+        self = super().__new__(cls)
+        self._initialized = False
+        cls._known[(base, power_ratio, prefix)] = self
+        return self
+
+    def __init__(
+        self,
+        base: float,
+        power_ratio: int = 1,
+        prefix: Prefix = Prefix(0, 0),
+        name: Optional[str] = None,
+        symbol: Optional[str] = None,
+    ) -> None:
+        if self._initialized:
+            return
+
+        self.base = base
+        self.power_ratio = power_ratio
+        self.prefix = prefix
+        self.name = name
+        self.symbol = symbol
+        self._initialized = True
+
+    def alias(self, name: str, symbol: str) -> "Logarithm":
+        self.name = name
+        self.symbol = symbol
+        return self
+
+    def __repr__(self) -> str:
+        return f"Logarithm(prefix={self.prefix!r}, base={self.base!r})"
+
+    def __mul__(self, other: Prefix) -> "Logarithm":
+        if isinstance(other, Prefix):
+            return Logarithm(self.base, prefix=self.prefix * other)
+
+        return NotImplemented
+
+    __rmul__ = __mul__
+
+    def __getitem__(self, reference: Quantity) -> "LogarithmicUnit":
+        return LogarithmicUnit(self, reference)
+
+
+class LogarithmicUnit:
+    _known: ClassVar[Dict[Tuple[Logarithm, Quantity], "LogarithmicUnit"]] = {}
+    _initialized: bool
+
+    logarithm: Logarithm
+    reference: Quantity
+
+    def __new__(cls, logarithm: Logarithm, reference: Quantity) -> "LogarithmicUnit":
+        if (logarithm, reference) in cls._known:
+            return cls._known[(logarithm, reference)]
+
+        self = super().__new__(cls)
+        self._initialized = False
+        cls._known[(logarithm, reference)] = self
+        return self
+
+    def __init__(self, logarithm: Logarithm, reference: Quantity) -> None:
+        self.logarithm = logarithm
+        self.reference = reference.unprefixed()
+
+    def __repr__(self) -> str:
+        return (
+            "LogarithmicUnit("
+            f"logarithm={self.logarithm!r}, "
+            f"reference={self.reference!r}"
+            ")"
+        )
+
+    def __mul__(self, magnitude: Numeric) -> "Level":
+        return Level(magnitude, self)
+
+    __rmul__ = __mul__
+
+
+class Level:
+    magnitude: Numeric
+    unit: LogarithmicUnit
+
+    def __init__(self, magnitude: Numeric, unit: LogarithmicUnit) -> None:
+        self.magnitude = magnitude
+        self.unit = unit
+
+    def __repr__(self) -> str:
+        return f"Level(magnitude={self.magnitude!r}, unit={self.unit!r})"
+
+    def quantify(self) -> Quantity:
+        base = self.unit.logarithm.base
+        prefix = self.unit.logarithm.prefix
+        power_ratio = self.unit.logarithm.power_ratio
+        reference = self.unit.reference
+        exponent = self.magnitude * prefix.quantify()
+        magnitude: float = base ** (exponent * power_ratio)
+        return magnitude * reference
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Level):
+            left = self.quantify()
+            right = other.quantify()
+            ic(left)
+            ic(right)
+            return self.quantify() == other.quantify()
+
+        if isinstance(other, Quantity):
+            return self.quantify() == other
+
+        return NotImplemented
+
+
 class Measurement:
     """Measurement represents an uncertain measurement of some Quantity, and will
     propagate that uncertainty through arithmetic operations with Quantities and other
@@ -1550,6 +1679,8 @@ class Measurement:
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Quantity):
             other = Measurement(other, 0)
+        if isinstance(other, Level):
+            other = Measurement(other.quantify(), 0)
 
         if not isinstance(other, Measurement):
             return False
@@ -1573,6 +1704,8 @@ class Measurement:
     def __lt__(self, other: object) -> bool:
         if isinstance(other, Quantity):
             other = Measurement(other, 0)
+        if isinstance(other, Level):
+            other = Measurement(other.quantify(), 0)
 
         if not isinstance(other, Measurement):
             return NotImplemented
@@ -1584,6 +1717,8 @@ class Measurement:
     def __le__(self, other: object) -> bool:
         if isinstance(other, Quantity):
             other = Measurement(other, 0)
+        if isinstance(other, Level):
+            other = Measurement(other.quantify(), 0)
 
         if not isinstance(other, Measurement):
             return NotImplemented
@@ -1595,6 +1730,8 @@ class Measurement:
     def __gt__(self, other: object) -> bool:
         if isinstance(other, Quantity):
             other = Measurement(other, 0)
+        if isinstance(other, Level):
+            other = Measurement(other.quantify(), 0)
 
         if not isinstance(other, Measurement):
             return NotImplemented
@@ -1606,6 +1743,8 @@ class Measurement:
     def __ge__(self, other: object) -> bool:
         if isinstance(other, Quantity):
             other = Measurement(other, 0)
+        if isinstance(other, Level):
+            other = Measurement(other.quantify(), 0)
 
         if not isinstance(other, Measurement):
             return NotImplemented
@@ -1703,7 +1842,9 @@ class Measurement:
         return Measurement(measurand, uncertainty)
 
 
-def approximately(quantity: Quantity, within: float = 1e-7) -> Measurement:
+def approximately(
+    quantity: Union[Quantity, Level], within: float = 1e-7
+) -> Measurement:
     """
     An approximation used mostly for making test assertions.  This special type of
     measurement uses a relative value for uncertainty and overrides its repr to be
@@ -1722,6 +1863,8 @@ def approximately(quantity: Quantity, within: float = 1e-7) -> Measurement:
         >>> assert 5.2 * Meter == approximately(5 * Meter, 0.3)
         >>> assert 5.2 * Meter < approximately(6 * Meter, 0.5)
     """
+    if isinstance(quantity, Level):
+        quantity = quantity.quantify()
 
     return Measurement(quantity, uncertainty=(quantity.magnitude or 1.0) * within)
 
