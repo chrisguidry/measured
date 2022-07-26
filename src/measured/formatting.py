@@ -1,10 +1,20 @@
+import math
 from functools import wraps
 from typing import TYPE_CHECKING, Callable, TypeVar, Union
 
 if TYPE_CHECKING:  # pragma: no cover
     from IPython.lib.pretty import RepresentationPrinter
 
-    from measured import Dimension, Measurement, Prefix, Quantity, Unit
+    from measured import (
+        Dimension,
+        Level,
+        Logarithm,
+        LogarithmicUnit,
+        Measurement,
+        Prefix,
+        Quantity,
+        Unit,
+    )
 
 SUPERSCRIPTS = {
     "-": "⁻",
@@ -345,6 +355,140 @@ def quantity_mathml(quantity: "Quantity") -> str:
         f"<mn>{quantity.magnitude}</mn>"
         "<mo></mo>"
         f"{unit_mathml(quantity.unit)}"
+        "</mrow>"
+    )
+
+
+def logarithm_repr(logarithm: "Logarithm") -> str:
+    """Formats the given Logarithm as a Python `repr`"""
+    return (
+        "Logarithm("
+        f"prefix={logarithm.prefix!r}, "
+        f"base={logarithm.base!r}, "
+        f"power_ratio={logarithm.power_ratio!r}, "
+        f"name={logarithm.name!r}, "
+        f"symbol={logarithm.symbol!r}"
+        ")"
+    )
+
+
+def logarithm_str(logarithm: "Logarithm") -> str:
+    """Formats the given Logarithm as a plaintext string"""
+    if logarithm.symbol:
+        return logarithm.symbol
+
+    power = superscript(logarithm.power_ratio)
+    function = "ln" if logarithm.base == math.e else f"log{logarithm.base}"
+    return f"{logarithm.prefix.quantify()} {function}(x{power}/x₀{power})"
+
+
+def logarithm_pretty(
+    logarithm: "Logarithm", pretty: "RepresentationPrinter", cycle: bool
+) -> None:
+    """Formats the given Logarithm to the provided pretty printer"""
+    with pretty.group():
+        pretty.text(str(logarithm))
+        with pretty.group(indent=2):
+            pretty.break_()
+            pretty.text(repr(logarithm))
+
+
+def logarithm_mathml(logarithm: "Logarithm") -> str:
+    """Formats the given Logarithm as a MathML expression"""
+    if logarithm.symbol:
+        return f"<mi>{logarithm.symbol}</mi>"
+
+    prefix = (
+        f"<mn>{logarithm.prefix.quantify()}</mn>" if logarithm.prefix.exponent else ""
+    )
+    function = "ln" if logarithm.base == math.e else f"log{logarithm.base}"
+    return (
+        "<mrow>"
+        f"{prefix}"
+        f"<mi>{function}</mi>"
+        "<mo>(</mo>"
+        "<mfrac>"
+        f"<mrow><msup><mi>x</mi><mn>{logarithm.power_ratio}</mn></msup></mrow>"
+        f"<mrow><msup><mi>x₀</mi><mn>{logarithm.power_ratio}</mn></msup></mrow>"
+        "</mfrac>"
+        "<mo>)</mo>"
+        "</mrow>"
+    )
+
+
+def logarithmic_unit_repr(logarithmic_unit: "LogarithmicUnit") -> str:
+    """Formats the given LogarithmicUnit as a Python `repr`"""
+    return (
+        "LogarithmicUnit("
+        f"logarithm={logarithmic_unit.logarithm!r}, "
+        f"reference={logarithmic_unit.reference!r}"
+        ")"
+    )
+
+
+def logarithmic_unit_str(logarithmic_unit: "LogarithmicUnit") -> str:
+    """Formats the given LogarithmicUnit as a plaintext string"""
+    if logarithmic_unit.symbol:
+        return logarithmic_unit.symbol
+
+    return f"{logarithmic_unit.logarithm} of {logarithmic_unit.reference}"
+
+
+def logarithmic_unit_pretty(
+    logarithmic_unit: "LogarithmicUnit", pretty: "RepresentationPrinter", cycle: bool
+) -> None:
+    """Formats the given LogarithmicUnit to the provided pretty printer"""
+    with pretty.group():
+        pretty.text(str(logarithmic_unit))
+        with pretty.group(indent=2):
+            pretty.break_()
+            pretty.text(repr(logarithmic_unit))
+
+
+def logarithmic_unit_mathml(logarithmic_unit: "LogarithmicUnit") -> str:
+    """Formats the given LogarithmicUnit as a MathML expression"""
+    if logarithmic_unit.symbol:
+        return f"<mi>{logarithmic_unit.symbol}</mi>"
+
+    return (
+        "<mrow>"
+        f"{logarithm_mathml(logarithmic_unit.logarithm)}"
+        "<mo>of</mo>"
+        f"{quantity_mathml(logarithmic_unit.reference)}"
+        "</mrow>"
+    )
+
+
+def level_repr(level: "Level") -> str:
+    """Formats the given Level as a Python `repr`"""
+    return f"Level(magnitude={level.magnitude!r}, unit={level.unit!r})"
+
+
+def level_str(level: "Level") -> str:
+    """Formats the given Level as a plaintext string"""
+    return f"{level.magnitude} {level.unit}"
+
+
+def level_pretty(level: "Level", pretty: "RepresentationPrinter", cycle: bool) -> None:
+    """Formats the given Level to the provided pretty printer"""
+    with pretty.group():
+        pretty.text(str(level))
+        with pretty.group(indent=2):
+            pretty.break_()
+            pretty.pretty(level.magnitude)
+            pretty.break_()
+            pretty.pretty(level.unit)
+            pretty.break_()
+            pretty.text(repr(level))
+
+
+def level_mathml(level: "Level") -> str:
+    """Formats the given Level as a MathML expression"""
+    return (
+        "<mrow>"
+        f"<mn>{level.magnitude}</mn>"
+        "<mo>⋅</mo>"
+        f"{logarithmic_unit_mathml(level.unit)}"
         "</mrow>"
     )
 

@@ -3,6 +3,9 @@ from reprlib import Repr
 
 import pytest
 
+from measured import Logarithm
+from measured.iec import Decibel
+
 pytest.importorskip("IPython")
 
 # flake8: noqa: E402 (imports not at top of file)
@@ -27,7 +30,8 @@ from measured import (
     VolumetricFlow,
 )
 from measured.formatting import superscript
-from measured.si import Hertz, Kilo, Mega, Meter, Milli, Ohm, Second
+from measured.iec import Decibel, Neper
+from measured.si import Hertz, Kilo, Mega, Meter, Milli, Ohm, Second, Watt
 
 
 @pytest.mark.parametrize(
@@ -92,6 +96,8 @@ def test_strings_of_dimensions(dimension: Dimension, string: str) -> None:
         (Meter**3 / Second**2, "m³⋅s⁻²"),
         (Hertz, "Hz"),
         (Hertz**2, "s⁻²"),
+        (Decibel[1 * Meter], "dB of 1 m"),
+        (Logarithm(2, 2), "1 log2(x²/x₀²)"),
     ],
 )
 def test_strings_of_units(unit: Unit, string: str) -> None:
@@ -158,6 +164,10 @@ def pretty() -> RepresentationPrinter:
         Ohm,
         5 * Meter,
         Measurement(5 * Meter, 0.1),
+        Decibel,
+        Neper,
+        Decibel[1 * Watt],
+        30 * Decibel[1 * Watt],
     ],
 )
 def test_pretty_repr_includes_string_and_repr_of_self(
@@ -200,6 +210,9 @@ def test_pretty_repr_includes_string_of_self(
         5 * Meter / Second,
         Measurement(5 * Meter, 0.1),
         Measurement(5 * Meter / Second, 0.1),
+        Neper,
+        Decibel[1 * Watt],
+        30 * Decibel[1 * Watt],
     ],
 )
 def test_html_is_mathml(formattable: Formattable) -> None:
@@ -225,6 +238,8 @@ def test_mathml_root_is_fraction(formattable: Formattable) -> None:
         Kilo,
         Meter,
         Hertz,
+        Neper,
+        Decibel[1 * Watt],
     ],
 )
 def test_mathml_root_is_identifier(formattable: Formattable) -> None:
@@ -239,6 +254,10 @@ def test_mathml_root_is_identifier(formattable: Formattable) -> None:
         Length * Time,
         (Kilo * Meter),
         Meter * Second,
+        Logarithm(2, 2),
+        Decibel[1 * Meter],  # a dB that we wouldn't have a symbol for
+        Neper[1 * Meter],
+        30 * Decibel[1 * Watt],
     ],
 )
 def test_mathml_root_is_subexpression(formattable: Formattable) -> None:

@@ -5,6 +5,7 @@ import pytest
 from pytest import approx
 
 from measured import Measurement, Quantity, approximately
+from measured.iec import Decibel
 from measured.si import Meter, Second
 from measured.us import Foot
 
@@ -228,14 +229,21 @@ def test_inequalities_based_on_uncertainty() -> None:
 
 
 def test_inequalities_coerce_to_measurements() -> None:
-    length = Measurement(10 * Meter, 1)
+    tiny = -5 * Decibel[1 * Meter]
     lesser = 8 * Meter
+    length = Measurement(10 * Meter, 1)
     greater = 20 * Meter
+    massive = 100 * Decibel[1 * Meter]
 
-    assert lesser < length < greater
-    assert lesser <= length <= greater
-    assert greater > length > lesser
-    assert greater >= length >= lesser
+    assert tiny < length < massive
+    assert tiny <= length <= massive
+    assert massive > length > tiny
+    assert massive >= length >= tiny
+
+    assert tiny < lesser < length < greater < massive
+    assert tiny <= lesser <= length <= greater <= massive
+    assert massive > greater > length > lesser > tiny
+    assert massive >= greater >= length >= lesser >= tiny
 
 
 def test_inequalities_only_with_measurements_or_quantities() -> None:
