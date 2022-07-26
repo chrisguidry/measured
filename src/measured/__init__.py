@@ -1671,6 +1671,60 @@ class Level:
         magnitude: float = base ** (exponent * power_ratio)
         return magnitude * reference
 
+    def __add__(self, other: "Level") -> "Level":
+        if isinstance(other, Level):
+            if other.unit != self.unit:
+                return NotImplemented
+
+            base = self.unit.logarithm.base
+            prefix = self.unit.logarithm.prefix
+            power_ratio = self.unit.logarithm.power_ratio
+
+            left_exponent = self.magnitude * prefix.quantify()
+            right_exponent = other.magnitude * prefix.quantify()
+
+            left_magnitude: float = base ** (left_exponent * power_ratio)
+            right_magnitude: float = base ** (right_exponent * power_ratio)
+
+            magnitude = base * log(left_magnitude + right_magnitude, base)
+
+            return Level(magnitude, self.unit)
+
+        return NotImplemented
+
+    def __sub__(self, other: "Level") -> "Level":
+        if isinstance(other, Level):
+            if other.unit != self.unit:
+                return NotImplemented
+
+            base = self.unit.logarithm.base
+            prefix = self.unit.logarithm.prefix
+            power_ratio = self.unit.logarithm.power_ratio
+
+            left_exponent = self.magnitude * prefix.quantify()
+            right_exponent = other.magnitude * prefix.quantify()
+
+            left_magnitude: float = base ** (left_exponent * power_ratio)
+            right_magnitude: float = base ** (right_exponent * power_ratio)
+
+            magnitude = base * log(left_magnitude - right_magnitude, base)
+
+            return Level(magnitude, self.unit)
+
+        return NotImplemented
+
+    def __mul__(self, other: Numeric) -> "Level":
+        if isinstance(other, NUMERIC_CLASSES):
+            return Level(self.magnitude + other, self.unit)
+
+        return NotImplemented
+
+    def __truediv__(self, other: Numeric) -> "Level":
+        if isinstance(other, NUMERIC_CLASSES):
+            return Level(self.magnitude - other, self.unit)
+
+        return NotImplemented
+
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Level):
             return self.quantify() == other.quantify()

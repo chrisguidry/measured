@@ -1,8 +1,8 @@
 import pytest
 
 from measured import Level, Logarithm, Numeric, Quantity, approximately
-from measured.iec import Bel, Decibel, Neper
-from measured.si import Deci, Meter, Micro, Milli, Watt
+from measured.iec import Bel, Decibel, Neper, dBW
+from measured.si import Deci, Meter, Micro, Milli, Volt, Watt
 
 
 def test_logarithmic_units_are_singletons() -> None:
@@ -44,9 +44,6 @@ def test_logarithmic_units_have_names_and_symbols() -> None:
 
     assert Neper.name == "neper"
     assert Neper.symbol == "Np"
-
-
-dBW = Decibel[1 * Watt]
 
 
 @pytest.mark.parametrize(
@@ -102,3 +99,49 @@ def test_comparing_bels_to_decibels(bels: Numeric, decibels: Numeric) -> None:
 def test_comparing_decibels_to_nepers(decibels: Numeric, nepers: Numeric) -> None:
     assert nepers * Neper[1 * Watt] == approximately(decibels * dBW, within=1e5)
     assert decibels * dBW == approximately(nepers * Neper[1 * Watt], within=1e5)
+
+
+def test_logarithmic_addition() -> None:
+    # Example adapted from
+    # https://en.wikipedia.org/wiki/Decibel#Representation_of_addition_operations
+    # But switched to the less controversial unit dBW for simplicity
+    assert 70 * dBW + 90 * dBW == 90.04321373782642 * dBW
+
+
+def test_addition_and_subtraction_only_by_levels() -> None:
+    with pytest.raises(TypeError):
+        (10 * dBW) + (1 * Watt)  # type: ignore
+
+    with pytest.raises(TypeError):
+        (10 * dBW) - (1 * Watt)  # type: ignore
+
+
+def test_addition_and_subtraction_only_within_same_unit() -> None:
+    with pytest.raises(TypeError):
+        10 * dBW + 1 * Decibel[1 * Volt]
+
+    with pytest.raises(TypeError):
+        10 * dBW - 1 * Decibel[1 * Volt]
+
+
+def test_logarithmic_subtraction() -> None:
+    # Example adapted from
+    # https://en.wikipedia.org/wiki/Decibel#Representation_of_addition_operations
+    # But switched to the less controversial unit dBW for simplicity
+    assert 87 * dBW - 83 * dBW == 84.79519169458092 * dBW
+
+
+def test_logarithmic_multiplication() -> None:
+    assert (10 * dBW) * 2 == 12 * dBW
+
+
+def test_logarithmic_division() -> None:
+    assert (10 * dBW) / 2 == 8 * dBW
+
+
+def test_logarithmic_multiplication_only_by_numerics() -> None:
+    with pytest.raises(TypeError):
+        (10 * dBW) * (2 * dBW)  # type: ignore
+
+    with pytest.raises(TypeError):
+        (10 * dBW) / (2 * dBW)  # type: ignore
