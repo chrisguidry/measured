@@ -1455,6 +1455,34 @@ class Quantity:
 
 
 class Logarithm:
+    """A `Logarithm` forms a family of [`LogarithmicUnits`][measured.LogarithmicUnit],
+    which measures the _ratio_ of a measured [`Quantity`][measured.Quantity] to a
+    reference [`Quantity`][measured.Quantity] on a logarithmic scale.  Commonly used
+    logarithms include the `Decibel` (base 10) and the `Neper` (base _e_)
+
+    The logarithm is not a unit itself, but rather a family of units, each with a
+    specific reference [`Quantity`][measured.Quantity].  For example, the unit `dBW`,
+    commonly used in electrical and communications applications, measures the ratio of a
+    `Power` quantity against the reference value 1 Watt, in increments of 10 (the base)
+    to the 1/10th power (the deci- prefix).
+
+    Examples:
+
+        Use a `Logarithm`, like `Decibel`, to _create_ a new
+        [`LogarithmicUnit`][measured.LogarithmicUnit] based on a reference value.  In
+        the example below, the reference value is 1 Watt:
+
+        >>> from measured.iec import Decibel
+        >>> from measured.si import Watt
+        >>> dBW = Decibel[1 * Watt]
+
+        The `dBW` unit may now be used to produces [`Levels`][measured.Level] that may
+        be used in operations with Quantities of the same dimension (`Power`, in this
+        case):
+
+        >>> assert 100 * Watt == 20 * dBW
+    """
+
     _known: ClassVar[Dict[Tuple[float, int, Prefix], "Logarithm"]] = {}
     _initialized: bool
 
@@ -1499,6 +1527,7 @@ class Logarithm:
         self._initialized = True
 
     def alias(self, name: str, symbol: str) -> "Logarithm":
+        """Gives a name and symbol to this Logarithm"""
         self.name = name
         self.symbol = symbol
         return self
@@ -1521,6 +1550,36 @@ class Logarithm:
 
 
 class LogarithmicUnit:
+    """A `LogarithmicUnit` represents a _ratio_ of a measured
+    [`Quantity`][measured.Quantity] to a reference [`Quantity`][measured.Quantity] on a
+    logarithmic scale.
+
+    Examples:
+
+        You may construct a `LogarithmicUnit` by applying the reference quantity as a
+        "suffix" (using Python's indexing operator `[]`) to the
+        [`Logarithm`][measured.Logarithm] in question:
+
+        >>> from measured.iec import Decibel
+        >>> from measured.si import Watt, Milli
+        >>> dBW = Decibel[1 * Watt]
+        >>> dBm = Decibel[1 * Milli * Watt]
+        >>> assert dBm is not dBW
+
+        `LogarithmicUnits` create [`Levels`][measured.Level] through multiplication:
+
+        >>> level = 20 * dBW
+
+        A [`Level`][measured.Level] is analogous to a [`Quantity`][measured.Quantity]:
+
+        >>> level.magnitude
+        20
+        >>> level.unit is dBW
+        True
+        >>> 100 * Watt == level
+        True
+    """
+
     _known: ClassVar[Dict[Tuple[Logarithm, Quantity], "LogarithmicUnit"]] = {}
     _initialized: bool
 
@@ -1561,6 +1620,8 @@ class LogarithmicUnit:
         self._initialized = True
 
     def alias(self, name: str, symbol: str) -> "LogarithmicUnit":
+        """Gives a name and symbol to this LogarithmicUnit"""
+        assert not self.name and not self.symbol
         self.name = name
         self.symbol = symbol
         return self
@@ -1577,6 +1638,17 @@ class LogarithmicUnit:
 
 
 class Level:
+    """A `Level` is analogous to a [`Quantity`][measured.Quantity], but represents a
+    ratio of a quantity to a reference quantity.  The reference quantity is captured by
+    the [`LogarithmicUnit`][measured.LogarithmicUnit].
+
+    Attributes:
+
+        magnitude (int | float): the quantity
+
+        unit (LogarithmicUnit): the [`LogarithmicUnit`][measured.LogarithmicUnit]
+    """
+
     magnitude: Numeric
     unit: LogarithmicUnit
 
@@ -1590,6 +1662,7 @@ class Level:
     _repr_html_ = formatting.mathml(formatting.level_mathml)
 
     def quantify(self) -> Quantity:
+        """Converts this Level into a Quantity of the reference unit"""
         base = self.unit.logarithm.base
         prefix = self.unit.logarithm.prefix
         power_ratio = self.unit.logarithm.power_ratio

@@ -27,6 +27,16 @@ Attributes: Prefixes (base 2)
     Zebi (Prefix): 2⁷⁰, symbol `Zi`
     Yobi (Prefix): 2⁸⁰, symbol `Yi`
 
+Attributes: Logarithms
+
+    Bel (Logarithm): A logarithmic ratio in base 10
+    Decibel (Logarithm): 1/10th of a Bel
+    Neper (Logarithm): A logarithmic ratio in base _e_
+
+Attributes: LogarithmicUnits
+
+    dBW (LogarithmicUnit): Decibels of `Power`, compared to 1 `Watt`
+
 """
 
 # https://en.wikipedia.org/wiki/Binary_prefix#Adoption_by_IEC,_NIST_and_ISO

@@ -26,6 +26,18 @@
     options:
         show_root_heading: true
 
+::: measured.Logarithm
+    options:
+        show_root_heading: true
+
+::: measured.LogarithmicUnit
+    options:
+        show_root_heading: true
+
+::: measured.Level
+    options:
+        show_root_heading: true
+
 ::: measured.Measurement
     options:
         show_root_heading: true
