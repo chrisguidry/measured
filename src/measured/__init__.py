@@ -1412,6 +1412,9 @@ class Quantity:
         return Quantity(abs(self.magnitude), self.unit)
 
     def __eq__(self, other: Any) -> bool:
+        if isinstance(other, Level):
+            other = other.quantify()
+
         if not isinstance(other, Quantity):
             return NotImplemented
 
@@ -1430,6 +1433,9 @@ class Quantity:
             return NotImplemented
 
     def __lt__(self, other: Any) -> bool:
+        if isinstance(other, Level):
+            other = other.quantify()
+
         if not isinstance(other, Quantity):
             return NotImplemented
 
@@ -1455,6 +1461,8 @@ class Logarithm:
     base: float
     power_ratio: int
     prefix: Prefix
+    name: Optional[str]
+    symbol: Optional[str]
 
     def __new__(
         cls,
@@ -1495,8 +1503,10 @@ class Logarithm:
         self.symbol = symbol
         return self
 
-    def __repr__(self) -> str:
-        return f"Logarithm(prefix={self.prefix!r}, base={self.base!r})"
+    __repr__ = formatting.logarithm_repr
+    __str__ = formatting.logarithm_str
+    _repr_pretty_ = formatting.logarithm_pretty
+    _repr_html_ = formatting.mathml(formatting.logarithm_mathml)
 
     def __mul__(self, other: Prefix) -> "Logarithm":
         if isinstance(other, Prefix):
@@ -1516,8 +1526,16 @@ class LogarithmicUnit:
 
     logarithm: Logarithm
     reference: Quantity
+    name: Optional[str]
+    symbol: Optional[str]
 
-    def __new__(cls, logarithm: Logarithm, reference: Quantity) -> "LogarithmicUnit":
+    def __new__(
+        cls,
+        logarithm: Logarithm,
+        reference: Quantity,
+        name: Optional[str] = None,
+        symbol: Optional[str] = None,
+    ) -> "LogarithmicUnit":
         if (logarithm, reference) in cls._known:
             return cls._known[(logarithm, reference)]
 
@@ -1526,17 +1544,31 @@ class LogarithmicUnit:
         cls._known[(logarithm, reference)] = self
         return self
 
-    def __init__(self, logarithm: Logarithm, reference: Quantity) -> None:
+    def __init__(
+        self,
+        logarithm: Logarithm,
+        reference: Quantity,
+        name: Optional[str] = None,
+        symbol: Optional[str] = None,
+    ) -> None:
+        if self._initialized:
+            return
+
         self.logarithm = logarithm
         self.reference = reference.unprefixed()
+        self.name = name
+        self.symbol = symbol
+        self._initialized = True
 
-    def __repr__(self) -> str:
-        return (
-            "LogarithmicUnit("
-            f"logarithm={self.logarithm!r}, "
-            f"reference={self.reference!r}"
-            ")"
-        )
+    def alias(self, name: str, symbol: str) -> "LogarithmicUnit":
+        self.name = name
+        self.symbol = symbol
+        return self
+
+    __repr__ = formatting.logarithmic_unit_repr
+    __str__ = formatting.logarithmic_unit_str
+    _repr_pretty_ = formatting.logarithmic_unit_pretty
+    _repr_html_ = formatting.mathml(formatting.logarithmic_unit_mathml)
 
     def __mul__(self, magnitude: Numeric) -> "Level":
         return Level(magnitude, self)
@@ -1552,8 +1584,10 @@ class Level:
         self.magnitude = magnitude
         self.unit = unit
 
-    def __repr__(self) -> str:
-        return f"Level(magnitude={self.magnitude!r}, unit={self.unit!r})"
+    __repr__ = formatting.level_repr
+    __str__ = formatting.level_str
+    _repr_pretty_ = formatting.level_pretty
+    _repr_html_ = formatting.mathml(formatting.level_mathml)
 
     def quantify(self) -> Quantity:
         base = self.unit.logarithm.base
@@ -1566,10 +1600,6 @@ class Level:
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Level):
-            left = self.quantify()
-            right = other.quantify()
-            ic(left)
-            ic(right)
             return self.quantify() == other.quantify()
 
         if isinstance(other, Quantity):

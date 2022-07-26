@@ -61,6 +61,7 @@ dBW = Decibel[1 * Watt]
 )
 def test_dBW(power: Quantity, level: Level) -> None:
     assert power == level
+    assert level == power
 
 
 @pytest.mark.parametrize(

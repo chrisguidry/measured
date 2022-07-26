@@ -33,7 +33,7 @@ Attributes: Prefixes (base 2)
 
 from math import e
 
-from measured.si import Deci, Meter, Second
+from measured.si import Deci, Meter, Second, Watt
 from measured.us import Inch
 
 from . import Information, Length, Logarithm, Prefix, Unit
@@ -72,3 +72,7 @@ RackUnit.equals(0.04445 * Meter)
 Bel = Logarithm(base=10, name="bel", symbol="bel")
 Decibel = (Deci * Bel).alias(name="decibel", symbol="dB")
 Neper = Logarithm(base=e, name="neper", symbol="Np", power_ratio=2)
+
+# https://en.wikipedia.org/wiki/Decibel#Suffixes_and_reference_values
+
+dBW = Decibel[1 * Watt].alias("dbW", "dbW")
