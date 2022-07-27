@@ -1460,6 +1460,9 @@ class Quantity:
         except conversions.ConversionNotFound:
             return NotImplemented
 
+    def level(self, unit: "LogarithmicUnit") -> "Level":
+        return unit.level(self)
+
 
 class Logarithm:
     """A `Logarithm` forms a family of [`LogarithmicUnits`][measured.LogarithmicUnit],
@@ -1649,6 +1652,16 @@ class LogarithmicUnit:
 
     __rmul__ = __mul__
 
+    def level(self, quantity: Quantity) -> "Level":
+        base = self.logarithm.base
+        prefix = self.logarithm.prefix
+        power_ratio = self.power_ratio
+        ratio = quantity.in_unit(self.reference.unit) / self.reference
+        magnitude = (
+            power_ratio * (1 / prefix.quantify()) * math.log(ratio.magnitude, base)
+        )
+        return Level(magnitude, self)
+
 
 class Level:
     """A `Level` is analogous to a [`Quantity`][measured.Quantity], but represents a
@@ -1681,7 +1694,7 @@ class Level:
         power_ratio = self.unit.power_ratio
         reference = self.unit.reference
         exponent = self.magnitude * prefix.quantify()
-        magnitude: float = base ** (exponent * power_ratio)
+        magnitude: float = base ** (exponent / power_ratio)
         return magnitude * reference
 
     def __add__(self, other: "Level") -> "Level":

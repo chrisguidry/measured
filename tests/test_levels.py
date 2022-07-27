@@ -1,4 +1,5 @@
 import pytest
+from pytest import approx
 
 from measured import (
     Bel,
@@ -68,9 +69,39 @@ def test_logarithmic_units_have_names_and_symbols() -> None:
         (0.01 * Watt, -20 * dBW),
     ],
 )
-def test_dBW(power: Quantity, level: Level) -> None:
+def test_quantity_to_level_comparisons(power: Quantity, level: Level) -> None:
     assert power == level
     assert level == power
+
+
+@pytest.mark.parametrize(
+    "power, level",
+    [
+        (1 * Watt, 0 * dBW),
+        (10 * Watt, 10 * dBW),
+        (100 * Watt, 20 * dBW),
+        (0.1 * Watt, -10 * dBW),
+        (0.01 * Watt, -20 * dBW),
+    ],
+)
+def test_producing_level(power: Quantity, level: Level) -> None:
+    assert power.level(dBW).unit is dBW
+    assert power.level(dBW).magnitude == approx(level.magnitude)
+
+
+@pytest.mark.parametrize(
+    "power, level",
+    [
+        (1 * Watt, 0 * dBW),
+        (10 * Watt, 10 * dBW),
+        (100 * Watt, 20 * dBW),
+        (0.1 * Watt, -10 * dBW),
+        (0.01 * Watt, -20 * dBW),
+    ],
+)
+def test_producing_quantity(power: Quantity, level: Level) -> None:
+    assert level.quantify().unit is Watt
+    assert level.quantify().magnitude == power.magnitude
 
 
 @pytest.mark.parametrize(

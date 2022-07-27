@@ -8,6 +8,10 @@ Attributes: LogarithmicUnits
 from measured import Decibel
 from measured.si import Micro, Pascal
 
+# https://en.wikipedia.org/wiki/Absolute_threshold_of_hearing
+
+ABSOLUTE_THRESHOLD_OF_HEARING = 20 * Micro * Pascal
+
 # https://en.wikipedia.org/wiki/Sound_pressure#Sound_pressure_level
 
-dBSPL = Decibel[20 * Micro * Pascal].alias("dBSPL", "dBSPL")
+dBSPL = Decibel[ABSOLUTE_THRESHOLD_OF_HEARING].alias("dBSPL", "dBSPL")

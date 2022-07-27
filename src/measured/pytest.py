@@ -18,7 +18,8 @@ class MeasuredPlugin:
             return None
 
         comparison = ""
-        difference = ""
+        difference: Optional[Quantity] = None
+        relative = None
 
         if isinstance(left, COMPARABLE) and isinstance(right, COMPARABLE):
             if isinstance(left, Level):
@@ -42,9 +43,9 @@ class MeasuredPlugin:
             if isinstance(right, Level):
                 try:
                     right_comparison = right_quantity.in_unit(left_unit)
-                    difference = str(left_quantity - right_comparison)
+                    difference = left_quantity - right_comparison
                 except ConversionNotFound:
-                    difference = "(conversion not found)"
+                    difference = None
 
             elif isinstance(right, Measurement):
                 try:
@@ -52,23 +53,38 @@ class MeasuredPlugin:
                         measurand=right_quantity.in_unit(left_unit),
                         uncertainty=right.uncertainty.in_unit(left_unit),
                     )
-                    difference = str(left_quantity - right_comparison.measurand)
+                    difference = left_quantity - right_comparison.measurand
                 except ConversionNotFound:
-                    difference = "(conversion not found)"
+                    difference = None
 
             elif isinstance(right, Quantity):
                 try:
                     right_comparison = right.in_unit(left_unit)
-                    difference = str(left_quantity - right_comparison)
+                    difference = left_quantity - right_comparison
                 except ConversionNotFound:
-                    difference = "(conversion not found)"
+                    difference = None
 
             comparison = f"{left} {op} {right_comparison}"
+
+            if difference:
+                if left_quantity.magnitude != 0:
+                    relative = abs(difference.magnitude / left_quantity.magnitude)
+                elif right_quantity.magnitude != 0:
+                    relative = abs(difference.magnitude / right_quantity.magnitude)
+                else:
+                    relative = None
+
+        if difference is None:
+            difference_description = "difference: (conversion not found)"
+        else:
+            difference_description = (
+                f"difference: absolute={difference} relative={relative})"
+            )
 
         return [
             f"{left} {op} {right}",
             comparison,
-            f"difference: {difference}",
+            difference_description,
             "where",
             f"{str(left)!r} is {left!r}",
             "and",
