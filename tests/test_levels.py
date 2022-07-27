@@ -1,7 +1,16 @@
 import pytest
 
-from measured import Level, Logarithm, Numeric, Quantity, approximately
-from measured.iec import Bel, Decibel, Neper, dBW
+from measured import (
+    Bel,
+    Decibel,
+    Level,
+    Logarithm,
+    Neper,
+    Numeric,
+    Quantity,
+    approximately,
+)
+from measured.electronics import dBW
 from measured.si import Deci, Meter, Micro, Milli, Volt, Watt
 
 

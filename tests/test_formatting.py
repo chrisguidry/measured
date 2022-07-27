@@ -3,9 +3,6 @@ from reprlib import Repr
 
 import pytest
 
-from measured import Logarithm
-from measured.iec import Decibel
-
 pytest.importorskip("IPython")
 
 # flake8: noqa: E402 (imports not at top of file)
@@ -17,10 +14,13 @@ from IPython.lib.pretty import RepresentationPrinter
 
 from measured import (
     Area,
+    Decibel,
     Dimension,
     Frequency,
     Length,
+    Logarithm,
     Measurement,
+    Neper,
     Number,
     Prefix,
     Quantity,
@@ -30,7 +30,6 @@ from measured import (
     VolumetricFlow,
 )
 from measured.formatting import superscript
-from measured.iec import Decibel, Neper
 from measured.si import Hertz, Kilo, Mega, Meter, Milli, Ohm, Second, Watt
 
 

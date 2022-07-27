@@ -27,26 +27,14 @@ Attributes: Prefixes (base 2)
     Zebi (Prefix): 2⁷⁰, symbol `Zi`
     Yobi (Prefix): 2⁸⁰, symbol `Yi`
 
-Attributes: Logarithms
-
-    Bel (Logarithm): A logarithmic ratio in base 10
-    Decibel (Logarithm): 1/10th of a Bel
-    Neper (Logarithm): A logarithmic ratio in base _e_
-
-Attributes: LogarithmicUnits
-
-    dBW (LogarithmicUnit): Decibels of `Power`, compared to 1 `Watt`
-
 """
 
 # https://en.wikipedia.org/wiki/Binary_prefix#Adoption_by_IEC,_NIST_and_ISO
 
-from math import e
-
-from measured.si import Deci, Meter, Second, Watt
+from measured.si import Meter, Second
 from measured.us import Inch
 
-from . import Information, Length, Logarithm, Prefix, Unit
+from . import Information, Length, Prefix, Unit
 
 Kibi = Prefix(2, 10, name="kibi", symbol="Ki")
 Mebi = Prefix(2, 20, name="mebi", symbol="Mi")
@@ -73,16 +61,3 @@ Byte = Unit.derive(Eight * Bit, name="byte", symbol="B")
 RackUnit = Length.unit("rack unit", "U")
 RackUnit.equals(1.75 * Inch)
 RackUnit.equals(0.04445 * Meter)
-
-
-# Logarithmic units
-# https://en.wikipedia.org/wiki/Decibel
-# https://en.wikipedia.org/wiki/Neper
-
-Bel = Logarithm(base=10, name="bel", symbol="bel")
-Decibel = (Deci * Bel).alias(name="decibel", symbol="dB")
-Neper = Logarithm(base=e, name="neper", symbol="Np", power_ratio=2)
-
-# https://en.wikipedia.org/wiki/Decibel#Suffixes_and_reference_values
-
-dBW = Decibel[1 * Watt].alias("dbW", "dbW")

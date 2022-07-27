@@ -4,8 +4,7 @@ from typing import Any
 import pytest
 from pytest import approx
 
-from measured import Measurement, Quantity, approximately
-from measured.iec import Decibel
+from measured import Decibel, Measurement, Quantity, approximately
 from measured.si import Meter, Second
 from measured.us import Foot
 

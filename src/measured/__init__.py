@@ -138,12 +138,18 @@ Attributes: Base Units
 
     One (Unit): represents the number 1, expressed as a unit of dimension `Number`
 
+Attributes: Logarithms
+
+    Bel (Logarithm): A logarithmic ratio in base 10
+    Decibel (Logarithm): 1/10th of a Bel
+    Neper (Logarithm): A logarithmic ratio in base _e_
+
 """
 
+import math
 from collections import defaultdict
 from functools import lru_cache, total_ordering
 from importlib.metadata import version
-from math import log, sqrt
 from typing import (
     Any,
     Callable,
@@ -682,7 +688,7 @@ class Prefix:
                 return Prefix(self.base, self.exponent + other.exponent)
 
             base, exponent = self.base, self.exponent
-            exponent += other.exponent * (log(other.base) / log(self.base))
+            exponent += other.exponent * (math.log(other.base) / math.log(self.base))
 
             return Prefix(base, exponent)
 
@@ -708,7 +714,7 @@ class Prefix:
             return Prefix(self.base, self.exponent - other.exponent)
 
         base, exponent = self.base, self.exponent
-        exponent -= other.exponent * (log(other.base) / log(self.base))
+        exponent -= other.exponent * (math.log(other.base) / math.log(self.base))
 
         return Prefix(base, exponent)
 
@@ -1472,7 +1478,7 @@ class Logarithm:
         [`LogarithmicUnit`][measured.LogarithmicUnit] based on a reference value.  In
         the example below, the reference value is 1 Watt:
 
-        >>> from measured.iec import Decibel
+        >>> from measured import Decibel
         >>> from measured.si import Watt
         >>> dBW = Decibel[1 * Watt]
 
@@ -1560,7 +1566,7 @@ class LogarithmicUnit:
         "suffix" (using Python's indexing operator `[]`) to the
         [`Logarithm`][measured.Logarithm] in question:
 
-        >>> from measured.iec import Decibel
+        >>> from measured import Decibel
         >>> from measured.si import Watt, Milli
         >>> dBW = Decibel[1 * Watt]
         >>> dBm = Decibel[1 * Milli * Watt]
@@ -1686,7 +1692,7 @@ class Level:
             left_magnitude: float = base ** (left_exponent * power_ratio)
             right_magnitude: float = base ** (right_exponent * power_ratio)
 
-            magnitude = base * log(left_magnitude + right_magnitude, base)
+            magnitude = base * math.log(left_magnitude + right_magnitude, base)
 
             return Level(magnitude, self.unit)
 
@@ -1707,7 +1713,7 @@ class Level:
             left_magnitude: float = base ** (left_exponent * power_ratio)
             right_magnitude: float = base ** (right_exponent * power_ratio)
 
-            magnitude = base * log(left_magnitude - right_magnitude, base)
+            magnitude = base * math.log(left_magnitude - right_magnitude, base)
 
             return Level(magnitude, self.unit)
 
@@ -1951,7 +1957,7 @@ class Measurement:
             return NotImplemented
 
         measurand = self.measurand * other.measurand
-        uncertainty = sqrt(
+        uncertainty = math.sqrt(
             measurand.magnitude**2
             * (
                 (self.uncertainty.magnitude**2 / self.measurand.magnitude**2)
@@ -1970,7 +1976,7 @@ class Measurement:
             return NotImplemented
 
         measurand = self.measurand / other.measurand
-        uncertainty = sqrt(
+        uncertainty = math.sqrt(
             measurand.magnitude**2
             * (
                 (self.uncertainty.magnitude**2 / self.measurand.magnitude**2)
@@ -1993,7 +1999,7 @@ class Measurement:
             return NotImplemented
 
         measurand = self.measurand**exponent
-        uncertainty = sqrt(
+        uncertainty = math.sqrt(
             (exponent * self.measurand.magnitude**2 * self.uncertainty.magnitude) ** 2
         )
         return Measurement(measurand, uncertainty)
@@ -2101,3 +2107,12 @@ from . import conversions  # noqa: E402
 from .parsing import parser  # noqa: E402
 
 One.equals(1 * One)
+
+
+# Logarithms
+# https://en.wikipedia.org/wiki/Decibel
+# https://en.wikipedia.org/wiki/Neper
+
+Bel = Logarithm(base=10, name="bel", symbol="bel")
+Decibel = (Prefix(10, -1) * Bel).alias(name="decibel", symbol="dB")
+Neper = Logarithm(base=math.e, name="neper", symbol="Np", power_ratio=2)
