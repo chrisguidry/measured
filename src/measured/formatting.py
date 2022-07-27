@@ -365,7 +365,6 @@ def logarithm_repr(logarithm: "Logarithm") -> str:
         "Logarithm("
         f"prefix={logarithm.prefix!r}, "
         f"base={logarithm.base!r}, "
-        f"power_ratio={logarithm.power_ratio!r}, "
         f"name={logarithm.name!r}, "
         f"symbol={logarithm.symbol!r}"
         ")"
@@ -377,9 +376,8 @@ def logarithm_str(logarithm: "Logarithm") -> str:
     if logarithm.symbol:
         return logarithm.symbol
 
-    power = superscript(logarithm.power_ratio)
     function = "ln" if logarithm.base == math.e else f"log{logarithm.base}"
-    return f"{logarithm.prefix.quantify()} {function}(x{power}/x₀{power})"
+    return f"{logarithm.prefix.quantify()} {function}(x/x₀)"
 
 
 def logarithm_pretty(
@@ -408,8 +406,8 @@ def logarithm_mathml(logarithm: "Logarithm") -> str:
         f"<mi>{function}</mi>"
         "<mo>(</mo>"
         "<mfrac>"
-        f"<mrow><msup><mi>x</mi><mn>{logarithm.power_ratio}</mn></msup></mrow>"
-        f"<mrow><msup><mi>x₀</mi><mn>{logarithm.power_ratio}</mn></msup></mrow>"
+        f"<mi>x</mi>"
+        f"<mi>x₀</mi>"
         "</mfrac>"
         "<mo>)</mo>"
         "</mrow>"

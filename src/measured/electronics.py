@@ -1,5 +1,5 @@
 """
-Units and non-standard conventions relating to electronics
+Units and non-standardized conventions relating to electronics
 
 Attributes: LogarithmicUnits
 

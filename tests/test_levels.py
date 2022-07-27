@@ -7,9 +7,12 @@ from measured import (
     Logarithm,
     Neper,
     Numeric,
+    Power,
+    Pressure,
     Quantity,
     approximately,
 )
+from measured.acoustics import dBSPL
 from measured.electronics import dBW
 from measured.si import Deci, Meter, Micro, Milli, Volt, Watt
 
@@ -154,3 +157,13 @@ def test_logarithmic_multiplication_only_by_numerics() -> None:
 
     with pytest.raises(TypeError):
         (10 * dBW) / (2 * dBW)  # type: ignore
+
+
+def test_power_ratios() -> None:
+    # https://en.wikipedia.org/wiki/Power,_root-power,_and_field_quantities
+
+    assert dBW.reference.unit.dimension is Power
+    assert dBW.power_ratio == 1
+
+    assert dBSPL.reference.unit.dimension is Pressure
+    assert dBSPL.power_ratio == 2

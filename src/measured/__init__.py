@@ -292,12 +292,13 @@ class Dimension:
         name: Optional[str] = None,
         symbol: Optional[str] = None,
     ) -> "Dimension":
-        if exponents in cls._known:
-            return cls._known[exponents]
+        key = exponents
+        if key in cls._known:
+            return cls._known[key]
 
         self = super().__new__(cls)
         self._initialized = False
-        cls._known[exponents] = self
+        cls._known[key] = self
         return self
 
     def __init__(
@@ -1489,11 +1490,10 @@ class Logarithm:
         >>> assert 100 * Watt == 20 * dBW
     """
 
-    _known: ClassVar[Dict[Tuple[float, int, Prefix], "Logarithm"]] = {}
+    _known: ClassVar[Dict[Tuple[float, Prefix], "Logarithm"]] = {}
     _initialized: bool
 
     base: float
-    power_ratio: int
     prefix: Prefix
     name: Optional[str]
     symbol: Optional[str]
@@ -1501,23 +1501,22 @@ class Logarithm:
     def __new__(
         cls,
         base: float,
-        power_ratio: int = 1,
         prefix: Prefix = Prefix(0, 0),
         name: Optional[str] = None,
         symbol: Optional[str] = None,
     ) -> "Logarithm":
-        if (base, power_ratio, prefix) in cls._known:
-            return cls._known[(base, power_ratio, prefix)]
+        key = (base, prefix)
+        if key in cls._known:
+            return cls._known[key]
 
         self = super().__new__(cls)
         self._initialized = False
-        cls._known[(base, power_ratio, prefix)] = self
+        cls._known[key] = self
         return self
 
     def __init__(
         self,
         base: float,
-        power_ratio: int = 1,
         prefix: Prefix = Prefix(0, 0),
         name: Optional[str] = None,
         symbol: Optional[str] = None,
@@ -1526,7 +1525,6 @@ class Logarithm:
             return
 
         self.base = base
-        self.power_ratio = power_ratio
         self.prefix = prefix
         self.name = name
         self.symbol = symbol
@@ -1601,12 +1599,13 @@ class LogarithmicUnit:
         name: Optional[str] = None,
         symbol: Optional[str] = None,
     ) -> "LogarithmicUnit":
-        if (logarithm, reference) in cls._known:
-            return cls._known[(logarithm, reference)]
+        key = (logarithm, reference)
+        if key in cls._known:
+            return cls._known[key]
 
         self = super().__new__(cls)
         self._initialized = False
-        cls._known[(logarithm, reference)] = self
+        cls._known[key] = self
         return self
 
     def __init__(
@@ -1631,6 +1630,14 @@ class LogarithmicUnit:
         self.name = name
         self.symbol = symbol
         return self
+
+    @property
+    def power_ratio(self) -> int:
+        """Indicates whether the reference quantity is a power (1) or root-power (2)
+        quantity"""
+        if self.reference.unit.dimension in ROOT_POWER_DIMENSIONS:
+            return 2
+        return 1
 
     __repr__ = formatting.logarithmic_unit_repr
     __str__ = formatting.logarithmic_unit_str
@@ -1671,7 +1678,7 @@ class Level:
         """Converts this Level into a Quantity of the reference unit"""
         base = self.unit.logarithm.base
         prefix = self.unit.logarithm.prefix
-        power_ratio = self.unit.logarithm.power_ratio
+        power_ratio = self.unit.power_ratio
         reference = self.unit.reference
         exponent = self.magnitude * prefix.quantify()
         magnitude: float = base ** (exponent * power_ratio)
@@ -1684,7 +1691,7 @@ class Level:
 
             base = self.unit.logarithm.base
             prefix = self.unit.logarithm.prefix
-            power_ratio = self.unit.logarithm.power_ratio
+            power_ratio = self.unit.power_ratio
 
             left_exponent = self.magnitude * prefix.quantify()
             right_exponent = other.magnitude * prefix.quantify()
@@ -1705,7 +1712,7 @@ class Level:
 
             base = self.unit.logarithm.base
             prefix = self.unit.logarithm.prefix
-            power_ratio = self.unit.logarithm.power_ratio
+            power_ratio = self.unit.power_ratio
 
             left_exponent = self.magnitude * prefix.quantify()
             right_exponent = other.magnitude * prefix.quantify()
@@ -2115,4 +2122,16 @@ One.equals(1 * One)
 
 Bel = Logarithm(base=10, name="bel", symbol="bel")
 Decibel = (Prefix(10, -1) * Bel).alias(name="decibel", symbol="dB")
-Neper = Logarithm(base=math.e, name="neper", symbol="Np", power_ratio=2)
+Neper = Logarithm(base=math.e, name="neper", symbol="Np")
+
+# https://en.wikipedia.org/wiki/Power,_root-power,_and_field_quantities
+ROOT_POWER_DIMENSIONS = {
+    Potential,
+    Current,
+    Pressure,
+    Potential / Length,
+    Speed,
+    Charge / Length,
+    Charge / Area,
+    Charge / Volume,
+}

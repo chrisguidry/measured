@@ -96,7 +96,7 @@ def test_strings_of_dimensions(dimension: Dimension, string: str) -> None:
         (Hertz, "Hz"),
         (Hertz**2, "s⁻²"),
         (Decibel[1 * Meter], "dB of 1 m"),
-        (Logarithm(2, 2), "1 log2(x²/x₀²)"),
+        (Logarithm(2), "1 log2(x/x₀)"),
     ],
 )
 def test_strings_of_units(unit: Unit, string: str) -> None:
@@ -253,7 +253,7 @@ def test_mathml_root_is_identifier(formattable: Formattable) -> None:
         Length * Time,
         (Kilo * Meter),
         Meter * Second,
-        Logarithm(2, 2),
+        Logarithm(2),
         Decibel[1 * Meter],  # a dB that we wouldn't have a symbol for
         Neper[1 * Meter],
         30 * Decibel[1 * Watt],
