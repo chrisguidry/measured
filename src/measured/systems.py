@@ -8,6 +8,7 @@ from measured import (  # noqa: F401
     iec,
     iso,
     metric,
+    music,
     natural,
     si,
     troy,

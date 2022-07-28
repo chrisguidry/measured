@@ -2133,9 +2133,10 @@ One.equals(1 * One)
 # https://en.wikipedia.org/wiki/Decibel
 # https://en.wikipedia.org/wiki/Neper
 
+Neper = Logarithm(base=math.e, name="neper", symbol="Np")
+Octave = Logarithm(base=2, name="octave", symbol="oct")
 Bel = Logarithm(base=10, name="bel", symbol="bel")
 Decibel = (Prefix(10, -1) * Bel).alias(name="decibel", symbol="dB")
-Neper = Logarithm(base=math.e, name="neper", symbol="Np")
 
 # https://en.wikipedia.org/wiki/Power,_root-power,_and_field_quantities
 ROOT_POWER_DIMENSIONS = {
