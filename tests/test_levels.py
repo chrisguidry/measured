@@ -1,7 +1,20 @@
 import pytest
+from pytest import approx
 
-from measured import Level, Logarithm, Numeric, Quantity, approximately
-from measured.iec import Bel, Decibel, Neper, dBW
+from measured import (
+    Bel,
+    Decibel,
+    Level,
+    Logarithm,
+    Neper,
+    Numeric,
+    Power,
+    Pressure,
+    Quantity,
+    approximately,
+)
+from measured.acoustics import dBSPL
+from measured.electronics import dBW
 from measured.si import Deci, Meter, Micro, Milli, Volt, Watt
 
 
@@ -56,9 +69,39 @@ def test_logarithmic_units_have_names_and_symbols() -> None:
         (0.01 * Watt, -20 * dBW),
     ],
 )
-def test_dBW(power: Quantity, level: Level) -> None:
+def test_quantity_to_level_comparisons(power: Quantity, level: Level) -> None:
     assert power == level
     assert level == power
+
+
+@pytest.mark.parametrize(
+    "power, level",
+    [
+        (1 * Watt, 0 * dBW),
+        (10 * Watt, 10 * dBW),
+        (100 * Watt, 20 * dBW),
+        (0.1 * Watt, -10 * dBW),
+        (0.01 * Watt, -20 * dBW),
+    ],
+)
+def test_producing_level(power: Quantity, level: Level) -> None:
+    assert power.level(dBW).unit is dBW
+    assert power.level(dBW).magnitude == approx(level.magnitude)
+
+
+@pytest.mark.parametrize(
+    "power, level",
+    [
+        (1 * Watt, 0 * dBW),
+        (10 * Watt, 10 * dBW),
+        (100 * Watt, 20 * dBW),
+        (0.1 * Watt, -10 * dBW),
+        (0.01 * Watt, -20 * dBW),
+    ],
+)
+def test_producing_quantity(power: Quantity, level: Level) -> None:
+    assert level.quantify().unit is Watt
+    assert level.quantify().magnitude == power.magnitude
 
 
 @pytest.mark.parametrize(
@@ -145,3 +188,13 @@ def test_logarithmic_multiplication_only_by_numerics() -> None:
 
     with pytest.raises(TypeError):
         (10 * dBW) / (2 * dBW)  # type: ignore
+
+
+def test_power_ratios() -> None:
+    # https://en.wikipedia.org/wiki/Power,_root-power,_and_field_quantities
+
+    assert dBW.reference.unit.dimension is Power
+    assert dBW.power_ratio == 1
+
+    assert dBSPL.reference.unit.dimension is Pressure
+    assert dBSPL.power_ratio == 2

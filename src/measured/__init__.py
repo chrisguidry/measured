@@ -138,12 +138,18 @@ Attributes: Base Units
 
     One (Unit): represents the number 1, expressed as a unit of dimension `Number`
 
+Attributes: Logarithms
+
+    Bel (Logarithm): A logarithmic ratio in base 10
+    Decibel (Logarithm): 1/10th of a Bel
+    Neper (Logarithm): A logarithmic ratio in base _e_
+
 """
 
+import math
 from collections import defaultdict
 from functools import lru_cache, total_ordering
 from importlib.metadata import version
-from math import log, sqrt
 from typing import (
     Any,
     Callable,
@@ -286,12 +292,13 @@ class Dimension:
         name: Optional[str] = None,
         symbol: Optional[str] = None,
     ) -> "Dimension":
-        if exponents in cls._known:
-            return cls._known[exponents]
+        key = exponents
+        if key in cls._known:
+            return cls._known[key]
 
         self = super().__new__(cls)
         self._initialized = False
-        cls._known[exponents] = self
+        cls._known[key] = self
         return self
 
     def __init__(
@@ -682,7 +689,7 @@ class Prefix:
                 return Prefix(self.base, self.exponent + other.exponent)
 
             base, exponent = self.base, self.exponent
-            exponent += other.exponent * (log(other.base) / log(self.base))
+            exponent += other.exponent * (math.log(other.base) / math.log(self.base))
 
             return Prefix(base, exponent)
 
@@ -708,7 +715,7 @@ class Prefix:
             return Prefix(self.base, self.exponent - other.exponent)
 
         base, exponent = self.base, self.exponent
-        exponent -= other.exponent * (log(other.base) / log(self.base))
+        exponent -= other.exponent * (math.log(other.base) / math.log(self.base))
 
         return Prefix(base, exponent)
 
@@ -1453,6 +1460,9 @@ class Quantity:
         except conversions.ConversionNotFound:
             return NotImplemented
 
+    def level(self, unit: "LogarithmicUnit") -> "Level":
+        return unit.level(self)
+
 
 class Logarithm:
     """A `Logarithm` forms a family of [`LogarithmicUnits`][measured.LogarithmicUnit],
@@ -1472,7 +1482,7 @@ class Logarithm:
         [`LogarithmicUnit`][measured.LogarithmicUnit] based on a reference value.  In
         the example below, the reference value is 1 Watt:
 
-        >>> from measured.iec import Decibel
+        >>> from measured import Decibel
         >>> from measured.si import Watt
         >>> dBW = Decibel[1 * Watt]
 
@@ -1483,11 +1493,10 @@ class Logarithm:
         >>> assert 100 * Watt == 20 * dBW
     """
 
-    _known: ClassVar[Dict[Tuple[float, int, Prefix], "Logarithm"]] = {}
+    _known: ClassVar[Dict[Tuple[float, Prefix], "Logarithm"]] = {}
     _initialized: bool
 
     base: float
-    power_ratio: int
     prefix: Prefix
     name: Optional[str]
     symbol: Optional[str]
@@ -1495,23 +1504,22 @@ class Logarithm:
     def __new__(
         cls,
         base: float,
-        power_ratio: int = 1,
         prefix: Prefix = Prefix(0, 0),
         name: Optional[str] = None,
         symbol: Optional[str] = None,
     ) -> "Logarithm":
-        if (base, power_ratio, prefix) in cls._known:
-            return cls._known[(base, power_ratio, prefix)]
+        key = (base, prefix)
+        if key in cls._known:
+            return cls._known[key]
 
         self = super().__new__(cls)
         self._initialized = False
-        cls._known[(base, power_ratio, prefix)] = self
+        cls._known[key] = self
         return self
 
     def __init__(
         self,
         base: float,
-        power_ratio: int = 1,
         prefix: Prefix = Prefix(0, 0),
         name: Optional[str] = None,
         symbol: Optional[str] = None,
@@ -1520,7 +1528,6 @@ class Logarithm:
             return
 
         self.base = base
-        self.power_ratio = power_ratio
         self.prefix = prefix
         self.name = name
         self.symbol = symbol
@@ -1560,7 +1567,7 @@ class LogarithmicUnit:
         "suffix" (using Python's indexing operator `[]`) to the
         [`Logarithm`][measured.Logarithm] in question:
 
-        >>> from measured.iec import Decibel
+        >>> from measured import Decibel
         >>> from measured.si import Watt, Milli
         >>> dBW = Decibel[1 * Watt]
         >>> dBm = Decibel[1 * Milli * Watt]
@@ -1595,12 +1602,13 @@ class LogarithmicUnit:
         name: Optional[str] = None,
         symbol: Optional[str] = None,
     ) -> "LogarithmicUnit":
-        if (logarithm, reference) in cls._known:
-            return cls._known[(logarithm, reference)]
+        key = (logarithm, reference)
+        if key in cls._known:
+            return cls._known[key]
 
         self = super().__new__(cls)
         self._initialized = False
-        cls._known[(logarithm, reference)] = self
+        cls._known[key] = self
         return self
 
     def __init__(
@@ -1626,6 +1634,14 @@ class LogarithmicUnit:
         self.symbol = symbol
         return self
 
+    @property
+    def power_ratio(self) -> int:
+        """Indicates whether the reference quantity is a power (1) or root-power (2)
+        quantity"""
+        if self.reference.unit.dimension in ROOT_POWER_DIMENSIONS:
+            return 2
+        return 1
+
     __repr__ = formatting.logarithmic_unit_repr
     __str__ = formatting.logarithmic_unit_str
     _repr_pretty_ = formatting.logarithmic_unit_pretty
@@ -1635,6 +1651,16 @@ class LogarithmicUnit:
         return Level(magnitude, self)
 
     __rmul__ = __mul__
+
+    def level(self, quantity: Quantity) -> "Level":
+        base = self.logarithm.base
+        prefix = self.logarithm.prefix
+        power_ratio = self.power_ratio
+        ratio = quantity.in_unit(self.reference.unit) / self.reference
+        magnitude = (
+            power_ratio * (1 / prefix.quantify()) * math.log(ratio.magnitude, base)
+        )
+        return Level(magnitude, self)
 
 
 class Level:
@@ -1665,10 +1691,10 @@ class Level:
         """Converts this Level into a Quantity of the reference unit"""
         base = self.unit.logarithm.base
         prefix = self.unit.logarithm.prefix
-        power_ratio = self.unit.logarithm.power_ratio
+        power_ratio = self.unit.power_ratio
         reference = self.unit.reference
         exponent = self.magnitude * prefix.quantify()
-        magnitude: float = base ** (exponent * power_ratio)
+        magnitude: float = base ** (exponent / power_ratio)
         return magnitude * reference
 
     def __add__(self, other: "Level") -> "Level":
@@ -1678,7 +1704,7 @@ class Level:
 
             base = self.unit.logarithm.base
             prefix = self.unit.logarithm.prefix
-            power_ratio = self.unit.logarithm.power_ratio
+            power_ratio = self.unit.power_ratio
 
             left_exponent = self.magnitude * prefix.quantify()
             right_exponent = other.magnitude * prefix.quantify()
@@ -1686,7 +1712,7 @@ class Level:
             left_magnitude: float = base ** (left_exponent * power_ratio)
             right_magnitude: float = base ** (right_exponent * power_ratio)
 
-            magnitude = base * log(left_magnitude + right_magnitude, base)
+            magnitude = base * math.log(left_magnitude + right_magnitude, base)
 
             return Level(magnitude, self.unit)
 
@@ -1699,7 +1725,7 @@ class Level:
 
             base = self.unit.logarithm.base
             prefix = self.unit.logarithm.prefix
-            power_ratio = self.unit.logarithm.power_ratio
+            power_ratio = self.unit.power_ratio
 
             left_exponent = self.magnitude * prefix.quantify()
             right_exponent = other.magnitude * prefix.quantify()
@@ -1707,7 +1733,7 @@ class Level:
             left_magnitude: float = base ** (left_exponent * power_ratio)
             right_magnitude: float = base ** (right_exponent * power_ratio)
 
-            magnitude = base * log(left_magnitude - right_magnitude, base)
+            magnitude = base * math.log(left_magnitude - right_magnitude, base)
 
             return Level(magnitude, self.unit)
 
@@ -1951,7 +1977,7 @@ class Measurement:
             return NotImplemented
 
         measurand = self.measurand * other.measurand
-        uncertainty = sqrt(
+        uncertainty = math.sqrt(
             measurand.magnitude**2
             * (
                 (self.uncertainty.magnitude**2 / self.measurand.magnitude**2)
@@ -1970,7 +1996,7 @@ class Measurement:
             return NotImplemented
 
         measurand = self.measurand / other.measurand
-        uncertainty = sqrt(
+        uncertainty = math.sqrt(
             measurand.magnitude**2
             * (
                 (self.uncertainty.magnitude**2 / self.measurand.magnitude**2)
@@ -1993,7 +2019,7 @@ class Measurement:
             return NotImplemented
 
         measurand = self.measurand**exponent
-        uncertainty = sqrt(
+        uncertainty = math.sqrt(
             (exponent * self.measurand.magnitude**2 * self.uncertainty.magnitude) ** 2
         )
         return Measurement(measurand, uncertainty)
@@ -2101,3 +2127,25 @@ from . import conversions  # noqa: E402
 from .parsing import parser  # noqa: E402
 
 One.equals(1 * One)
+
+
+# Logarithms
+# https://en.wikipedia.org/wiki/Decibel
+# https://en.wikipedia.org/wiki/Neper
+
+Neper = Logarithm(base=math.e, name="neper", symbol="Np")
+Octave = Logarithm(base=2, name="octave", symbol="oct")
+Bel = Logarithm(base=10, name="bel", symbol="bel")
+Decibel = (Prefix(10, -1) * Bel).alias(name="decibel", symbol="dB")
+
+# https://en.wikipedia.org/wiki/Power,_root-power,_and_field_quantities
+ROOT_POWER_DIMENSIONS = {
+    Potential,
+    Current,
+    Pressure,
+    Potential / Length,
+    Speed,
+    Charge / Length,
+    Charge / Area,
+    Charge / Volume,
+}

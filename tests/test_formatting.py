@@ -3,9 +3,6 @@ from reprlib import Repr
 
 import pytest
 
-from measured import Logarithm
-from measured.iec import Decibel
-
 pytest.importorskip("IPython")
 
 # flake8: noqa: E402 (imports not at top of file)
@@ -17,10 +14,13 @@ from IPython.lib.pretty import RepresentationPrinter
 
 from measured import (
     Area,
+    Decibel,
     Dimension,
     Frequency,
     Length,
+    Logarithm,
     Measurement,
+    Neper,
     Number,
     Prefix,
     Quantity,
@@ -30,7 +30,6 @@ from measured import (
     VolumetricFlow,
 )
 from measured.formatting import superscript
-from measured.iec import Decibel, Neper
 from measured.si import Hertz, Kilo, Mega, Meter, Milli, Ohm, Second, Watt
 
 
@@ -97,7 +96,7 @@ def test_strings_of_dimensions(dimension: Dimension, string: str) -> None:
         (Hertz, "Hz"),
         (Hertz**2, "s⁻²"),
         (Decibel[1 * Meter], "dB of 1 m"),
-        (Logarithm(2, 2), "1 log2(x²/x₀²)"),
+        (Logarithm(3), "1 log3(x/x₀)"),
     ],
 )
 def test_strings_of_units(unit: Unit, string: str) -> None:
@@ -254,7 +253,7 @@ def test_mathml_root_is_identifier(formattable: Formattable) -> None:
         Length * Time,
         (Kilo * Meter),
         Meter * Second,
-        Logarithm(2, 2),
+        Logarithm(3),
         Decibel[1 * Meter],  # a dB that we wouldn't have a symbol for
         Neper[1 * Meter],
         30 * Decibel[1 * Watt],
