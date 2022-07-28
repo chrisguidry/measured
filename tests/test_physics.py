@@ -66,7 +66,7 @@ def test_constants_have_expected_dimension(
     "constant, expected",
     [
         (physics.c, 299792458 * Meter / Second),
-        (physics.G, 6.6743015e-11 * Meter**3 / (Kilogram * Second**2)),
+        (physics.G, 6.67430e-11 * Meter**3 / (Kilogram * Second**2)),
         (physics.h, 6.62607015e-34 * Joule * Second),
         (physics.ℏ, 1.0545718176461565e-34 * Joule * Second),
         (physics.k, 1.380649e-23 * Joule / Kelvin),

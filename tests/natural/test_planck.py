@@ -37,14 +37,14 @@ def test_length() -> None:
 
 def test_mass() -> None:
     assert PlanckMass.dimension is Mass
-    assert 1 * PlanckMass == approximately(2.176434e-8 * Kilogram)
+    assert 1 * PlanckMass == approximately(2.176434e-8 * Kilogram, 1.6e-7)
 
 
 def test_time() -> None:
     assert PlanckTime.dimension is Time
-    assert 1 * PlanckTime == approximately(5.391247e-44 * Second)
+    assert 1 * PlanckTime == approximately(5.391247e-44 * Second, 1.1e-7)
 
 
 def test_temperature() -> None:
     assert PlanckTemperature.dimension is Temperature
-    assert 1 * PlanckTemperature == approximately(1.416784e32 * Kelvin)
+    assert 1 * PlanckTemperature == approximately(1.416784e32 * Kelvin, 1.2e-7)

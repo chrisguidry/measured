@@ -59,7 +59,7 @@ from measured.si import Coulomb, Farad, Hertz, Joule, Kelvin, Kilogram, Meter, S
 c = 299792458 * Meter / Second
 
 # https://en.wikipedia.org/wiki/Gravitational_constant
-G = 6.6743015e-11 * Meter**3 / (Kilogram * Second**2)
+G = 6.67430e-11 * Meter**3 / (Kilogram * Second**2)
 
 # https://en.wikipedia.org/wiki/Planck_constant#Value
 h = 6.62607015e-34 * Joule / Hertz
