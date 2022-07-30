@@ -54,6 +54,11 @@ jobs:
 
     - run: pytest ${{ matrix.coverageArgument }}
 
+    - run: isort --check .
+    - run: black --check .
+    - run: mypy .
+    - run: flake8 .
+
     - uses: codecov/codecov-action@v2
       if: ${{ matrix.coverage }}
       with:
