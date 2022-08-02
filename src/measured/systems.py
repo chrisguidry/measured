@@ -1,7 +1,10 @@
 from measured import (  # noqa: F401
+    acoustics,
+    apocrypha,
     astronomical,
     avoirdupois,
     computing,
+    electronics,
     energy,
     eu,
     fff,

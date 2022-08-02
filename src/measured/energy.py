@@ -1,3 +1,39 @@
+"""
+Units and non-standardized conventions for representing `Energy` and `Power`.
+
+Attributes: Units of Energy
+
+    Erg (Unit):
+
+    Calorie (Unit):
+
+    BritishThermalUnit (Unit):
+
+    TonOfRefrigeration (Unit):
+
+    TonneOfTNT (Unit):
+
+
+Attributes: Units of Power
+
+    Horsepower (Unit):
+
+    Donkeypower (Unit):
+
+    MetricHorsepower (Unit):
+
+    ElectricalHorsepower (Unit):
+
+    BoilerHorsepower (Unit):
+
+
+Attributes: Other units
+
+    Langley (Unit): A unit of heat transmission (`Energy/Area`), often used to express
+        insolation (the amount of solar energy reaching the surface of the Earth)
+
+"""
+
 from measured import Area, Energy, Power
 from measured.si import Hour, Joule, Kilo, Meter, Second, Watt
 from measured.us import Foot, PoundForce
@@ -24,10 +60,6 @@ TonneOfTNT = Energy.unit(name="ton of TNT", symbol="tₜₙₜ")
 TonneOfTNT.equals(4.184e9 * Joule)
 TonneOfTNT.equals(1e9 * Calorie)
 
-# https://en.wikipedia.org/wiki/Langley_(unit)
-Langley = (Energy / Area).unit("langley", "Ly")
-Langley.equals(41840 * Joule / Meter**2)
-
 
 # https://en.wikipedia.org/wiki/Horsepower#Definitions
 Horsepower = Power.unit("horsepower", "hp")
@@ -44,3 +76,8 @@ ElectricalHorsepower.equals(746 * Watt)
 
 BoilerHorsepower = Power.unit("boiler horsepower", "hp(S)")
 BoilerHorsepower.equals(33475 * BritishThermalUnit / Hour)
+
+
+# https://en.wikipedia.org/wiki/Langley_(unit)
+Langley = (Energy / Area).unit("langley", "Ly")
+Langley.equals(41840 * Joule / Meter**2)

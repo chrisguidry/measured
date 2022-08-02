@@ -13,18 +13,26 @@ Attributes: Units of length
     AstronomicalUnit (Unit): A unit representing the average distance between the Earth
         and the Sun; it is now defined precisely as 149,597,870,700 meters
 
-    LightYear (Unit): the distance light travels through a vacuum in one `JulianYear`
+    LightYear (Unit): The distance light travels through a vacuum in one `JulianYear`
+
+    Spat (Unit): An obsolete unit of astronomical distance equaling 1 trillion meters
 
     Parsec (Unit): A measure of large astronomical distances defined in terms of
         [trigonometry and parallax][1]
 
         [1]: https://en.wikipedia.org/wiki/Parsec
 
+    Siriometer (Unit): An obsolete unit of astronomical distance equaling 1 million AU
+
 Attributes: Units of time
 
     Day (Unit): Uses the same definition of `Day` as the SI system
 
-    JulianYear (Unit): defined as 365.25 days
+    SiderealDay (Unit): The `Time` it takes the Earth to make one rotation with respect
+        to distant stars, approximately 86164.0905 seconds, a few minutes shorter than
+        the SI Day.
+
+    JulianYear (Unit): defined as 365.25 days of 84,600 SI `Second`
 
 Attributes: Units of mass
 
@@ -33,22 +41,47 @@ Attributes: Units of mass
     EarthMass (Unit): The mass of the Earth
 
     JupiterMass (Unit): The mass of Jupiter
+
+Attributes: Units for astrophotometry
+
+    Jansky (Unit): A unit of spectral flux density
+
+    Crab (Unit): A unit for measuring the intensity of astromonical X-ray sources, based
+        on the intensity of the Crab Nebula
+
+Attributes: Hubble's Law
+
+    H0 (Quantity): Today's estimate of the Hubble Parameter representing the observed
+        expansion rate of the universe
+
+    HubbleTime (Unit): An approximation of the age of the universe, if the expansion
+        rate had been linear
+
+    HubbleLength (Unit): The distance at which galaxies are receding from us at the
+        speed of light
+
+    HubbleVolume (Unit): The sphere within which galaxies are receding from us below
+        the speed of light
+
 """
 
-from measured import Area, Length, Mass, Power, Time, Unit, Volume, si
+from measured import Area, Length, Mass, Power, Time, Volume, si
 from measured.geometry import π
 from measured.physics import c
 from measured.si import Kilogram, Mega, Meter, Second, Watt
 
 # Measures of Time
 
-Day = Unit.derive(si.Day, name="day", symbol="D")
+Day = si.Day
 
+# https://en.wikipedia.org/wiki/Sidereal_day
 SiderealDay = Time.unit("sidereal day", "SD")
 SiderealDay.equals(86164.0905 * Second)
 
+# https://en.wikipedia.org/wiki/Julian_year_(astronomy)
 JulianYear = Time.unit("Julian year", "a")
 JulianYear.equals(365.25 * Day)
+
 
 # Measures of Length
 
@@ -70,6 +103,7 @@ Parsec.equals(96939420213600600 / π * Meter)
 # https://en.wikipedia.org/wiki/Siriometer
 Siriometer = Length.unit("seriometer", "sir")
 Siriometer.equals(1000000 * AstronomicalUnit)
+
 
 # Measures of Mass
 

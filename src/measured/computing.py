@@ -1,3 +1,15 @@
+"""
+Units and non-standardized conventions from the domain of computing.
+
+Attributes: Unit
+
+    Furman (Unit): A unit of `PlaneAngle` that divides the circle into 2¹⁶ divisions,
+        making it convenient for representation and arithmetic on a commputer.
+
+    Nibble (Unit): A unit of `Information` equal to half a byte
+
+"""
+
 from measured import Information, PlaneAngle
 from measured.geometry import π
 from measured.iec import Bit
