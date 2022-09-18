@@ -35,10 +35,11 @@ jobs:
             coverageArgument: --no-cov
 
     steps:
-    - name: Show matrix
-      run: echo '${{ toJSON(matrix) }}'
+    - run: echo '${{ toJSON(matrix) }}'
 
     - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
     - uses: actions/setup-python@v4
       with:
@@ -54,10 +55,7 @@ jobs:
 
     - run: pytest ${{ matrix.coverageArgument }}
 
-    - run: isort --check .
-    - run: black --check .
-    - run: mypy .
-    - run: flake8 .
+    - run: pre-commit run --all-files
 
     - uses: codecov/codecov-action@v2
       if: ${{ matrix.coverage }}
