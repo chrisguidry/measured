@@ -148,6 +148,7 @@ Attributes: Logarithms
 
 import math
 from collections import defaultdict
+from decimal import Decimal
 from functools import lru_cache, total_ordering
 from importlib.metadata import version
 from typing import (
@@ -178,8 +179,8 @@ ic = _ic
 
 __version__ = version("measured")
 
-NUMERIC_CLASSES = (int, float)
-Numeric = Union[int, float]
+NUMERIC_CLASSES = (int, float, Decimal)
+Numeric = Union[int, float, Decimal]
 
 
 class FractionalDimensionError(ValueError):
@@ -1416,7 +1417,9 @@ class Quantity:
         return Quantity(+self.magnitude, self.unit)
 
     def __abs__(self) -> "Quantity":
-        return Quantity(abs(self.magnitude), self.unit)
+        absolute = abs(self.magnitude)
+        assert isinstance(absolute, NUMERIC_CLASSES)
+        return Quantity(absolute, self.unit)
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, Level):
@@ -1846,12 +1849,12 @@ class Measurement:
     @property
     def uncertainty_ratio(self) -> float:
         """The uncertainty, expressed as a fraction of the magnitude of the measurand"""
-        return self.uncertainty.magnitude / self.measurand.magnitude
+        return float(self.uncertainty.magnitude) / float(self.measurand.magnitude)
 
     @property
     def uncertainty_percent(self) -> float:
         """The uncertainty, expressed as a percent of the magnitude of the measurand"""
-        return self.uncertainty_ratio * 100
+        return float(self.uncertainty_ratio) * 100
 
     __repr__ = formatting.measurement_repr
     __str__ = formatting.measurement_str

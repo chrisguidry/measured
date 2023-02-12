@@ -1,6 +1,6 @@
 import math
 from functools import wraps
-from typing import TYPE_CHECKING, Callable, TypeVar, Union
+from typing import TYPE_CHECKING, Callable, TypeVar
 
 if TYPE_CHECKING:  # pragma: no cover
     from IPython.lib.pretty import RepresentationPrinter
@@ -11,6 +11,7 @@ if TYPE_CHECKING:  # pragma: no cover
         Logarithm,
         LogarithmicUnit,
         Measurement,
+        Numeric,
         Prefix,
         Quantity,
         Unit,
@@ -27,7 +28,7 @@ SUPERSCRIPTS = {
 DIGITS = {v: k for k, v in SUPERSCRIPTS.items()}
 
 
-def superscript(exponent: Union[int, float]) -> str:
+def superscript(exponent: "Numeric") -> str:
     """Given a signed integer exponent, returns the Unicode superscript string for it
 
     Examples:

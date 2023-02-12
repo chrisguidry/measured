@@ -1,8 +1,9 @@
 import functools
 import operator
 from collections import defaultdict
+from decimal import Decimal
 from functools import reduce
-from typing import Dict, Iterable, List, Set, Tuple, TypeVar
+from typing import Callable, Dict, Iterable, List, Set, Tuple, TypeVar
 
 from measured import ic  # noqa: F401
 from measured import (
@@ -72,12 +73,15 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
     plan = _plan_conversion(quantity.unit, other_unit)
 
     magnitude = this.magnitude
+    coerce: Callable[[Numeric], Numeric] = lambda v: v
+    if isinstance(magnitude, Decimal):
+        coerce = Decimal
 
     for ratio, path, exponent in plan:
-        magnitude *= ratio
+        magnitude *= coerce(ratio)  # type: ignore
         for scale, offset, _ in path:
-            magnitude *= scale**exponent
-            magnitude += offset
+            magnitude *= coerce(scale**exponent)  # type: ignore
+            magnitude += coerce(offset)  # type: ignore
 
     return Quantity(magnitude, other_unit)
 
@@ -193,7 +197,6 @@ def _match_factors(
     start_factors: Dict[Dimension, List[Unit]],
     end_factors: Dict[Dimension, List[Unit]],
 ) -> RoughPlan:
-
     plan: RoughPlan = []
 
     dimensions_to_match = _by_complex_first(
@@ -311,7 +314,6 @@ def _find_path_recursive(
     end: Unit,
     visited: Set[Unit],
 ) -> Path:
-
     if start is end:
         return [(1, 0, end)]
 
