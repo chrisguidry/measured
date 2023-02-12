@@ -48,7 +48,7 @@ jobs:
 
     - run: pre-commit run --all-files
 
-    - uses: codecov/codecov-action@v2
+    - uses: codecov/codecov-action@v3
       if: ${{ matrix.coverage }}
       with:
         flags: python-${{ matrix.python-version }}
