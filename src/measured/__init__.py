@@ -516,22 +516,32 @@ class Dimension:
 
 
 def _add(left: Numeric, right: Numeric) -> Numeric:
+    if isinstance(left, Decimal) or isinstance(right, Decimal):
+        return Decimal(left) + Decimal(right)
     return left + right
 
 
 def _sub(left: Numeric, right: Numeric) -> Numeric:
+    if isinstance(left, Decimal) or isinstance(right, Decimal):
+        return Decimal(left) - Decimal(right)
     return left - right
 
 
 def _mul(left: Numeric, right: Numeric) -> Numeric:
+    if isinstance(left, Decimal) or isinstance(right, Decimal):
+        return Decimal(left) * Decimal(right)
     return left * right
 
 
 def _div(left: Numeric, right: Numeric) -> Numeric:
+    if isinstance(left, Decimal) or isinstance(right, Decimal):
+        return Decimal(left) / Decimal(right)
     return left / right
 
 
 def _pow(base: Numeric, exponent: Numeric) -> Numeric:
+    if isinstance(base, Decimal) or isinstance(exponent, Decimal):
+        return Decimal(base) ** Decimal(exponent)
     return base**exponent
 
 

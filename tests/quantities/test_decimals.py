@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from measured import approximately
 from measured.si import Ampere, Meter, Ohm, Second, Volt
 
 
@@ -25,6 +26,19 @@ def test_simple_addition() -> None:
     distance_one = Decimal("1.23") * Meter
     distance_two = Decimal("3.45") * Meter
     assert distance_one + distance_two == Decimal("4.68") * Meter
+
+
+def test_simple_subtraction() -> None:
+    distance_one = Decimal("4.68") * Meter
+    distance_two = Decimal("3.45") * Meter
+    assert distance_one - distance_two == Decimal("1.23") * Meter
+
+
+def test_exponentation() -> None:
+    distance = Decimal("1.23") * Meter
+    volume = distance**3
+    assert volume == Decimal("1.860867") * Meter**3
+    assert volume.root(3) == approximately(distance)
 
 
 def test_complex_addition() -> None:
