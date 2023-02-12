@@ -512,6 +512,29 @@ class Dimension:
         return bool(exponents)
 
 
+# Operators that preserve the Decimally-ness
+
+
+def _add(left: Numeric, right: Numeric) -> Numeric:
+    return left + right
+
+
+def _sub(left: Numeric, right: Numeric) -> Numeric:
+    return left - right
+
+
+def _mul(left: Numeric, right: Numeric) -> Numeric:
+    return left * right
+
+
+def _div(left: Numeric, right: Numeric) -> Numeric:
+    return left / right
+
+
+def _pow(base: Numeric, exponent: Numeric) -> Numeric:
+    return base**exponent
+
+
 class Prefix:
     """Prefixes scale a [`Unit`][measured.Unit] up or down by a constant factor.
 
@@ -687,12 +710,14 @@ class Prefix:
             elif self.base == 0:
                 return other
             elif other.base == self.base:
-                return Prefix(self.base, self.exponent + other.exponent)
+                return Prefix(self.base, _add(self.exponent, other.exponent))
 
             base, exponent = self.base, self.exponent
-            exponent += other.exponent * (math.log(other.base) / math.log(self.base))
+            base_change = _mul(
+                other.exponent, (math.log(other.base) / math.log(self.base))
+            )
 
-            return Prefix(base, exponent)
+            return Prefix(base, _add(exponent, base_change))
 
         if isinstance(other, Unit):
             return Unit(other.prefix * self, other.factors, other.dimension)
@@ -713,12 +738,12 @@ class Prefix:
         elif self.base == 0:
             return Prefix(other.base, -other.exponent)
         elif other.base == self.base:
-            return Prefix(self.base, self.exponent - other.exponent)
+            return Prefix(self.base, _sub(self.exponent, other.exponent))
 
         base, exponent = self.base, self.exponent
-        exponent -= other.exponent * (math.log(other.base) / math.log(self.base))
+        base_change = _mul(other.exponent, (math.log(other.base) / math.log(self.base)))
 
-        return Prefix(base, exponent)
+        return Prefix(base, _sub(exponent, base_change))
 
     def __pow__(self, power: int) -> "Prefix":
         return Prefix(self.base, self.exponent * power)
@@ -1358,14 +1383,14 @@ class Quantity:
     def __add__(self, other: "Quantity") -> "Quantity":
         if isinstance(other, Quantity):
             other = other.in_unit(self.unit)
-            return Quantity(self.magnitude + other.magnitude, self.unit)
+            return Quantity(_add(self.magnitude, other.magnitude), self.unit)
 
         return NotImplemented
 
     def __sub__(self, other: "Quantity") -> "Quantity":
         if isinstance(other, Quantity):
             other = other.in_unit(self.unit)
-            return Quantity(self.magnitude - other.magnitude, self.unit)
+            return Quantity(_sub(self.magnitude, other.magnitude), self.unit)
 
         return NotImplemented
 
@@ -1374,10 +1399,12 @@ class Quantity:
             return Quantity(self.magnitude, self.unit * other)
 
         if isinstance(other, Quantity):
-            return Quantity(self.magnitude * other.magnitude, self.unit * other.unit)
+            return Quantity(
+                _mul(self.magnitude, other.magnitude), self.unit * other.unit
+            )
 
         if isinstance(other, NUMERIC_CLASSES):
-            return Quantity(self.magnitude * other, self.unit)
+            return Quantity(_mul(self.magnitude, other), self.unit)
 
         return NotImplemented
 
@@ -1388,16 +1415,18 @@ class Quantity:
             return Quantity(self.magnitude, self.unit / other)
 
         if isinstance(other, Quantity):
-            return Quantity(self.magnitude / other.magnitude, self.unit / other.unit)
+            return Quantity(
+                _div(self.magnitude, other.magnitude), self.unit / other.unit
+            )
 
         if isinstance(other, NUMERIC_CLASSES):
-            return Quantity(self.magnitude / other, self.unit)
+            return Quantity(_div(self.magnitude, other), self.unit)
 
         return NotImplemented
 
     def __rtruediv__(self, other: Numeric) -> "Quantity":
         if isinstance(other, NUMERIC_CLASSES):
-            return Quantity(other / self.magnitude, self.unit)
+            return Quantity(_div(other, self.magnitude), self.unit)
 
         return NotImplemented
 
@@ -1408,7 +1437,7 @@ class Quantity:
         """Returns the nth root of this Quantity"""
         if degree == 0:
             return 1 * One
-        return Quantity(self.magnitude ** (1 / degree), self.unit.root(degree))
+        return Quantity(_pow(self.magnitude, (1 / degree)), self.unit.root(degree))
 
     def __neg__(self) -> "Quantity":
         return Quantity(-self.magnitude, self.unit)
@@ -1660,9 +1689,8 @@ class LogarithmicUnit:
         prefix = self.logarithm.prefix
         power_ratio = self.power_ratio
         ratio = quantity.in_unit(self.reference.unit) / self.reference
-        magnitude = (
-            power_ratio * (1 / prefix.quantify()) * math.log(ratio.magnitude, base)
-        )
+        inverted = _mul(1 / prefix.quantify(), math.log(ratio.magnitude, base))
+        magnitude = power_ratio * inverted
         return Level(magnitude, self)
 
 
@@ -1696,8 +1724,8 @@ class Level:
         prefix = self.unit.logarithm.prefix
         power_ratio = self.unit.power_ratio
         reference = self.unit.reference
-        exponent = self.magnitude * prefix.quantify()
-        magnitude: float = base ** (exponent / power_ratio)
+        exponent = _mul(self.magnitude, prefix.quantify())
+        magnitude = _pow(base, (exponent / power_ratio))
         return magnitude * reference
 
     def __add__(self, other: "Level") -> "Level":
@@ -1709,13 +1737,13 @@ class Level:
             prefix = self.unit.logarithm.prefix
             power_ratio = self.unit.power_ratio
 
-            left_exponent = self.magnitude * prefix.quantify()
-            right_exponent = other.magnitude * prefix.quantify()
+            left_exponent = _mul(self.magnitude, prefix.quantify())
+            right_exponent = _mul(other.magnitude, prefix.quantify())
 
-            left_magnitude: float = base ** (left_exponent * power_ratio)
-            right_magnitude: float = base ** (right_exponent * power_ratio)
+            left_magnitude = _pow(base, (left_exponent * power_ratio))
+            right_magnitude = _pow(base, (right_exponent * power_ratio))
 
-            magnitude = base * math.log(left_magnitude + right_magnitude, base)
+            magnitude = base * math.log(_add(left_magnitude, right_magnitude), base)
 
             return Level(magnitude, self.unit)
 
@@ -1730,13 +1758,13 @@ class Level:
             prefix = self.unit.logarithm.prefix
             power_ratio = self.unit.power_ratio
 
-            left_exponent = self.magnitude * prefix.quantify()
-            right_exponent = other.magnitude * prefix.quantify()
+            left_exponent = _mul(self.magnitude, prefix.quantify())
+            right_exponent = _mul(other.magnitude, prefix.quantify())
 
-            left_magnitude: float = base ** (left_exponent * power_ratio)
-            right_magnitude: float = base ** (right_exponent * power_ratio)
+            left_magnitude = _pow(base, (left_exponent * power_ratio))
+            right_magnitude = _pow(base, (right_exponent * power_ratio))
 
-            magnitude = base * math.log(left_magnitude - right_magnitude, base)
+            magnitude = base * math.log(_sub(left_magnitude, right_magnitude), base)
 
             return Level(magnitude, self.unit)
 
@@ -1744,13 +1772,13 @@ class Level:
 
     def __mul__(self, other: Numeric) -> "Level":
         if isinstance(other, NUMERIC_CLASSES):
-            return Level(self.magnitude + other, self.unit)
+            return Level(_add(self.magnitude, other), self.unit)
 
         return NotImplemented
 
     def __truediv__(self, other: Numeric) -> "Level":
         if isinstance(other, NUMERIC_CLASSES):
-            return Level(self.magnitude - other, self.unit)
+            return Level(_sub(self.magnitude, other), self.unit)
 
         return NotImplemented
 
@@ -1980,13 +2008,7 @@ class Measurement:
             return NotImplemented
 
         measurand = self.measurand * other.measurand
-        uncertainty = math.sqrt(
-            measurand.magnitude**2
-            * (
-                (self.uncertainty.magnitude**2 / self.measurand.magnitude**2)
-                + (other.uncertainty.magnitude**2 / other.measurand.magnitude**2)
-            )
-        )
+        uncertainty = self._join_uncertainties(measurand, other)
         return Measurement(measurand, uncertainty)
 
     __rmul__ = __mul__
@@ -1999,14 +2021,27 @@ class Measurement:
             return NotImplemented
 
         measurand = self.measurand / other.measurand
-        uncertainty = math.sqrt(
-            measurand.magnitude**2
-            * (
-                (self.uncertainty.magnitude**2 / self.measurand.magnitude**2)
-                + (other.uncertainty.magnitude**2 / other.measurand.magnitude**2)
+        uncertainty = self._join_uncertainties(measurand, other)
+        return Measurement(measurand, uncertainty)
+
+    def _join_uncertainties(self, measurand: Quantity, other: "Measurement") -> float:
+        return math.sqrt(
+            _mul(
+                _pow(measurand.magnitude, 2),
+                (
+                    _add(
+                        _div(
+                            _pow(self.uncertainty.magnitude, 2),
+                            _pow(self.measurand.magnitude, 2),
+                        ),
+                        _div(
+                            _pow(other.uncertainty.magnitude, 2),
+                            _pow(other.measurand.magnitude, 2),
+                        ),
+                    )
+                ),
             )
         )
-        return Measurement(measurand, uncertainty)
 
     def __rtruediv__(self, other: Union["Measurement", Quantity]) -> "Measurement":
         if isinstance(other, Quantity):
@@ -2023,7 +2058,16 @@ class Measurement:
 
         measurand = self.measurand**exponent
         uncertainty = math.sqrt(
-            (exponent * self.measurand.magnitude**2 * self.uncertainty.magnitude) ** 2
+            _pow(
+                _mul(
+                    exponent,
+                    _mul(
+                        _pow(self.measurand.magnitude, 2),
+                        self.uncertainty.magnitude,
+                    ),
+                ),
+                2,
+            )
         )
         return Measurement(measurand, uncertainty)
 
@@ -2052,7 +2096,8 @@ def approximately(
     if isinstance(quantity, Level):
         quantity = quantity.quantify()
 
-    return Measurement(quantity, uncertainty=(quantity.magnitude or 1.0) * within)
+    uncertainty = _mul(quantity.magnitude or 1.0, within)
+    return Measurement(quantity, uncertainty)
 
 
 # https://en.wikipedia.org/wiki/Dimensional_analysis#Definition

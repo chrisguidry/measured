@@ -2,7 +2,7 @@ from typing import Any, List, Optional, Union
 
 from _pytest.config import Config
 
-from measured import Level, Measurement, Quantity
+from measured import Level, Measurement, Quantity, _div
 from measured.conversions import ConversionNotFound
 
 Comparable = Union[Quantity, Level, Measurement]
@@ -13,7 +13,6 @@ class MeasuredPlugin:
     def pytest_assertrepr_compare(
         self, op: str, left: Any, right: Any
     ) -> Optional[List[str]]:
-
         if not isinstance(left, COMPARABLE) and not isinstance(right, COMPARABLE):
             return None
 
@@ -68,9 +67,9 @@ class MeasuredPlugin:
 
             if difference:
                 if left_quantity.magnitude != 0:
-                    relative = abs(difference.magnitude / left_quantity.magnitude)
+                    relative = abs(_div(difference.magnitude, left_quantity.magnitude))
                 elif right_quantity.magnitude != 0:
-                    relative = abs(difference.magnitude / right_quantity.magnitude)
+                    relative = abs(_div(difference.magnitude, right_quantity.magnitude))
                 else:
                     relative = None
 

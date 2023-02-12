@@ -3,7 +3,7 @@ import textwrap
 from argparse import ArgumentParser, RawTextHelpFormatter
 from typing import Generator, Iterable, Optional, Set, Tuple
 
-from measured import Quantity, Unit, conversions, systems  # noqa: F401
+from measured import Quantity, Unit, _add, _mul, conversions, systems  # noqa: F401
 
 parser = ArgumentParser(
     description="Unit conversions with measured",
@@ -43,7 +43,7 @@ def all_equivalents(
 
         offset = conversions._offsets[unit].get(other, 0)
 
-        magnitude = (quantity.magnitude * ratio) + offset
+        magnitude = _add(_mul(quantity.magnitude, ratio), offset)
         next_quantity = Quantity(magnitude, other)
 
         yield next_quantity

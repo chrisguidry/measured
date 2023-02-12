@@ -1,9 +1,8 @@
 import functools
 import operator
 from collections import defaultdict
-from decimal import Decimal
 from functools import reduce
-from typing import Callable, Dict, Iterable, List, Set, Tuple, TypeVar
+from typing import Dict, Iterable, List, Set, Tuple, TypeVar
 
 from measured import ic  # noqa: F401
 from measured import (
@@ -14,6 +13,9 @@ from measured import (
     One,
     Quantity,
     Unit,
+    _add,
+    _div,
+    _mul,
 )
 
 from .compat import gcd
@@ -35,8 +37,8 @@ def equate(a: Quantity, b: Quantity) -> None:
     a = a.unprefixed()
     b = b.unprefixed()
 
-    _ratios[a.unit][b.unit] = b.magnitude / a.magnitude
-    _ratios[b.unit][a.unit] = a.magnitude / b.magnitude
+    _ratios[a.unit][b.unit] = _div(b.magnitude, a.magnitude)
+    _ratios[b.unit][a.unit] = _div(a.magnitude, b.magnitude)
 
 
 def translate(scale: Unit, zero: Quantity) -> None:
@@ -73,15 +75,12 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
     plan = _plan_conversion(quantity.unit, other_unit)
 
     magnitude = this.magnitude
-    coerce: Callable[[Numeric], Numeric] = lambda v: v
-    if isinstance(magnitude, Decimal):
-        coerce = Decimal
 
     for ratio, path, exponent in plan:
-        magnitude *= coerce(ratio)  # type: ignore
+        magnitude = _mul(magnitude, ratio)
         for scale, offset, _ in path:
-            magnitude *= coerce(scale**exponent)  # type: ignore
-            magnitude += coerce(offset)  # type: ignore
+            magnitude = _mul(magnitude, scale**exponent)
+            magnitude = _add(magnitude, offset)
 
     return Quantity(magnitude, other_unit)
 

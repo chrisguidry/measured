@@ -53,4 +53,7 @@ def test_sound_power_from_sound_pressure() -> None:
     pressure = 50 * dBSPL
     power = 67.0127 * dBSWL
 
+    assert isinstance(pressure.magnitude, int)
+    assert isinstance(surface_area_level.magnitude, float)
+
     assert pressure.magnitude + surface_area_level.magnitude == approx(power.magnitude)
