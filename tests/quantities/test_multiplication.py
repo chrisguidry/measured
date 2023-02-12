@@ -1,5 +1,5 @@
 import pytest
-from hypothesis import assume, given
+from hypothesis import HealthCheck, assume, given, settings
 
 from measured import One, Quantity, approximately
 from measured.hypothesis import quantities
@@ -11,6 +11,7 @@ def identity() -> Quantity:
 
 
 @given(a=quantities(), b=quantities(), c=quantities())
+@settings(suppress_health_check=(HealthCheck.too_slow,))
 def test_associativity(a: Quantity, b: Quantity, c: Quantity) -> None:
     assert (a * b) * c == approximately(a * (b * c))
 

@@ -6,7 +6,7 @@ from typing import Callable
 
 import typer
 
-from measured import One, Quantity
+from measured import One, Quantity, _div
 from measured.astronomical import JulianYear
 from measured.si import Ampere, Meter, Ohm, Second, Volt
 from measured.us import Ounce, Ton
@@ -64,7 +64,7 @@ def resistances() -> None:
     """Computes a whole lot of Ohms"""
     for a in (Quantity(a, Ampere) for a in range(1, 1001)):
         for v in (Quantity(v, Volt) for v in range(1, 1001)):
-            assert v / a == (v.magnitude / a.magnitude) * Ohm
+            assert v / a == _div(v.magnitude, a.magnitude) * Ohm
 
 
 @app.command()
@@ -75,7 +75,7 @@ def conversions() -> None:
             divided = (t / o).in_unit(One)
             assert divided.unit == One
             assert round(divided.magnitude) == round(
-                t.magnitude / o.magnitude * 20 * 100 * 16
+                _div(t.magnitude, o.magnitude) * 20 * 100 * 16
             )
 
 

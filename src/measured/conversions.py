@@ -13,6 +13,9 @@ from measured import (
     One,
     Quantity,
     Unit,
+    _add,
+    _div,
+    _mul,
 )
 
 from .compat import gcd
@@ -34,8 +37,8 @@ def equate(a: Quantity, b: Quantity) -> None:
     a = a.unprefixed()
     b = b.unprefixed()
 
-    _ratios[a.unit][b.unit] = b.magnitude / a.magnitude
-    _ratios[b.unit][a.unit] = a.magnitude / b.magnitude
+    _ratios[a.unit][b.unit] = _div(b.magnitude, a.magnitude)
+    _ratios[b.unit][a.unit] = _div(a.magnitude, b.magnitude)
 
 
 def translate(scale: Unit, zero: Quantity) -> None:
@@ -74,10 +77,10 @@ def convert(quantity: Quantity, other_unit: Unit) -> Quantity:
     magnitude = this.magnitude
 
     for ratio, path, exponent in plan:
-        magnitude *= ratio
+        magnitude = _mul(magnitude, ratio)
         for scale, offset, _ in path:
-            magnitude *= scale**exponent
-            magnitude += offset
+            magnitude = _mul(magnitude, scale**exponent)
+            magnitude = _add(magnitude, offset)
 
     return Quantity(magnitude, other_unit)
 
@@ -193,7 +196,6 @@ def _match_factors(
     start_factors: Dict[Dimension, List[Unit]],
     end_factors: Dict[Dimension, List[Unit]],
 ) -> RoughPlan:
-
     plan: RoughPlan = []
 
     dimensions_to_match = _by_complex_first(
@@ -311,7 +313,6 @@ def _find_path_recursive(
     end: Unit,
     visited: Set[Unit],
 ) -> Path:
-
     if start is end:
         return [(1, 0, end)]
 

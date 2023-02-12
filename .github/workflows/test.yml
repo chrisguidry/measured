@@ -15,28 +15,19 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-        - "3.11-dev"
+        - "3.11"
         - "3.10"
         - "3.9"
         - "pypy3.9"
         - "3.8"
-        - "pypy3.8"
         include:
           - coverage: true
             coverageArgument: --cov-report xml
-          - python-version: "3.11-dev"
-            coverage: false
-            coverageArgument: --no-cov
           - python-version: "pypy3.9"
-            coverage: false
-            coverageArgument: --no-cov
-          - python-version: "pypy3.8"
             coverage: false
             coverageArgument: --no-cov
 
     steps:
-    - run: echo '${{ toJSON(matrix) }}'
-
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
@@ -57,7 +48,7 @@ jobs:
 
     - run: pre-commit run --all-files
 
-    - uses: codecov/codecov-action@v2
+    - uses: codecov/codecov-action@v3
       if: ${{ matrix.coverage }}
       with:
         flags: python-${{ matrix.python-version }}

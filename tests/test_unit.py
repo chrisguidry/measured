@@ -1,7 +1,7 @@
 from fractions import Fraction
 
 import pytest
-from hypothesis import example, given, strategies
+from hypothesis import HealthCheck, example, given, settings, strategies
 
 from measured import Length, Number, One, Unit
 from measured.hypothesis import base_units, units, units_with_symbols
@@ -41,6 +41,7 @@ def test_homogenous_under_subtraction(a: Unit, b: Unit) -> None:
 
 
 @given(a=units(), b=units(), c=units())
+@settings(suppress_health_check=(HealthCheck.too_slow,))
 def test_abelian_associativity(a: Unit, b: Unit, c: Unit) -> None:
     # https://en.wikipedia.org/wiki/Abelian_group
     assert (a * b) * c == a * (b * c)
@@ -68,19 +69,19 @@ def test_abelian_commutativity(a: Unit, b: Unit) -> None:
 @given(unit=units())
 def test_no_dimensional_exponentation(unit: Unit) -> None:
     with pytest.raises(TypeError):
-        unit**unit  # type: ignore
+        unit**unit  # type: ignore[operator]
 
 
 @given(unit=units())
 def test_no_floating_point_exponentation(unit: Unit) -> None:
     with pytest.raises(TypeError):
-        unit**0.5  # type: ignore
+        unit**0.5  # type: ignore[operator]
 
 
 @given(unit=units())
 def test_no_fractional_exponentation(unit: Unit) -> None:
     with pytest.raises(TypeError):
-        unit ** Fraction(1, 2)  # type: ignore
+        unit ** Fraction(1, 2)  # type: ignore[operator]
 
 
 @given(unit=units())
@@ -124,7 +125,7 @@ def test_roots() -> None:
 
 def test_only_integer_roots() -> None:
     with pytest.raises(TypeError):
-        (Meter**2).root(0.5)  # type: ignore
+        (Meter**2).root(0.5)  # type: ignore[arg-type]
 
 
 def test_whole_power_roots_only() -> None:
