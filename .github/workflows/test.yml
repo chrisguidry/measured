@@ -32,8 +32,6 @@ jobs:
             coverageArgument: --no-cov
 
     steps:
-    - run: echo '${{ toJSON(matrix) }}'
-
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
