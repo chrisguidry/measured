@@ -136,6 +136,7 @@ def test_number() -> None:
     assert Number.name == "number"
     assert Number.symbol == "1"
     assert Number is Number * Number
+    assert Dimension.named("number") is Number
 
 
 def test_length() -> None:
@@ -143,11 +144,13 @@ def test_length() -> None:
     assert Length.name == "length"
     assert Length.symbol == "L"
     assert Length is Number * Length
+    assert Dimension.named("length") is Length
 
 
 def test_area() -> None:
     assert isinstance(Area, Dimension)
     assert Area is Length * Length
+    assert Dimension.named("area") is Area
 
 
 def test_volume() -> None:
@@ -155,6 +158,7 @@ def test_volume() -> None:
     assert Volume is Length * Length * Length
     assert Volume is Length * Area
     assert Volume is Area * Length
+    assert Dimension.named("volume") is Volume
 
 
 def test_time() -> None:
@@ -162,11 +166,13 @@ def test_time() -> None:
     assert Time.name == "time"
     assert Time.symbol == "T"
     assert Time is Number * Time
+    assert Dimension.named("time") is Time
 
 
 def test_frequency() -> None:
     assert isinstance(Frequency, Dimension)
     assert Frequency is Number / Time
+    assert Dimension.named("frequency") is Frequency
 
 
 def test_mass() -> None:
@@ -174,6 +180,7 @@ def test_mass() -> None:
     assert Mass.name == "mass"
     assert Mass.symbol == "M"
     assert Mass is Number * Mass
+    assert Dimension.named("mass") is Mass
 
 
 def test_temperature() -> None:
@@ -181,6 +188,7 @@ def test_temperature() -> None:
     assert Temperature.name == "temperature"
     assert Temperature.symbol == "Θ"
     assert Temperature is Number * Temperature
+    assert Dimension.named("temperature") is Temperature
 
 
 def test_charge() -> None:
@@ -188,6 +196,7 @@ def test_charge() -> None:
     assert Charge.name == "charge"
     assert Charge.symbol == "Q"
     assert Charge is Number * Charge
+    assert Dimension.named("charge") is Charge
 
 
 def test_amount_of_substance() -> None:
@@ -195,6 +204,7 @@ def test_amount_of_substance() -> None:
     assert AmountOfSubstance.name == "amount of substance"
     assert AmountOfSubstance.symbol == "N"
     assert AmountOfSubstance is Number * AmountOfSubstance
+    assert Dimension.named("amount of substance") is AmountOfSubstance
 
 
 def test_luminous_intensity() -> None:
@@ -202,6 +212,7 @@ def test_luminous_intensity() -> None:
     assert LuminousIntensity.name == "luminous intensity"
     assert LuminousIntensity.symbol == "J"
     assert LuminousIntensity is Number * LuminousIntensity
+    assert Dimension.named("luminous intensity") is LuminousIntensity
 
 
 def test_plane_angle_is_dimensionless() -> None:

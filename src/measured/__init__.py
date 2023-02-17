@@ -364,6 +364,11 @@ class Dimension:
         return dimension
 
     @classmethod
+    def named(cls, name: str) -> "Dimension | None":
+        """Return a previously registered named Dimension if it is registered"""
+        return cls._by_name.get(name)
+
+    @classmethod
     def derive(
         cls, dimension: "Dimension", name: str, symbol: Optional[str] = None
     ) -> "Dimension":
