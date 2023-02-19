@@ -1002,8 +1002,12 @@ class Unit:
         return {
             "name": self.name,
             "symbol": self.symbol,
-            "dimension": self.dimension,
-            "prefix": prefix if prefix.quantify() != 1 else None,
+            "dimension": {"__measured__": "Dimension", **self.dimension.__json__()},
+            "prefix": (
+                {"__measured__": "Prefix", **prefix.__json__()}
+                if prefix.quantify() != 1
+                else None
+            ),
             "factors": None if factors == ((self, 1),) else factors,
         }
 
@@ -1011,6 +1015,7 @@ class Unit:
     def __from_json__(cls, json_object: Dict[str, Any]) -> "Unit":
         if not json_object["factors"]:
             return cls._by_name[json_object["name"]]
+
         prefix = json_object["prefix"] or Prefix(0, 0)
         factors = dict(json_object["factors"])
         dimension = json_object["dimension"]
@@ -1313,10 +1318,7 @@ class Quantity:
     # JSON support
 
     def __json__(self) -> Dict[str, Any]:
-        return {
-            "magnitude": self.magnitude,
-            "unit": self.unit,
-        }
+        return {"magnitude": self.magnitude, "unit": str(self.unit)}
 
     @classmethod
     def __from_json__(cls, json_object: Dict[str, Any]) -> "Quantity":

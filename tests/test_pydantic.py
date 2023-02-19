@@ -1,7 +1,9 @@
 import json
-from typing import Generator, Optional
+from typing import AsyncGenerator, Generator, List, Optional
 
 import pytest
+from fastapi import FastAPI
+from httpx import ASGITransport, AsyncClient
 from pydantic import BaseModel
 
 import measured.json
@@ -27,6 +29,12 @@ class ExampleModel(BaseModel):
 
     quantity: Quantity = 5 * Meter
     optional_quantity: Optional[Quantity] = None
+
+
+class ParentModel(BaseModel):
+    one_example: ExampleModel
+
+    some_examples: List[ExampleModel]
 
 
 def test_dimension_field() -> None:
@@ -126,12 +134,20 @@ def test_unit_field_from_string_must_exist() -> None:
 
 
 @pytest.fixture
-def instance() -> ExampleModel:
+def example() -> ExampleModel:
     return ExampleModel()
 
 
-def test_to_dict(instance: ExampleModel) -> None:
-    assert instance.dict() == {
+@pytest.fixture
+def parent() -> ParentModel:
+    return ParentModel(
+        one_example=ExampleModel(),
+        some_examples=[ExampleModel(), ExampleModel()],
+    )
+
+
+def test_to_dict(example: ExampleModel) -> None:
+    assert example.dict() == {
         "dimension": Length,
         "optional_dimension": None,
         "prefix": Kilo,
@@ -143,13 +159,18 @@ def test_to_dict(instance: ExampleModel) -> None:
     }
 
 
-def test_to_json_without_codecs_installed(instance: ExampleModel) -> None:
+def test_to_json_without_codecs_installed(example: ExampleModel) -> None:
     with pytest.raises(TypeError, match="is not JSON serializable"):
-        assert instance.json()
+        assert example.json()
 
 
-def test_to_json(codecs_installed: None, instance: ExampleModel) -> None:
-    assert json.loads(instance.json(), cls=json.JSONDecoder, object_hook=None) == {
+def test_parent_to_json_without_codecs_installed(parent: ExampleModel) -> None:
+    with pytest.raises(TypeError, match="is not JSON serializable"):
+        assert parent.json()
+
+
+def test_to_json(codecs_installed: None, example: ExampleModel) -> None:
+    assert json.loads(example.json(), cls=json.JSONDecoder, object_hook=None) == {
         "dimension": {
             "__measured__": "Dimension",
             "name": "length",
@@ -182,19 +203,59 @@ def test_to_json(codecs_installed: None, instance: ExampleModel) -> None:
         "quantity": {
             "__measured__": "Quantity",
             "magnitude": 5,
-            "unit": {
-                "__measured__": "Unit",
-                "name": "meter",
-                "symbol": "m",
-                "prefix": None,
-                "factors": None,
-                "dimension": {
-                    "__measured__": "Dimension",
-                    "name": "length",
-                    "symbol": "L",
-                    "exponents": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-                },
-            },
+            "unit": "m",
         },
         "optional_quantity": None,
     }
+
+
+def test_example_dict_roundtrip(example: ExampleModel) -> None:
+    assert ExampleModel.parse_obj(example.dict()) == example
+
+
+def test_parent_dict_roundtrip(parent: ParentModel) -> None:
+    assert ParentModel.parse_obj(parent.dict()) == parent
+
+
+def test_example_json_roundtrip(codecs_installed: None, example: ExampleModel) -> None:
+    assert ExampleModel.parse_raw(example.json()) == example
+
+
+def test_parent_json_roundtrip(codecs_installed: None, parent: ParentModel) -> None:
+    assert ParentModel.parse_raw(parent.json()) == parent
+
+
+@pytest.fixture
+def api(codecs_installed: None) -> FastAPI:
+    app = FastAPI()
+
+    @app.post("/example")  # type: ignore[misc]
+    def echo_example(example: ExampleModel) -> ExampleModel:
+        return example
+
+    @app.post("/parent")  # type: ignore[misc]
+    def echo_parent(parent: ParentModel) -> ParentModel:
+        return parent
+
+    return app
+
+
+@pytest.fixture
+async def client(api: FastAPI) -> AsyncGenerator[AsyncClient, None]:
+    transport = ASGITransport(app=api)  # type: ignore[arg-type]
+    async with AsyncClient(base_url="http://measured", transport=transport) as client:
+        yield client
+
+
+async def test_example_api_roundtrip(
+    client: AsyncClient, example: ExampleModel
+) -> None:
+    response = await client.post("/example", content=example.json())
+    assert response.status_code == 200
+    assert ExampleModel.parse_raw(response.text) == example
+
+
+async def test_parent_api_roundtrip(client: AsyncClient, parent: ParentModel) -> None:
+    response = await client.post("/parent", content=parent.json())
+    assert response.status_code == 200
+    assert ParentModel.parse_raw(response.text) == parent
