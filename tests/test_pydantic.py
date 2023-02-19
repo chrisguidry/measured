@@ -1,5 +1,5 @@
 import json
-from typing import AsyncGenerator, Generator, Optional
+from typing import AsyncGenerator, Generator, List, Optional
 
 import pytest
 from fastapi import FastAPI
@@ -34,7 +34,7 @@ class ExampleModel(BaseModel):
 class ParentModel(BaseModel):
     one_example: ExampleModel
 
-    some_examples: list[ExampleModel]
+    some_examples: List[ExampleModel]
 
 
 def test_dimension_field() -> None:
