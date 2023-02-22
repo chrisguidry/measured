@@ -56,38 +56,44 @@ class MeasuredJSONDecoder(JSONDecoder):
 def codecs_installed() -> Generator[None, None, None]:
     """A context within which the standard library's `json` module will be aware of
     how to encode and decode `measured` objects."""
-    original_encoder = json._default_encoder  # type: ignore
-    original_decoder = json._default_decoder  # type: ignore
-    original_object_hook = json.loads.__kwdefaults__["object_hook"]
+    outermost_context = False
+    if not isinstance(json._default_encoder, MeasuredJSONEncoder):  # type: ignore
+        outermost_context = True
 
-    encoder = MeasuredJSONEncoder()
-    decoder = MeasuredJSONDecoder()
+    if outermost_context:
+        original_encoder = json._default_encoder  # type: ignore
+        original_decoder = json._default_decoder  # type: ignore
+        original_object_hook = json.loads.__kwdefaults__["object_hook"]
 
-    json._default_encoder = encoder  # type: ignore
-    json._default_decoder = decoder  # type: ignore
-    json.loads.__kwdefaults__["object_hook"] = decoder.object_hook
+        encoder = MeasuredJSONEncoder()
+        decoder = MeasuredJSONDecoder()
 
-    try:
-        from pydantic.json import ENCODERS_BY_TYPE as PYDANTIC_ENCODERS_BY_TYPE
-    except ImportError:  # pragma: no cover
-        PYDANTIC_ENCODERS_BY_TYPE = {}
+        json._default_encoder = encoder  # type: ignore
+        json._default_decoder = decoder  # type: ignore
+        json.loads.__kwdefaults__["object_hook"] = decoder.object_hook
 
-    PYDANTIC_ENCODERS_BY_TYPE[Dimension] = encoder
-    PYDANTIC_ENCODERS_BY_TYPE[Prefix] = encoder
-    PYDANTIC_ENCODERS_BY_TYPE[Unit] = encoder
-    PYDANTIC_ENCODERS_BY_TYPE[Quantity] = encoder
+        try:
+            from pydantic.json import ENCODERS_BY_TYPE as PYDANTIC_ENCODERS_BY_TYPE
+        except ImportError:  # pragma: no cover
+            PYDANTIC_ENCODERS_BY_TYPE = {}
+
+        PYDANTIC_ENCODERS_BY_TYPE[Dimension] = encoder
+        PYDANTIC_ENCODERS_BY_TYPE[Prefix] = encoder
+        PYDANTIC_ENCODERS_BY_TYPE[Unit] = encoder
+        PYDANTIC_ENCODERS_BY_TYPE[Quantity] = encoder
 
     try:
         yield
     finally:
-        json._default_encoder = original_encoder  # type: ignore
-        json._default_decoder = original_decoder  # type: ignore
-        json.loads.__kwdefaults__["object_hook"] = original_object_hook
+        if outermost_context:
+            json._default_encoder = original_encoder  # type: ignore
+            json._default_decoder = original_decoder  # type: ignore
+            json.loads.__kwdefaults__["object_hook"] = original_object_hook
 
-        del PYDANTIC_ENCODERS_BY_TYPE[Dimension]
-        del PYDANTIC_ENCODERS_BY_TYPE[Prefix]
-        del PYDANTIC_ENCODERS_BY_TYPE[Unit]
-        del PYDANTIC_ENCODERS_BY_TYPE[Quantity]
+            del PYDANTIC_ENCODERS_BY_TYPE[Dimension]
+            del PYDANTIC_ENCODERS_BY_TYPE[Prefix]
+            del PYDANTIC_ENCODERS_BY_TYPE[Unit]
+            del PYDANTIC_ENCODERS_BY_TYPE[Quantity]
 
 
 _installer = codecs_installed()

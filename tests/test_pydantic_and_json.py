@@ -259,3 +259,20 @@ async def test_parent_api_roundtrip(client: AsyncClient, parent: ParentModel) ->
     response = await client.post("/parent", content=parent.json())
     assert response.status_code == 200
     assert ParentModel.parse_raw(response.text) == parent
+
+
+def test_codec_installation_is_nestable() -> None:
+    with pytest.raises(TypeError, match="not JSON serializable"):
+        json.dumps(Length)
+
+    with measured.json.codecs_installed():
+        assert json.loads(json.dumps(Length)) is Length
+        with measured.json.codecs_installed():
+            assert json.loads(json.dumps(Length)) is Length
+            with measured.json.codecs_installed():
+                assert json.loads(json.dumps(Length)) is Length
+            assert json.loads(json.dumps(Length)) is Length
+        assert json.loads(json.dumps(Length)) is Length
+
+    with pytest.raises(TypeError, match="not JSON serializable"):
+        json.dumps(Length)
