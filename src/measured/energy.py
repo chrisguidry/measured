@@ -38,6 +38,11 @@ from measured import Area, Energy, Power
 from measured.si import Hour, Joule, Kilo, Meter, Second, Watt
 from measured.us import Foot, PoundForce
 
+# watt-hour and kilowatt-hour are commonly used units in electric energy
+# generation and consumption
+(Watt * Hour).alias(name="watt-hour", symbol="Wh")
+(Kilo * Watt * Hour).alias(name="kilowatt-hour", symbol="kWh")
+
 # https://en.wikipedia.org/wiki/Erg
 Erg = Energy.unit(name="erg", symbol="erg")
 Erg.equals(1e-7 * Joule)
