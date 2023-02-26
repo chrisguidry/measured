@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 from typing import AsyncGenerator, Generator, List, Optional
 
 import pytest
@@ -225,6 +226,11 @@ def test_parent_json_roundtrip(codecs_installed: None, parent: ParentModel) -> N
     assert ParentModel.parse_raw(parent.json()) == parent
 
 
+def test_decimal_json_roundtrip(codecs_installed: None, example: ExampleModel) -> None:
+    example.quantity = Decimal("1.2345") * Meter
+    assert ExampleModel.parse_raw(example.json()) == example
+
+
 @pytest.fixture
 def api(codecs_installed: None) -> FastAPI:
     app = FastAPI()
@@ -276,3 +282,8 @@ def test_codec_installation_is_nestable() -> None:
 
     with pytest.raises(TypeError, match="not JSON serializable"):
         json.dumps(Length)
+
+
+def test_decimal_quantity_roundtrips(codecs_installed: None) -> None:
+    quantity = Decimal("1.23456") * Meter
+    assert json.loads(json.dumps(quantity)) == Decimal("1.23456") * Meter

@@ -1318,11 +1318,17 @@ class Quantity:
     # JSON support
 
     def __json__(self) -> Dict[str, Any]:
-        return {"magnitude": self.magnitude, "unit": str(self.unit)}
+        magnitude: Union[Numeric, str] = self.magnitude
+        if isinstance(magnitude, Decimal):
+            magnitude = str(magnitude)
+        return {"magnitude": magnitude, "unit": str(self.unit)}
 
     @classmethod
     def __from_json__(cls, json_object: Dict[str, Any]) -> "Quantity":
-        return Quantity(json_object["magnitude"], json_object["unit"])
+        magnitude = json_object["magnitude"]
+        if isinstance(magnitude, str):
+            magnitude = Decimal(magnitude)
+        return Quantity(magnitude, json_object["unit"])
 
     # Pydantic support
 
