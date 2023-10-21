@@ -9,13 +9,10 @@ MeasuredType = Union[Dimension, Prefix, Quantity, Unit]
 
 
 class MeasuredJSONEncoder(JSONEncoder):
-    def __call__(self, o: Any) -> Any:
-        return self.default(o)
-
     def default(self, o: Any) -> Any:
         json_method = getattr(o, "__json__", None)
         if callable(json_method):
-            return {"__measured__": o.__class__.__name__, **json_method()}
+            return json_method()
         return super().default(o)
 
 

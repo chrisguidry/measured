@@ -12,10 +12,46 @@ from measured import Dimension, Length, Prefix, Quantity, Unit
 from measured.si import Kilo, Meter
 
 
+def test_dimension_json_roundtrips_without_codecs() -> None:
+    with pytest.raises(TypeError, match="not JSON serializable"):
+        json.loads(json.dumps(Length))
+
+
+def test_prefix_json_roundtrips_without_codecs() -> None:
+    with pytest.raises(TypeError, match="not JSON serializable"):
+        json.loads(json.dumps(Kilo))
+
+
+def test_unit_json_roundtrips_without_codecs() -> None:
+    with pytest.raises(TypeError, match="not JSON serializable"):
+        json.loads(json.dumps(Meter))
+
+
+def test_quantity_json_roundtrips_without_codecs() -> None:
+    with pytest.raises(TypeError, match="not JSON serializable"):
+        json.loads(json.dumps(5 * Kilo * Meter))
+
+
 @pytest.fixture
 def codecs_installed() -> Generator[None, None, None]:
     with measured.json.codecs_installed():
         yield
+
+
+def test_dimension_json_roundtrips(codecs_installed: None) -> None:
+    assert json.loads(json.dumps(Length)) == Length
+
+
+def test_prefix_json_roundtrips(codecs_installed: None) -> None:
+    assert json.loads(json.dumps(Kilo)) == Kilo
+
+
+def test_unit_json_roundtrips(codecs_installed: None) -> None:
+    assert json.loads(json.dumps(Meter)) == Meter
+
+
+def test_quantity_json_roundtrips(codecs_installed: None) -> None:
+    assert json.loads(json.dumps(5 * Kilo * Meter)) == 5 * Kilo * Meter
 
 
 class ExampleModel(BaseModel):
@@ -62,19 +98,19 @@ def test_quantity_field() -> None:
 
 
 def test_dimension_field_from_string() -> None:
-    model = ExampleModel(dimension="length")
+    model = ExampleModel(dimension="length")  # type: ignore[arg-type]
     assert model.dimension == Length
     assert model.dimension is Length
 
 
 def test_prefix_field_from_string() -> None:
-    model = ExampleModel(prefix="kilo")
+    model = ExampleModel(prefix="kilo")  # type: ignore[arg-type]
     assert model.prefix == Kilo
     assert model.prefix is Kilo
 
 
 def test_unit_field_from_string() -> None:
-    model = ExampleModel(unit="meter")
+    model = ExampleModel(unit="meter")  # type: ignore[arg-type]
     assert model.unit == Meter
     assert model.unit is Meter
 
@@ -101,37 +137,37 @@ def test_quantity_field_from_none() -> None:
 
 def test_dimension_field_from_incompatible() -> None:
     with pytest.raises(ValueError):
-        ExampleModel(dimension=11)
+        ExampleModel(dimension=11)  # type: ignore[arg-type]
 
 
 def test_prefix_field_from_incompatible() -> None:
     with pytest.raises(ValueError):
-        ExampleModel(prefix=11)
+        ExampleModel(prefix=11)  # type: ignore[arg-type]
 
 
 def test_unit_field_from_incompatible() -> None:
     with pytest.raises(ValueError):
-        ExampleModel(unit=11)
+        ExampleModel(unit=11)  # type: ignore[arg-type]
 
 
 def test_quantity_field_from_incompatible() -> None:
     with pytest.raises(ValueError):
-        ExampleModel(quantity=11)
+        ExampleModel(quantity=11)  # type: ignore[arg-type]
 
 
 def test_dimension_field_from_string_must_exist() -> None:
     with pytest.raises(ValueError, match="'flibbity' is not a named Dimension"):
-        ExampleModel(dimension="flibbity")
+        ExampleModel(dimension="flibbity")  # type: ignore[arg-type]
 
 
 def test_prefix_field_from_string_must_exist() -> None:
     with pytest.raises(ValueError, match="'kibbity' is not a named Prefix"):
-        ExampleModel(prefix="kibbity")
+        ExampleModel(prefix="kibbity")  # type: ignore[arg-type]
 
 
 def test_unit_field_from_string_must_exist() -> None:
     with pytest.raises(ValueError, match="'kibbity' is not a named Unit"):
-        ExampleModel(unit="kibbity")
+        ExampleModel(unit="kibbity")  # type: ignore[arg-type]
 
 
 @pytest.fixture
@@ -148,7 +184,7 @@ def parent() -> ParentModel:
 
 
 def test_to_dict(example: ExampleModel) -> None:
-    assert example.dict() == {
+    assert example.model_dump() == {
         "dimension": Length,
         "optional_dimension": None,
         "prefix": Kilo,
@@ -160,18 +196,9 @@ def test_to_dict(example: ExampleModel) -> None:
     }
 
 
-def test_to_json_without_codecs_installed(example: ExampleModel) -> None:
-    with pytest.raises(TypeError, match="is not JSON serializable"):
-        assert example.json()
-
-
-def test_parent_to_json_without_codecs_installed(parent: ExampleModel) -> None:
-    with pytest.raises(TypeError, match="is not JSON serializable"):
-        assert parent.json()
-
-
 def test_to_json(codecs_installed: None, example: ExampleModel) -> None:
-    assert json.loads(example.json(), cls=json.JSONDecoder, object_hook=None) == {
+    as_json = example.model_dump_json()
+    assert json.loads(as_json, cls=json.JSONDecoder, object_hook=None) == {
         "dimension": {
             "__measured__": "Dimension",
             "name": "length",
@@ -211,24 +238,24 @@ def test_to_json(codecs_installed: None, example: ExampleModel) -> None:
 
 
 def test_example_dict_roundtrip(example: ExampleModel) -> None:
-    assert ExampleModel.parse_obj(example.dict()) == example
+    assert ExampleModel.model_validate(example.model_dump()) == example
 
 
 def test_parent_dict_roundtrip(parent: ParentModel) -> None:
-    assert ParentModel.parse_obj(parent.dict()) == parent
+    assert ParentModel.model_validate(parent.model_dump()) == parent
 
 
 def test_example_json_roundtrip(codecs_installed: None, example: ExampleModel) -> None:
-    assert ExampleModel.parse_raw(example.json()) == example
+    assert ExampleModel.model_validate_json(example.model_dump_json()) == example
 
 
 def test_parent_json_roundtrip(codecs_installed: None, parent: ParentModel) -> None:
-    assert ParentModel.parse_raw(parent.json()) == parent
+    assert ParentModel.model_validate_json(parent.model_dump_json()) == parent
 
 
 def test_decimal_json_roundtrip(codecs_installed: None, example: ExampleModel) -> None:
     example.quantity = Decimal("1.2345") * Meter
-    assert ExampleModel.parse_raw(example.json()) == example
+    assert ExampleModel.model_validate_json(example.model_dump_json()) == example
 
 
 @pytest.fixture
@@ -256,15 +283,15 @@ async def client(api: FastAPI) -> AsyncGenerator[AsyncClient, None]:
 async def test_example_api_roundtrip(
     client: AsyncClient, example: ExampleModel
 ) -> None:
-    response = await client.post("/example", content=example.json())
+    response = await client.post("/example", content=example.model_dump_json())
     assert response.status_code == 200
-    assert ExampleModel.parse_raw(response.text) == example
+    assert ExampleModel.model_validate_json(response.text) == example
 
 
 async def test_parent_api_roundtrip(client: AsyncClient, parent: ParentModel) -> None:
-    response = await client.post("/parent", content=parent.json())
+    response = await client.post("/parent", content=parent.model_dump_json())
     assert response.status_code == 200
-    assert ParentModel.parse_raw(response.text) == parent
+    assert ParentModel.model_validate_json(response.text) == parent
 
 
 def test_codec_installation_is_nestable() -> None:
