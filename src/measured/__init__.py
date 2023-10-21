@@ -162,6 +162,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Type,
     Union,
     cast,
     overload,
@@ -415,7 +416,7 @@ class Dimension:
 
     @classmethod
     def __get_pydantic_core_schema__(
-        cls, source: type[Any], handler: "GetCoreSchemaHandler"
+        cls, source: Type[Any], handler: "GetCoreSchemaHandler"
     ) -> "core_schema.CoreSchema":
         from pydantic_core import core_schema
 
@@ -697,7 +698,7 @@ class Prefix:
 
     @classmethod
     def __get_pydantic_core_schema__(
-        cls, source: type[Any], handler: "GetCoreSchemaHandler"
+        cls, source: Type[Any], handler: "GetCoreSchemaHandler"
     ) -> "core_schema.CoreSchema":
         from pydantic_core import core_schema
 
@@ -1056,7 +1057,7 @@ class Unit:
 
     @classmethod
     def __get_pydantic_core_schema__(
-        cls, source: type[Any], handler: "GetCoreSchemaHandler"
+        cls, source: Type[Any], handler: "GetCoreSchemaHandler"
     ) -> "core_schema.CoreSchema":
         from pydantic_core import core_schema
 
@@ -1379,7 +1380,7 @@ class Quantity:
 
     @classmethod
     def __get_pydantic_core_schema__(
-        cls, source: type[Any], handler: "GetCoreSchemaHandler"
+        cls, source: Type[Any], handler: "GetCoreSchemaHandler"
     ) -> "core_schema.CoreSchema":
         from pydantic_core import core_schema
 
