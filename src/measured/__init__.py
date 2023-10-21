@@ -429,7 +429,7 @@ class Dimension:
 
     @classmethod
     def _pydantic_validate(
-        cls, value: Union[str, dict[str, Any], "Dimension"]
+        cls, value: Union[str, Dict[str, Any], "Dimension"]
     ) -> "Dimension":
         if isinstance(value, dict):
             return cls.__from_json__(value)
@@ -711,7 +711,7 @@ class Prefix:
 
     @classmethod
     def _pydantic_validate(
-        cls, value: Union[str, dict[str, Any], "Prefix"]
+        cls, value: Union[str, Dict[str, Any], "Prefix"]
     ) -> "Prefix":
         if isinstance(value, dict):
             return cls.__from_json__(value)
@@ -1069,7 +1069,7 @@ class Unit:
         )
 
     @classmethod
-    def _pydantic_validate(cls, value: Union[str, dict[str, Any], "Unit"]) -> "Unit":
+    def _pydantic_validate(cls, value: Union[str, Dict[str, Any], "Unit"]) -> "Unit":
         if isinstance(value, dict):
             return cls.__from_json__(value)
 
@@ -1393,7 +1393,7 @@ class Quantity:
 
     @classmethod
     def _pydantic_validate(
-        cls, value: Union[str, dict[str, Any], "Quantity"]
+        cls, value: Union[str, Dict[str, Any], "Quantity"]
     ) -> "Quantity":
         if isinstance(value, dict):
             return cls.__from_json__(value)
