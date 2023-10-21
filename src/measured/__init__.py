@@ -152,23 +152,28 @@ from decimal import Decimal
 from functools import lru_cache, total_ordering
 from importlib.metadata import version
 from typing import (
+    TYPE_CHECKING,
     Any,
-    Callable,
     ClassVar,
     Dict,
-    Generator,
     Iterable,
     List,
     Mapping,
     Optional,
     Set,
     Tuple,
+    Type,
     Union,
     cast,
     overload,
 )
 
 from . import formatting
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pydantic import GetCoreSchemaHandler
+    from pydantic_core import core_schema
+
 
 try:
     from icecream import ic as _ic
@@ -397,6 +402,7 @@ class Dimension:
 
     def __json__(self) -> Dict[str, Any]:
         return {
+            "__measured__": "Dimension",
             "name": self.name,
             "symbol": self.symbol,
             "exponents": list(self.exponents),
@@ -409,13 +415,25 @@ class Dimension:
     # Pydantic support
 
     @classmethod
-    def __get_validators__(
-        cls,
-    ) -> Generator[Callable[[Union[str, "Dimension"]], "Dimension"], None, None]:
-        yield cls.validate
+    def __get_pydantic_core_schema__(
+        cls, source: Type[Any], handler: "GetCoreSchemaHandler"
+    ) -> "core_schema.CoreSchema":
+        from pydantic_core import core_schema
+
+        return core_schema.no_info_plain_validator_function(
+            cls._pydantic_validate,
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                cls.__json__, when_used="json-unless-none"
+            ),
+        )
 
     @classmethod
-    def validate(cls, value: Union[str, "Dimension"]) -> "Dimension":
+    def _pydantic_validate(
+        cls, value: Union[str, Dict[str, Any], "Dimension"]
+    ) -> "Dimension":
+        if isinstance(value, dict):
+            return cls.__from_json__(value)
+
         if isinstance(value, str):
             if value not in cls._by_name:
                 raise ValueError(f"{value!r} is not a named Dimension")
@@ -665,6 +683,7 @@ class Prefix:
 
     def __json__(self) -> Dict[str, Any]:
         return {
+            "__measured__": "Prefix",
             "base": self.base,
             "exponent": self.exponent,
             "name": self.name,
@@ -678,13 +697,25 @@ class Prefix:
     # Pydantic support
 
     @classmethod
-    def __get_validators__(
-        cls,
-    ) -> Generator[Callable[[Union[str, "Prefix"]], "Prefix"], None, None]:
-        yield cls.validate
+    def __get_pydantic_core_schema__(
+        cls, source: Type[Any], handler: "GetCoreSchemaHandler"
+    ) -> "core_schema.CoreSchema":
+        from pydantic_core import core_schema
+
+        return core_schema.no_info_plain_validator_function(
+            cls._pydantic_validate,
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                cls.__json__, when_used="json-unless-none"
+            ),
+        )
 
     @classmethod
-    def validate(cls, value: Union[str, "Prefix"]) -> "Prefix":
+    def _pydantic_validate(
+        cls, value: Union[str, Dict[str, Any], "Prefix"]
+    ) -> "Prefix":
+        if isinstance(value, dict):
+            return cls.__from_json__(value)
+
         if isinstance(value, str):
             if value not in cls._by_name:
                 raise ValueError(f"{value!r} is not a named Prefix")
@@ -1000,6 +1031,7 @@ class Unit:
     def __json__(self) -> Dict[str, Any]:
         prefix, factors = self._build_key(self.prefix, self.factors)
         return {
+            "__measured__": "Unit",
             "name": self.name,
             "symbol": self.symbol,
             "dimension": {"__measured__": "Dimension", **self.dimension.__json__()},
@@ -1024,13 +1056,23 @@ class Unit:
     # Pydantic support
 
     @classmethod
-    def __get_validators__(
-        cls,
-    ) -> Generator[Callable[[Union[str, "Unit"]], "Unit"], None, None]:
-        yield cls.validate
+    def __get_pydantic_core_schema__(
+        cls, source: Type[Any], handler: "GetCoreSchemaHandler"
+    ) -> "core_schema.CoreSchema":
+        from pydantic_core import core_schema
+
+        return core_schema.no_info_plain_validator_function(
+            cls._pydantic_validate,
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                cls.__json__, when_used="json-unless-none"
+            ),
+        )
 
     @classmethod
-    def validate(cls, value: Union[str, "Unit"]) -> "Unit":
+    def _pydantic_validate(cls, value: Union[str, Dict[str, Any], "Unit"]) -> "Unit":
+        if isinstance(value, dict):
+            return cls.__from_json__(value)
+
         if isinstance(value, str):
             if value not in cls._by_name:
                 raise ValueError(f"{value!r} is not a named Unit")
@@ -1321,7 +1363,11 @@ class Quantity:
         magnitude: Union[Numeric, str] = self.magnitude
         if isinstance(magnitude, Decimal):
             magnitude = str(magnitude)
-        return {"magnitude": magnitude, "unit": str(self.unit)}
+        return {
+            "__measured__": "Quantity",
+            "magnitude": magnitude,
+            "unit": str(self.unit),
+        }
 
     @classmethod
     def __from_json__(cls, json_object: Dict[str, Any]) -> "Quantity":
@@ -1333,13 +1379,25 @@ class Quantity:
     # Pydantic support
 
     @classmethod
-    def __get_validators__(
-        cls,
-    ) -> Generator[Callable[["Quantity"], "Quantity"], None, None]:
-        yield cls.validate
+    def __get_pydantic_core_schema__(
+        cls, source: Type[Any], handler: "GetCoreSchemaHandler"
+    ) -> "core_schema.CoreSchema":
+        from pydantic_core import core_schema
+
+        return core_schema.no_info_plain_validator_function(
+            cls._pydantic_validate,
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                cls.__json__, when_used="json-unless-none"
+            ),
+        )
 
     @classmethod
-    def validate(cls, value: Union[str, "Quantity"]) -> "Quantity":
+    def _pydantic_validate(
+        cls, value: Union[str, Dict[str, Any], "Quantity"]
+    ) -> "Quantity":
+        if isinstance(value, dict):
+            return cls.__from_json__(value)
+
         if isinstance(value, Quantity):
             return value
 
