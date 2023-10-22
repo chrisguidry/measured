@@ -1,6 +1,8 @@
 import math
 from functools import wraps
-from typing import TYPE_CHECKING, Callable, Sequence, Tuple, TypeVar
+from typing import TYPE_CHECKING, Callable, Optional, Sequence, Tuple, TypeVar
+
+from typing_extensions import TypeAlias
 
 if TYPE_CHECKING:  # pragma: no cover
     from IPython.lib.pretty import RepresentationPrinter
@@ -199,9 +201,12 @@ def unit_repr(unit: "Unit") -> str:
     )
 
 
+UnitTerm: TypeAlias = Tuple["Prefix", Optional[str], int]
+
+
 def _unit_to_magnitude_and_terms(
     unit: "Unit",
-) -> Tuple["Numeric", Sequence[Tuple["Prefix", str | None, int]]]:
+) -> Tuple["Numeric", Sequence[UnitTerm]]:
     from measured import FractionalDimensionError
 
     # In order to handle cases like `Mega * (Meter**-1)`, which naively becomes
@@ -277,9 +282,7 @@ def unit_pretty(unit: "Unit", pretty: "RepresentationPrinter", cycle: bool) -> N
             pretty.text(repr(unit))
 
 
-def _unit_terms_mathml(
-    magnitude: "Numeric", terms: Sequence[Tuple["Prefix", str | None, int]]
-) -> str:
+def _unit_terms_mathml(magnitude: "Numeric", terms: Sequence[UnitTerm]) -> str:
     numerator = [(p, s, e) for p, s, e in terms if e >= 0]
     denominator = [(p, s, e * -1) for p, s, e in terms if e < 0]
 
