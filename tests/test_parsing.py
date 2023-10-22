@@ -10,6 +10,7 @@ from measured.iec import Byte, Kibi
 from measured.parsing import ParseError
 from measured.si import (
     Ampere,
+    Centi,
     Gram,
     Hertz,
     Kilo,
@@ -41,12 +42,33 @@ def test_kilogram_converts_to_kilogram() -> None:
     assert Unit.parse(str(Kilo * Gram)) is Kilogram
 
 
+def test_prefixes_have_precedence_over_exponents() -> None:
+    """
+    From Wikipedia (https://en.wikipedia.org/wiki/Square_kilometre):
+
+        The symbol "km²" means (km)², square kilometre or kilometre squared and not
+        k(m²), kilo-square metre. For example, 3 km² is equal to 3*(1,000m)² = 3,000,000
+        m², not 3,000 m².
+    """
+    assert Unit.parse("km²") == (Kilo * Meter) ** 2 == Mega * Meter**2
+    assert str(Unit.parse("km²")) == "km²"
+
+    assert Quantity.parse("3 km²") == 3 * (Kilo * Meter) ** 2 == 3 * Mega * Meter**2
+    assert str(Quantity.parse("3 km²")) == "3 km²"
+
+
 @given(
     magnitude=integers(min_value=-1000000000000, max_value=1000000000000),
     unit=units(),
 )
 @example(magnitude=1, unit=Liter)
 @example(magnitude=1, unit=Mega * (Meter**-1))
+@example(magnitude=1, unit=(Kilo * Meter) ** 2)
+@example(magnitude=1, unit=Kilo * (Meter**2))
+@example(magnitude=5, unit=(Mega * Meter**-1))
+@example(magnitude=5, unit=((Mega * Meter) ** -1))
+@example(magnitude=1, unit=Centi * (Meter**-2))
+@example(magnitude=1, unit=(Centi * Meter) ** -2)
 def test_small_integer_quantities_parse_exactly(magnitude: Numeric, unit: Unit) -> None:
     assert Quantity.parse(str(magnitude * unit)) == magnitude * unit
 

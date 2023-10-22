@@ -12,6 +12,7 @@ from xml.etree import ElementTree
 
 from IPython.lib.pretty import RepresentationPrinter
 
+from measured import systems  # noqa: F401
 from measured import (
     Area,
     Decibel,
@@ -29,6 +30,7 @@ from measured import (
     Volume,
     VolumetricFlow,
 )
+from measured.electronics import dBW
 from measured.formatting import superscript
 from measured.si import Hertz, Kilo, Mega, Meter, Milli, Ohm, Second, Watt
 
@@ -92,6 +94,8 @@ def test_strings_of_dimensions(dimension: Dimension, string: str) -> None:
         (Meter, "m"),
         (Meter**2, "m²"),
         (Meter**3, "m³"),
+        ((Kilo * Meter) ** 2, "km²"),
+        (Kilo * Meter**2, "1000 m²"),
         (Meter**3 / Second**2, "m³⋅s⁻²"),
         (Hertz, "Hz"),
         (Hertz**2, "s⁻²"),
@@ -109,10 +113,13 @@ def test_strings_of_units(unit: Unit, string: str) -> None:
         (5 * Meter, "5 m"),
         (5.1 * Meter**2, "5.1 m²"),
         (5 * (Kilo * Meter), "5 km"),
-        (5.1 * (Kilo * (Meter**2) / Second), "5.1 km²⋅s⁻¹"),
-        (5.1 * (Kilo * Meter**2) / Second, "5.1 km²⋅s⁻¹"),
-        (5.1 * (Kilo * Meter) ** 2 / Second, "5.1 Mm²⋅s⁻¹"),
+        (5.1 * (Kilo * Meter) ** 2, "5.1 km²"),
+        (5.1 * (Kilo * (Meter**2)), "5100.0 m²"),
+        (5.1 * (Kilo * (Meter**2) / Second), "5100.0 m²⋅s⁻¹"),
+        (5.1 * (Kilo * Meter**2) / Second, "5100.0 m²⋅s⁻¹"),
+        (5.1 * (Kilo * Meter) ** 2 / Second, "5.1 km²⋅s⁻¹"),
         (5.1 * (Mega * Meter**-1), "5.1 μm⁻¹"),
+        (5.1 * ((Mega * Meter) ** -1), "5.1 Mm⁻¹"),
     ],
 )
 def test_strings_of_quantities(quantity: Quantity, string: str) -> None:
@@ -212,6 +219,15 @@ def test_pretty_repr_includes_string_of_self(
         Neper,
         Decibel[1 * Watt],
         30 * Decibel[1 * Watt],
+        (Kilo * Meter) ** 2,
+        (Kilo * (Meter**2)),
+        (5.1 * (Kilo * Meter) ** 2),
+        (5.1 * (Kilo * (Meter**2))),
+        (5.1 * (Kilo * (Meter**2) / Second)),
+        (5.1 * (Kilo * Meter**2) / Second),
+        (5.1 * (Kilo * Meter) ** 2 / Second),
+        (5.1 * (Mega * Meter**-1)),
+        (5.1 * ((Mega * Meter) ** -1)),
     ],
 )
 def test_html_is_mathml(formattable: Formattable) -> None:
@@ -238,6 +254,7 @@ def test_mathml_root_is_fraction(formattable: Formattable) -> None:
         Meter,
         Hertz,
         Neper,
+        dBW,
         Decibel[1 * Watt],
     ],
 )
@@ -257,6 +274,13 @@ def test_mathml_root_is_identifier(formattable: Formattable) -> None:
         Decibel[1 * Meter],  # a dB that we wouldn't have a symbol for
         Neper[1 * Meter],
         30 * Decibel[1 * Watt],
+        (5.1 * (Kilo * Meter) ** 2),
+        (5.1 * (Kilo * (Meter**2))),
+        (5.1 * (Kilo * (Meter**2) / Second)),
+        (5.1 * (Kilo * Meter**2) / Second),
+        (5.1 * (Kilo * Meter) ** 2 / Second),
+        (5.1 * (Mega * Meter**-1)),
+        (5.1 * ((Mega * Meter) ** -1)),
     ],
 )
 def test_mathml_root_is_subexpression(formattable: Formattable) -> None:
