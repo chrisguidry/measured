@@ -1,6 +1,8 @@
 import math
 from functools import wraps
-from typing import TYPE_CHECKING, Callable, TypeVar
+from typing import TYPE_CHECKING, Callable, Optional, Sequence, Tuple, TypeVar
+
+from typing_extensions import TypeAlias
 
 if TYPE_CHECKING:  # pragma: no cover
     from IPython.lib.pretty import RepresentationPrinter
@@ -199,10 +201,13 @@ def unit_repr(unit: "Unit") -> str:
     )
 
 
-def unit_str(unit: "Unit") -> str:
-    """Formats the given Unit as a plaintext string"""
-    if unit.symbol:
-        return unit.symbol
+UnitTerm: TypeAlias = Tuple["Prefix", Optional[str], int]
+
+
+def _unit_to_magnitude_and_terms(
+    unit: "Unit",
+) -> Tuple["Numeric", Sequence[UnitTerm]]:
+    from measured import FractionalDimensionError
 
     # In order to handle cases like `Mega * (Meter**-1)`, which naively becomes
     # "Mm⁻¹", which looks like it should parse to `(Mega*Meter)**-1`, take this
@@ -210,18 +215,35 @@ def unit_str(unit: "Unit") -> str:
     # turn `Mega * (Meter**-1)` into the correct `(Micro*Meter)**-1`.
     #
     # While it seems odd to have this in `str`, it's just a side-effect of the
-    # string represeentations not having parentheses.
+    # string representations not having parentheses.
     first, *rest = [
         (factor.prefix, factor.symbol, exponent)
         for factor, exponent in unit.factors.items()
     ]
-    prefix, symbol, exponent = first
-    sign = 1 if exponent >= 0 else -1
-    first = ((unit.prefix * prefix) ** sign, symbol, exponent)
 
-    return "⋅".join(
-        f"{prefix}{symbol}{superscript(exponent)}"
-        for prefix, symbol, exponent in [first, *rest]
+    magnitude: Numeric = 1
+    prefix, symbol, exponent = first
+    prefix = unit.prefix * prefix
+    try:
+        prefix = prefix.root(exponent)
+        first = (prefix, symbol, exponent)
+    except FractionalDimensionError:
+        magnitude = prefix.quantify()
+
+    return magnitude, [first, *rest]
+
+
+def unit_str(unit: "Unit") -> str:
+    """Formats the given Unit as a plaintext string"""
+    if unit.symbol:
+        return unit.symbol
+
+    magnitude, terms = _unit_to_magnitude_and_terms(unit)
+    return (str(magnitude) + " " if magnitude != 1 else "") + (
+        "⋅".join(
+            f"{prefix}{symbol}{superscript(exponent)}"
+            for prefix, symbol, exponent in terms
+        )
     )
 
 
@@ -260,27 +282,9 @@ def unit_pretty(unit: "Unit", pretty: "RepresentationPrinter", cycle: bool) -> N
             pretty.text(repr(unit))
 
 
-def unit_mathml(unit: "Unit") -> str:
-    """Formats the given Unit as a MathML expression"""
-    if unit.symbol:
-        return f"<mi>{unit.symbol}</mi>"
-
-    # In order to handle cases like `Mega * (Meter**-1)`, which naively becomes
-    # "Mm⁻¹", which looks like it should parse to `(Mega*Meter)**-1`, take this
-    # unit's prefix and push it down as the prefix of the first factor, which would
-    # turn `Mega * (Meter**-1)` into the correct `(Micro*Meter)**-1`.
-    #
-    # While it seems odd to have this in `str`, it's just a side-effect of the
-    # string represeentations not having parentheses.
-    first, *rest = [
-        (unit.prefix, unit.symbol, exponent) for unit, exponent in unit.factors.items()
-    ]
-    prefix, symbol, exponent = first
-    sign = 1 if exponent >= 0 else -1
-    first = ((unit.prefix * prefix) ** sign, symbol, exponent)
-
-    numerator = [(p, s, e) for p, s, e in [first, *rest] if e >= 0]
-    denominator = [(p, s, e * -1) for p, s, e in [first, *rest] if e < 0]
+def _unit_terms_mathml(magnitude: "Numeric", terms: Sequence[UnitTerm]) -> str:
+    numerator = [(p, s, e) for p, s, e in terms if e >= 0]
+    denominator = [(p, s, e * -1) for p, s, e in terms if e < 0]
 
     n = (
         "<mo>⋅</mo>".join(
@@ -296,6 +300,8 @@ def unit_mathml(unit: "Unit") -> str:
         )
         or "<mi>1</mi>"
     )
+    if magnitude != 1:
+        n = f"<mn>{magnitude}</mn><mo>⋅</mo>" + n
 
     d = "<mo>⋅</mo>".join(
         (
@@ -315,6 +321,15 @@ def unit_mathml(unit: "Unit") -> str:
     return f"<mfrac><mrow>{n}</mrow><mrow>{d}</mrow></mfrac>"
 
 
+def unit_mathml(unit: "Unit") -> str:
+    """Formats the given Unit as a MathML expression"""
+    if unit.symbol:
+        return f"<mi>{unit.symbol}</mi>"
+
+    magnitude, terms = _unit_to_magnitude_and_terms(unit)
+    return _unit_terms_mathml(magnitude, terms)
+
+
 def quantity_repr(quantity: "Quantity") -> str:
     """Formats the given Quantity as a Python `repr`"""
     return f"Quantity(magnitude={quantity.magnitude!r}, unit={quantity.unit!r})"
@@ -322,7 +337,17 @@ def quantity_repr(quantity: "Quantity") -> str:
 
 def quantity_str(quantity: "Quantity") -> str:
     """Formats the given Quantity as a plaintext string"""
-    return f"{quantity.magnitude} {quantity.unit}"
+    if quantity.unit.symbol:
+        return f"{quantity.magnitude} {quantity.unit.symbol}"
+
+    unit_magnitude, unit_terms = _unit_to_magnitude_and_terms(quantity.unit)
+    quantity = quantity * unit_magnitude
+    return f"{quantity.magnitude} " + (
+        "⋅".join(
+            f"{prefix}{symbol}{superscript(exponent)}"
+            for prefix, symbol, exponent in unit_terms
+        )
+    )
 
 
 def quantity_format(quantity: "Quantity", format_specifier: str) -> str:
@@ -351,11 +376,22 @@ def quantity_pretty(
 
 def quantity_mathml(quantity: "Quantity") -> str:
     """Formats the given Quantity as a MathML expression"""
+    if quantity.unit.symbol:
+        return (
+            "<mrow>"
+            f"<mn>{quantity.magnitude}</mn>"
+            "<mo></mo>"
+            f"<mi>{quantity.unit.symbol}</mi>"
+            "</mrow>"
+        )
+
+    unit_magnitude, unit_terms = _unit_to_magnitude_and_terms(quantity.unit)
+    quantity = quantity * unit_magnitude
     return (
         "<mrow>"
         f"<mn>{quantity.magnitude}</mn>"
         "<mo></mo>"
-        f"{unit_mathml(quantity.unit)}"
+        f"{_unit_terms_mathml(1, unit_terms)}"
         "</mrow>"
     )
 
