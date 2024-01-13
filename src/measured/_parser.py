@@ -139,7 +139,6 @@ class UnexpectedInput(LarkError):
                             self, (UnexpectedToken, UnexpectedEOF)
                         ) and isinstance(ut, (UnexpectedToken, UnexpectedEOF)):
                             if ut.token == self.token:  ##
-
                                 logger.debug("Exact Match at example [%s][%s]" % (i, j))
                                 return label
 
@@ -357,7 +356,6 @@ def classify(seq, key=None, value=None):
 def _deserialize(data, namespace, memo):
     if isinstance(data, dict):
         if "__type__" in data:  ##
-
             class_ = namespace[data["__type__"]]
             return class_.deserialize(data, memo)
         elif "@" in data:
@@ -482,7 +480,6 @@ from collections import OrderedDict
 
 
 class Meta:
-
     empty: bool
     line: int
     column: int
@@ -642,7 +639,6 @@ class _Decoratable:
         assert mro[0] is cls
         libmembers = {name for _cls in mro[1:] for name, _ in getmembers(_cls)}
         for name, value in getmembers(cls):
-
             ##
 
             if name.startswith("_") or (
@@ -776,7 +772,6 @@ class InlineTransformer(Transformer):  ##
 
 
 class TransformerChain(Generic[_Leaf_T, _Return_T]):
-
     transformers: "Tuple[Union[Transformer, TransformerChain], ...]"
 
     def __init__(self, *transformers: "Union[Transformer, TransformerChain]") -> None:
@@ -797,7 +792,6 @@ class TransformerChain(Generic[_Leaf_T, _Return_T]):
 class Transformer_InPlace(Transformer):
     # --
     def _transform_tree(self, tree):  ##
-
         return self._call_userfunc(tree)
 
     def transform(self, tree: Tree[_Leaf_T]) -> _Return_T:
@@ -1199,7 +1193,6 @@ from copy import copy
 
 
 class Pattern(Serialize, ABC):
-
     value: str
     flags: Collection[str]
     raw: Optional[str]
@@ -1309,7 +1302,6 @@ class TerminalDef(Serialize):
 
     def user_repr(self) -> str:
         if self.name.startswith("__"):  ##
-
             return self.pattern.raw or self.name
         else:
             return self.name
@@ -1522,7 +1514,6 @@ class Scanner:
             try:
                 mre = self.re_.compile(pattern, self.g_regex_flags)
             except AssertionError:  ##
-
                 return self._build_mres(terminals, max_size // 2)
 
             mres.append((mre, {i: n for n, i in mre.groupindex.items()}))
@@ -1604,7 +1595,6 @@ class Lexer(ABC):
 
 
 class BasicLexer(Lexer):
-
     terminals: Collection[TerminalDef]
     ignore_types: FrozenSet[str]
     newline_types: FrozenSet[str]
@@ -1745,7 +1735,6 @@ class BasicLexer(Lexer):
 
 
 class ContextualLexer(Lexer):
-
     lexers: Dict[str, BasicLexer]
     root_lexer: BasicLexer
 
@@ -2021,7 +2010,6 @@ class ChildFilterLALR(ChildFilter):
                 if filtered:
                     filtered += children[i].children
                 else:  ##
-
                     filtered = children[i].children
             else:
                 filtered.append(children[i])
@@ -2045,7 +2033,6 @@ class ChildFilterLALR_NoPlaceholders(ChildFilter):
                 if filtered:
                     filtered += children[i].children
                 else:  ##
-
                     filtered = children[i].children
             else:
                 filtered.append(children[i])
@@ -2271,7 +2258,6 @@ class ParseTreeBuilder:
             default_callback = self.tree_class
 
         for rule, wrapper_chain in self.rule_builders:
-
             user_callback_name = (
                 rule.alias or rule.options.template_source or rule.origin.name
             )
@@ -2631,7 +2617,6 @@ class ParsingFrontend(Serialize):
         ##
 
         if parser:  ##
-
             self.parser = parser
         else:
             create_parser = _parser_creators.get(parser_conf.parser_type)
@@ -2704,7 +2689,6 @@ class ParsingFrontend(Serialize):
 def _validate_frontend_args(parser, lexer) -> None:
     assert_config(parser, ("lalr", "earley", "cyk"))
     if not isinstance(lexer, type):  ##
-
         expected = {
             "lalr": ("basic", "contextual"),
             "earley": ("basic", "dynamic", "dynamic_complete"),
@@ -3082,7 +3066,6 @@ class Lark(Serialize):
                                 self._load(cached_parser_data, **options)
                                 return
                         except Exception:  ##
-
                             logger.exception(
                                 "Failed to load Lark from cache: %r. We will try to carry on."
                                 % cache_fn
