@@ -23,7 +23,7 @@ class MeasuredJSONDecoder(JSONDecoder):
         parse_float: Optional[Callable[[str], Any]] = None,
         parse_int: Optional[Callable[[str], Any]] = None,
         parse_constant: Optional[Callable[[str], Any]] = None,
-        strict: bool = True
+        strict: bool = True,
     ) -> None:
         super().__init__(
             object_hook=self.object_hook,

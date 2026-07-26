@@ -2,4 +2,150 @@
 requires = ["setuptools>=62", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "measured"
+description = "Fast and Pythonic library for working with measurements and quantities"
+readme = "README.md"
+authors = [{ name = "Chris Guidry", email = "chris@theguidrys.us" }]
+license = { text = "MIT" }
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+]
+dependencies = [
+    "typing-extensions; python_version < '3.9'",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/chrisguidry/measured"
+"Bug Tracker" = "https://github.com/chrisguidry/measured/issues"
+
+[project.scripts]
+measured = "measured.cli:main"
+
+[project.entry-points.pytest11]
+measured = "measured.pytest"
+
+[project.optional-dependencies]
+dev = [
+    "black[jupyter]",
+    "build",
+    "cloudpickle",
+    "fastapi",
+    "flake8",
+    "flake8-black",
+    "httpx",
+    "hypothesis",
+    "icecream",
+    "isort>=5.12.0",
+    "ipython",
+    "jupyter",
+    "lark",
+    'memray; implementation_name=="cpython" and python_version<="3.10"',
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+    "mypy",
+    "pre-commit",
+    "pydantic>2",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-benchmark",
+    "pytest-cov<7",  # 7.x starts measuring after the pytest11 entry point imports measured
+    "pytest-xdist",
+    "snakeviz",
+    "sqlalchemy",
+    "tox",
+    "typer",
+    "tuna",
+    "twine",
+    "wheel",
+    "types-sqlalchemy",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+measured = ["py.typed"]
+
 [tool.setuptools_scm]
+
+[tool.coverage.run]
+omit = [
+    "src/measured/_parser.py",
+    "src/measured/pytest.py",
+]
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+strict = true
+warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = "measured.formatting"
+disallow_untyped_calls = false
+
+[[tool.mypy.overrides]]
+module = "tests.test_formatting"
+disallow_untyped_calls = false
+
+[[tool.mypy.overrides]]
+module = "measured._parser"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "cloudpickle"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "icecream"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "IPython.lib.pretty"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "7.1"
+addopts = """
+    -n auto
+    --maxprocesses 4
+    --doctest-modules
+    --cov=src
+    --cov=tests
+    --cov-branch
+    --cov-report=term-missing
+    --cov-fail-under=100
+    --no-cov-on-fail
+"""
+asyncio_mode = "auto"
+filterwarnings = [
+    "default",
+    # warnings from lark-generated parser module
+    "ignore:module 'sre_parse' is deprecated:DeprecationWarning",
+    "ignore:module 'sre_constants' is deprecated:DeprecationWarning",
+]

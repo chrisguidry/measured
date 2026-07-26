@@ -283,13 +283,21 @@ async def client(api: FastAPI) -> AsyncGenerator[AsyncClient, None]:
 async def test_example_api_roundtrip(
     client: AsyncClient, example: ExampleModel
 ) -> None:
-    response = await client.post("/example", content=example.model_dump_json())
+    response = await client.post(
+        "/example",
+        content=example.model_dump_json(),
+        headers={"Content-Type": "application/json"},
+    )
     assert response.status_code == 200
     assert ExampleModel.model_validate_json(response.text) == example
 
 
 async def test_parent_api_roundtrip(client: AsyncClient, parent: ParentModel) -> None:
-    response = await client.post("/parent", content=parent.model_dump_json())
+    response = await client.post(
+        "/parent",
+        content=parent.model_dump_json(),
+        headers={"Content-Type": "application/json"},
+    )
     assert response.status_code == 200
     assert ParentModel.model_validate_json(response.text) == parent
 
