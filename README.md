@@ -33,7 +33,7 @@ computing speed.
 ## Installing
 
 `measured` is available on [PyPi](https://pypi.org/project/measured), and is tested with
-with Python and PyPy 3.8+:
+with Python and PyPy 3.10+:
 
 ```bash
 $ pip install measured
