@@ -49,7 +49,9 @@ measured = "measured.pytest"
 dev = [
     "black[jupyter]",
     "build",
-    "cloudpickle",
+    # cloudpickle's PyPy code path subclasses the pure-Python pickle.Pickler,
+    # which PyPy no longer provides, so the import fails there
+    'cloudpickle; implementation_name=="cpython"',
     "fastapi",
     "flake8",
     "flake8-black",

@@ -1920,7 +1920,7 @@ source = { editable = "." }
 dev = [
     { name = "black", extra = ["jupyter"] },
     { name = "build" },
-    { name = "cloudpickle" },
+    { name = "cloudpickle", marker = "implementation_name == 'cpython'" },
     { name = "fastapi" },
     { name = "flake8" },
     { name = "flake8-black" },
@@ -1958,7 +1958,7 @@ dev = [
 requires-dist = [
     { name = "black", extras = ["jupyter"], marker = "extra == 'dev'" },
     { name = "build", marker = "extra == 'dev'" },
-    { name = "cloudpickle", marker = "extra == 'dev'" },
+    { name = "cloudpickle", marker = "implementation_name == 'cpython' and extra == 'dev'" },
     { name = "fastapi", marker = "extra == 'dev'" },
     { name = "flake8", marker = "extra == 'dev'" },
     { name = "flake8-black", marker = "extra == 'dev'" },
