@@ -8,7 +8,7 @@ jobs:
   build-and-test:
     uses: ./.github/workflows/test.yml
   publish:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: [build-and-test]
     steps:
     - uses: actions/checkout@v3
