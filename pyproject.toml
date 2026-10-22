@@ -67,6 +67,9 @@ dev = [
     "mkdocs-material",
     "mkdocstrings[python]",
     "mypy",
+    # mkdocstrings 1.0.8 still calls pymdownx Highlight without the md
+    # argument that pymdown-extensions 12 requires, so the docs build fails.
+    "pymdown-extensions<12",
     "pre-commit",
     "pydantic>2",
     "pytest",
