@@ -4,7 +4,7 @@
 
 [![PyPi](https://img.shields.io/pypi/v/measured)](https://pypi.org/project/measured)
 [![Build and test](https://github.com/chrisguidry/measured/actions/workflows/test.yml/badge.svg?event=push)](https://github.com/chrisguidry/measured/actions)
-[![Code Coverage](https://img.shields.io/codecov/c/github/chrisguidry/measured?flag=python-3.10)](https://app.codecov.io/gh/chrisguidry/measured/)
+[![Code Coverage](https://img.shields.io/codecov/c/github/chrisguidry/measured?flag=python-3.11)](https://app.codecov.io/gh/chrisguidry/measured/)
 [![Documentation Status](https://readthedocs.org/projects/measured/badge/?version=latest)](https://measured.readthedocs.io/en/latest/?badge=latest)
 
 ```python
@@ -33,7 +33,7 @@ computing speed.
 ## Installing
 
 `measured` is available on [PyPi](https://pypi.org/project/measured), and is tested with
-with Python and PyPy 3.10+:
+with Python and PyPy 3.11+:
 
 ```bash
 $ pip install measured
