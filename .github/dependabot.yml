@@ -4,6 +4,11 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      # pytest-cov 7 starts measuring after the pytest11 entry point has
+      # imported measured, so coverage misses every module-level line.
+      - dependency-name: "pytest-cov"
+        versions: [">=7"]
     groups:
       all-dependencies:
         patterns:
