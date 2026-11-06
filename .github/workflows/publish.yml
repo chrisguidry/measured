@@ -4,6 +4,9 @@ on:
   release:
     types: ['created']
 
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     uses: ./.github/workflows/test.yml
