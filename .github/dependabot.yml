@@ -1,23 +1,34 @@
+# Terraform writes this file from github.com/chrisguidry/.github, and
+# writes it again over any change made here. To change it, edit this
+# repository's entry in repositories.yaml there.
+
 version: 2
 updates:
-  - package-ecosystem: "uv"
-    directory: "/"
+  - package-ecosystem: github-actions
+    directories: ["/"]
     schedule:
-      interval: "weekly"
+      interval: weekly
+    # A release has a week to be found bad and yanked before it lands here.
+    cooldown:
+      default-days: 7
+    # One pull request a week carries every update of this ecosystem.
+    groups:
+      github-actions:
+        patterns: ["*"]
+  - package-ecosystem: uv
+    directories: ["/"]
+    schedule:
+      interval: weekly
+    # A release has a week to be found bad and yanked before it lands here.
+    cooldown:
+      default-days: 7
+    # One pull request a week carries every update of this ecosystem.
+    groups:
+      uv:
+        patterns: ["*"]
     ignore:
-      # pytest-cov 7 starts measuring after the pytest11 entry point has
-      # imported measured, so coverage misses every module-level line.
+      # pytest-cov 7 starts measuring after the pytest11 entry point
+      # has imported measured, so coverage misses every module-level
+      # line.
       - dependency-name: "pytest-cov"
         versions: [">=7"]
-    groups:
-      all-dependencies:
-        patterns:
-          - "*"
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    groups:
-      all-actions:
-        patterns:
-          - "*"
