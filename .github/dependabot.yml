@@ -32,3 +32,8 @@ updates:
       # line.
       - dependency-name: "pytest-cov"
         versions: [">=7"]
+      # measured caps pymdown-extensions below 13 for its docs
+      # build, and 13 needs Python 3.11.5 where measured supports
+      # 3.11, so an update to it does not resolve.
+      - dependency-name: "pymdown-extensions"
+        versions: [">=13"]
