@@ -45,4 +45,4 @@ class QuantityTransformer(_parser.Transformer[Any, "Quantity"]):
     float = inline(float)
 
 
-parser: _parser.Lark = _parser.Parser(transformer=QuantityTransformer())  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType] lark generates _parser without annotations
+parser: _parser.Lark = _parser.Parser(transformer=QuantityTransformer())  # pyright: ignore[reportUnknownMemberType] lark generates _parser without annotations

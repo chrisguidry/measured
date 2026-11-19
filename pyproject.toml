@@ -111,6 +111,9 @@ exclude = ["src/measured/_parser.py"]
 
 [tool.pyright]
 include = ["src", "tests"]
+# pyright infers different types from lark's generated parser on newer Pythons,
+# so it checks against the oldest supported version whatever the interpreter.
+pythonVersion = "3.11"
 typeCheckingMode = "strict"
 enableTypeIgnoreComments = false
 reportUnnecessaryTypeIgnoreComment = "error"
