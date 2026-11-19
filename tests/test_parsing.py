@@ -4,7 +4,13 @@ import pytest
 from hypothesis import assume, example, given
 from hypothesis.strategies import floats, integers
 
-from measured import Numeric, Quantity, Unit, approximately, systems  # noqa: F401
+from measured import (
+    Numeric,
+    Quantity,
+    Unit,
+    approximately,
+    systems,  # noqa: F401  # pyright: ignore[reportUnusedImport] registers every unit system
+)
 from measured.hypothesis import units
 from measured.iec import Byte, Kibi
 from measured.parsing import ParseError

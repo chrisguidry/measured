@@ -7,13 +7,18 @@ from hypothesis.strategies import (
     sampled_from,
 )
 
-from measured import systems  # noqa: F401
-from measured import Dimension, Prefix, Quantity, Unit
+from measured import (
+    Dimension,
+    Prefix,
+    Quantity,
+    Unit,
+    systems,  # noqa: F401  # pyright: ignore[reportUnusedImport] registers every unit system
+)
 
 DIMENSIONS = sorted(Dimension.fundamental(), key=lambda d: d.exponents)
-PREFIXES = sorted(Prefix._by_name.values(), key=lambda p: (p.base, p.exponent))
+PREFIXES = sorted(Prefix._by_name.values(), key=lambda p: (p.base, p.exponent))  # pyright: ignore[reportPrivateUsage] internal to measured
 BASE_UNITS = sorted(Unit.base(), key=lambda u: u.name or "")
-UNITS = sorted(Unit._known.values(), key=lambda u: u.name or "")
+UNITS = sorted(Unit._known.values(), key=lambda u: u.name or "")  # pyright: ignore[reportPrivateUsage] internal to measured
 for this in BASE_UNITS:
     UNITS.append(this**2)
     UNITS.append(this**3)

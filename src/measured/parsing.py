@@ -1,6 +1,6 @@
 import operator
 from functools import reduce
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from measured import Numeric, One, Quantity, Unit
 
@@ -11,7 +11,9 @@ ParseError = _parser.LarkError
 
 
 class QuantityTransformer(_parser.Transformer[Any, "Quantity"]):
-    inline = _parser.v_args(inline=True)
+    inline: Callable[[Callable[..., Any]], Callable[..., Any]] = _parser.v_args(  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType] lark generates _parser without annotations
+        inline=True
+    )
 
     @inline
     def unit(self, numerator: Unit, denominator: Optional[Unit] = None) -> Unit:
@@ -43,4 +45,4 @@ class QuantityTransformer(_parser.Transformer[Any, "Quantity"]):
     float = inline(float)
 
 
-parser: _parser.Lark = _parser.Parser(transformer=QuantityTransformer())  # type: ignore
+parser: _parser.Lark = _parser.Parser(transformer=QuantityTransformer())  # pyright: ignore[reportUnknownMemberType] lark generates _parser without annotations

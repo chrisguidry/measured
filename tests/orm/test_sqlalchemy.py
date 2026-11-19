@@ -9,15 +9,16 @@ From the [SQLAlchemy documentation][1]:
 
     [1]: https://docs.sqlalchemy.org/en/20/orm/composites.html
 """
+
 import pytest
 
 pytest.importorskip("sqlalchemy")
 
-# flake8: noqa: E402 (imports not at top of file)
+# ruff: noqa: E402 (imports not at top of file)
 
 from typing import Generator, Tuple
 
-from sqlalchemy import Column, Float, Integer, String, create_engine, select
+from sqlalchemy import Column, Float, Integer, String, create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, composite, declarative_base
 
@@ -46,7 +47,7 @@ def test_quantity_composite_values_roundtrip(
 Base = declarative_base()
 
 
-class Measurement(Base):  # type: ignore
+class Measurement(Base):
     __tablename__ = "measurements"
 
     id = Column(Integer, primary_key=True)

@@ -44,9 +44,15 @@ from typing import (
     List,
     Mapping,
     Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    overload,
 )
 from typing import Pattern as REPattern
-from typing import Sequence, Set, Tuple, Type, TypeVar, Union, overload
 
 
 class LarkError(Exception):
@@ -590,7 +596,7 @@ class Tree(Generic[_Leaf_T]):
         return self.data
 
     def _pretty(self, level, indent_str):
-        yield f"{indent_str*level}{self._pretty_label()}"
+        yield f"{indent_str * level}{self._pretty_label()}"
         if len(self.children) == 1 and not isinstance(self.children[0], Tree):
             yield f"\t{self.children[0]}\n"
         else:
@@ -599,7 +605,7 @@ class Tree(Generic[_Leaf_T]):
                 if isinstance(n, Tree):
                     yield from n._pretty(level + 1, indent_str)
                 else:
-                    yield f"{indent_str*(level+1)}{n}\n"
+                    yield f"{indent_str * (level + 1)}{n}\n"
 
     def pretty(self, indent_str: str = "  ") -> str:
         # --
@@ -1452,8 +1458,7 @@ class Token(str):
         end_line: Optional[int] = None,
         end_column: Optional[int] = None,
         end_pos: Optional[int] = None,
-    ) -> "Token":
-        ...
+    ) -> "Token": ...
 
     @overload
     def __new__(
@@ -1466,8 +1471,7 @@ class Token(str):
         end_line: Optional[int] = None,
         end_column: Optional[int] = None,
         end_pos: Optional[int] = None,
-    ) -> "Token":
-        ...
+    ) -> "Token": ...
 
     def __new__(cls, *args, **kwargs):
         if "type_" in kwargs:
@@ -1510,14 +1514,12 @@ class Token(str):
     @overload
     def update(
         self, type: Optional[str] = None, value: Optional[Any] = None
-    ) -> "Token":
-        ...
+    ) -> "Token": ...
 
     @overload
     def update(
         self, type_: Optional[str] = None, value: Optional[Any] = None
-    ) -> "Token":
-        ...
+    ) -> "Token": ...
 
     def update(self, *args, **kwargs):
         if "type_" in kwargs:
@@ -1857,12 +1859,10 @@ class AbstractBasicLexer(Lexer):
     terminals_by_name: Dict[str, TerminalDef]
 
     @abstractmethod
-    def __init__(self, conf: "LexerConf", comparator=None) -> None:
-        ...
+    def __init__(self, conf: "LexerConf", comparator=None) -> None: ...
 
     @abstractmethod
-    def next_token(self, lex_state: LexerState, parser_state: Any = None) -> Token:
-        ...
+    def next_token(self, lex_state: LexerState, parser_state: Any = None) -> Token: ...
 
     def lex(self, state: LexerState, parser_state: Any) -> Iterator[Token]:
         with suppress(EOFError):
@@ -3145,9 +3145,9 @@ class ParsingFrontend(Serialize):
             self.parser = parser
         else:
             create_parser = _parser_creators.get(parser_conf.parser_type)
-            assert (
-                create_parser is not None
-            ), "{} is not supported in standalone mode".format(parser_conf.parser_type)
+            assert create_parser is not None, (
+                "{} is not supported in standalone mode".format(parser_conf.parser_type)
+            )
             self.parser = create_parser(lexer_conf, parser_conf, options)
 
         ##

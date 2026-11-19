@@ -19,19 +19,19 @@ def test_constructing_quantities_by_multiplying_units(value: Numeric) -> None:
 @pytest.mark.parametrize("value", ["nope", b"nah"])
 def test_construction_by_multiplication_only_with_number_types(value: Any) -> None:
     with pytest.raises(TypeError):
-        Meter * value
+        _ = Meter * value
 
     with pytest.raises(TypeError):
-        value * Meter
+        _ = value * Meter
 
 
 @pytest.mark.parametrize("value", ["nope", b"nah"])
 def test_construction_by_division_only_with_number_types(value: Any) -> None:
     with pytest.raises(TypeError):
-        Meter / value
+        _ = Meter / value
 
     with pytest.raises(TypeError):
-        value / Meter
+        _ = value / Meter
 
 
 def test_equality_only_with_quantities() -> None:
@@ -46,18 +46,18 @@ def test_equality_only_in_same_dimension() -> None:
 
 def test_addition_only_with_quantities() -> None:
     with pytest.raises(TypeError):
-        (5 * Meter) + 10  # type: ignore
+        (5 * Meter) + 10  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
     with pytest.raises(TypeError):
-        10 + (5 * Meter)  # type: ignore
+        10 + (5 * Meter)  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
 
 def test_subtraction_only_with_quantities() -> None:
     with pytest.raises(TypeError):
-        (5 * Meter) - 10  # type: ignore
+        (5 * Meter) - 10  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
     with pytest.raises(TypeError):
-        10 - (5 * Meter)  # type: ignore
+        10 - (5 * Meter)  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
 
 def test_multiplication_by_scalar() -> None:
@@ -81,15 +81,15 @@ def test_roots() -> None:
 
 def test_cannot_multiply_by_random_types() -> None:
     with pytest.raises(TypeError):
-        "hi" * (5 * Meter)  # type: ignore
+        "hi" * (5 * Meter)  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
     with pytest.raises(TypeError):
-        (5 * Meter) * "hi"  # type: ignore
+        (5 * Meter) * "hi"  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
 
 def test_cannot_divide_by_random_types() -> None:
     with pytest.raises(TypeError):
-        (5 * Meter) / "hi"  # type: ignore
+        (5 * Meter) / "hi"  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
 
 def test_negative() -> None:
@@ -113,21 +113,21 @@ def test_ordering() -> None:
 
 def test_ordering_only_with_quantities() -> None:
     with pytest.raises(TypeError):
-        1 * Meter <= 1
+        _ = 1 * Meter <= 1
 
 
 def test_ordering_only_within_dimension() -> None:
     with pytest.raises(TypeError):
-        1 * Meter < 1 * Second
+        _ = 1 * Meter < 1 * Second
 
     with pytest.raises(TypeError):
-        1 * Meter <= 1 * Second
+        _ = 1 * Meter <= 1 * Second
 
     with pytest.raises(TypeError):
-        1 * Meter > 1 * Second
+        _ = 1 * Meter > 1 * Second
 
     with pytest.raises(TypeError):
-        1 * Meter >= 1 * Second
+        _ = 1 * Meter >= 1 * Second
 
 
 def test_ordering_requires_types_with_a_conversion() -> None:
@@ -137,16 +137,16 @@ def test_ordering_requires_types_with_a_conversion() -> None:
     other = 1 * Bogie
 
     with pytest.raises(TypeError):
-        one < other
+        _ = one < other
 
     with pytest.raises(TypeError):
-        one <= other
+        _ = one <= other
 
     with pytest.raises(TypeError):
-        one > other
+        _ = one > other
 
     with pytest.raises(TypeError):
-        one >= other
+        _ = one >= other
 
 
 def test_ordering_requires_types_in_the_same_dimension() -> None:
@@ -154,16 +154,16 @@ def test_ordering_requires_types_in_the_same_dimension() -> None:
     other = 1 * Second
 
     with pytest.raises(TypeError):
-        one < other
+        _ = one < other
 
     with pytest.raises(TypeError):
-        one <= other
+        _ = one <= other
 
     with pytest.raises(TypeError):
-        one > other
+        _ = one > other
 
     with pytest.raises(TypeError):
-        one >= other
+        _ = one >= other
 
 
 def test_sorting() -> None:
@@ -190,7 +190,7 @@ def test_repr(quantity: Quantity) -> None:
 
 @given(quantity=quantities())
 def test_repr_roundtrips(quantity: Quantity) -> None:
-    from measured import Dimension, Prefix, Unit  # noqa: F401
+    from measured import Dimension, Prefix, Unit  # noqa: F401  # pyright: ignore[reportUnusedImport] eval reads them
 
     assert eval(repr(quantity)) == quantity
 

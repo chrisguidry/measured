@@ -24,7 +24,7 @@ def test_homogenous_under_addition(a: Unit, b: Unit) -> None:
         assert a + b == a
     else:
         with pytest.raises(TypeError):
-            a + b
+            _ = a + b
 
 
 @given(a=units(), b=units())
@@ -37,7 +37,7 @@ def test_homogenous_under_subtraction(a: Unit, b: Unit) -> None:
         assert a - b == a
     else:
         with pytest.raises(TypeError):
-            a - b
+            _ = a - b
 
 
 @given(a=units(), b=units(), c=units())
@@ -69,24 +69,24 @@ def test_abelian_commutativity(a: Unit, b: Unit) -> None:
 @given(unit=units())
 def test_no_dimensional_exponentation(unit: Unit) -> None:
     with pytest.raises(TypeError):
-        unit**unit  # type: ignore[operator]
+        unit**unit  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
 
 @given(unit=units())
 def test_no_floating_point_exponentation(unit: Unit) -> None:
     with pytest.raises(TypeError):
-        unit**0.5  # type: ignore[operator]
+        unit**0.5  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
 
 @given(unit=units())
 def test_no_fractional_exponentation(unit: Unit) -> None:
     with pytest.raises(TypeError):
-        unit ** Fraction(1, 2)  # type: ignore[operator]
+        unit ** Fraction(1, 2)  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
 
 @given(unit=units())
 def test_repr_roundtrips(unit: Unit) -> None:
-    from measured import Dimension, Prefix  # noqa: F401
+    from measured import Dimension, Prefix  # noqa: F401  # pyright: ignore[reportUnusedImport] eval reads them
 
     assert eval(repr(unit)) is unit
 
@@ -125,7 +125,7 @@ def test_roots() -> None:
 
 def test_only_integer_roots() -> None:
     with pytest.raises(TypeError):
-        (Meter**2).root(0.5)  # type: ignore[arg-type]
+        (Meter**2).root(0.5)  # pyright: ignore[reportArgumentType] the test passes a type the call rejects
 
 
 def test_whole_power_roots_only() -> None:

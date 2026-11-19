@@ -2,7 +2,7 @@ from typing import Any, List, Optional, Union
 
 from _pytest.config import Config
 
-from measured import Level, Measurement, Quantity, _div
+from measured import Level, Measurement, Quantity, _div  # pyright: ignore[reportPrivateUsage] internal to measured
 from measured.conversions import ConversionNotFound
 
 Comparable = Union[Quantity, Level, Measurement]
@@ -25,14 +25,14 @@ class MeasuredPlugin:
                 left_quantity = left.quantify()
             elif isinstance(left, Measurement):
                 left_quantity = left.measurand
-            elif isinstance(left, Quantity):
+            elif isinstance(left, Quantity):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
                 left_quantity = left
 
             if isinstance(right, Level):
                 right_quantity = right.quantify()
             elif isinstance(right, Measurement):
                 right_quantity = right.measurand
-            elif isinstance(right, Quantity):
+            elif isinstance(right, Quantity):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
                 right_quantity = right
 
             left_unit = left_quantity.unit
@@ -56,7 +56,7 @@ class MeasuredPlugin:
                 except ConversionNotFound:
                     difference = None
 
-            elif isinstance(right, Quantity):
+            elif isinstance(right, Quantity):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
                 try:
                     right_comparison = right.in_unit(left_unit)
                     difference = left_quantity - right_comparison

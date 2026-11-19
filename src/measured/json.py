@@ -1,7 +1,7 @@
 import json
 from contextlib import contextmanager
 from json import JSONDecoder, JSONEncoder
-from typing import Any, Callable, Dict, Generator, Optional, Union
+from typing import Any, Callable, Dict, Generator, Optional, Union, cast
 
 from . import Dimension, Prefix, Quantity, Unit
 
@@ -53,44 +53,46 @@ class MeasuredJSONDecoder(JSONDecoder):
 def codecs_installed() -> Generator[None, None, None]:
     """A context within which the standard library's `json` module will be aware of
     how to encode and decode `measured` objects."""
-    outermost_context = False
-    if not isinstance(json._default_encoder, MeasuredJSONEncoder):  # type: ignore
-        outermost_context = True
+    if isinstance(json._default_encoder, MeasuredJSONEncoder):  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType] typeshed omits json's module-level codecs
+        yield
+        return
 
-    if outermost_context:
-        original_encoder = json._default_encoder  # type: ignore
-        original_decoder = json._default_decoder  # type: ignore
-        original_object_hook = json.loads.__kwdefaults__["object_hook"]
+    original_encoder = json._default_encoder  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType] typeshed omits json's module-level codecs
+    original_decoder = json._default_decoder  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType] typeshed omits json's module-level codecs
+    original_object_hook = cast(Dict[str, Any], json.loads.__kwdefaults__)[
+        "object_hook"
+    ]
 
-        encoder = MeasuredJSONEncoder()
-        decoder = MeasuredJSONDecoder()
+    encoder = MeasuredJSONEncoder()
+    decoder = MeasuredJSONDecoder()
 
-        json._default_encoder = encoder  # type: ignore
-        json._default_decoder = decoder  # type: ignore
-        json.loads.__kwdefaults__["object_hook"] = decoder.object_hook
+    json._default_encoder = encoder  # pyright: ignore[reportAttributeAccessIssue] typeshed omits json's module-level codecs
+    json._default_decoder = decoder  # pyright: ignore[reportAttributeAccessIssue] typeshed omits json's module-level codecs
+    cast(Dict[str, Any], json.loads.__kwdefaults__)["object_hook"] = decoder.object_hook
 
-        try:
-            from pydantic.json import ENCODERS_BY_TYPE as PYDANTIC_ENCODERS_BY_TYPE
-        except ImportError:  # pragma: no cover
-            PYDANTIC_ENCODERS_BY_TYPE = {}
+    try:
+        from pydantic.json import ENCODERS_BY_TYPE as pydantic_encoders
+    except ImportError:  # pragma: no cover
+        pydantic_encoders = {}
 
-        PYDANTIC_ENCODERS_BY_TYPE[Dimension] = encoder
-        PYDANTIC_ENCODERS_BY_TYPE[Prefix] = encoder
-        PYDANTIC_ENCODERS_BY_TYPE[Unit] = encoder
-        PYDANTIC_ENCODERS_BY_TYPE[Quantity] = encoder
+    pydantic_encoders[Dimension] = encoder
+    pydantic_encoders[Prefix] = encoder
+    pydantic_encoders[Unit] = encoder
+    pydantic_encoders[Quantity] = encoder
 
     try:
         yield
     finally:
-        if outermost_context:
-            json._default_encoder = original_encoder  # type: ignore
-            json._default_decoder = original_decoder  # type: ignore
-            json.loads.__kwdefaults__["object_hook"] = original_object_hook
+        json._default_encoder = original_encoder  # pyright: ignore[reportAttributeAccessIssue] typeshed omits json's module-level codecs
+        json._default_decoder = original_decoder  # pyright: ignore[reportAttributeAccessIssue] typeshed omits json's module-level codecs
+        cast(Dict[str, Any], json.loads.__kwdefaults__)["object_hook"] = (
+            original_object_hook
+        )
 
-            del PYDANTIC_ENCODERS_BY_TYPE[Dimension]
-            del PYDANTIC_ENCODERS_BY_TYPE[Prefix]
-            del PYDANTIC_ENCODERS_BY_TYPE[Unit]
-            del PYDANTIC_ENCODERS_BY_TYPE[Quantity]
+        del pydantic_encoders[Dimension]
+        del pydantic_encoders[Prefix]
+        del pydantic_encoders[Unit]
+        del pydantic_encoders[Quantity]
 
 
 _installer = codecs_installed()

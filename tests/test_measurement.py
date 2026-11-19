@@ -31,10 +31,10 @@ def test_addition_with_quantity() -> None:
 @pytest.mark.parametrize("other", [(1.0, 1, Decimal("1.0"))])
 def test_addition_only_with_measurements(other: Any) -> None:
     with pytest.raises(TypeError):
-        Measurement(1 * Meter, 0.1) + other
+        _ = Measurement(1 * Meter, 0.1) + other
 
     with pytest.raises(TypeError):
-        other + Measurement(1 * Meter, 0.1)
+        _ = other + Measurement(1 * Meter, 0.1)
 
 
 def test_subtraction() -> None:
@@ -70,10 +70,10 @@ def test_subtraction_of_quantity() -> None:
 @pytest.mark.parametrize("other", [(1.0, 1, Decimal("1.0"))])
 def test_subtraction_only_with_measurements(other: Any) -> None:
     with pytest.raises(TypeError):
-        Measurement(1 * Meter, 0.1) - other
+        _ = Measurement(1 * Meter, 0.1) - other
 
     with pytest.raises(TypeError):
-        other - Measurement(1 * Meter, 0.1)
+        _ = other - Measurement(1 * Meter, 0.1)
 
 
 def test_multiplication() -> None:
@@ -102,17 +102,17 @@ def test_multiplication_by_quantity() -> None:
 
     area = length * width
     assert area.measurand == 120 * Foot**2
-    area.uncertainty == 1.0 * Foot**2
+    _ = area.uncertainty == 1.0 * Foot**2
     assert area.uncertainty_ratio == approx(0.00833333)
 
 
 @pytest.mark.parametrize("other", [(1.0, 1, Decimal("1.0"))])
 def test_multiplication_only_with_measurements(other: Any) -> None:
     with pytest.raises(TypeError):
-        Measurement(1 * Meter, 0.1) * other
+        _ = Measurement(1 * Meter, 0.1) * other
 
     with pytest.raises(TypeError):
-        other * Measurement(1 * Meter, 0.1)
+        _ = other * Measurement(1 * Meter, 0.1)
 
 
 def test_division() -> None:
@@ -154,10 +154,10 @@ def test_division_by_quantity() -> None:
 @pytest.mark.parametrize("other", [(1.0, 1, Decimal("1.0"))])
 def test_division_only_with_measurements(other: Any) -> None:
     with pytest.raises(TypeError):
-        Measurement(1 * Meter, 0.1) / other
+        _ = Measurement(1 * Meter, 0.1) / other
 
     with pytest.raises(TypeError):
-        other / Measurement(1 * Meter, 0.1)
+        _ = other / Measurement(1 * Meter, 0.1)
 
 
 def test_exponentation() -> None:
@@ -171,10 +171,10 @@ def test_exponentation() -> None:
 @pytest.mark.parametrize("other", [(1 * Meter, 1.0, Decimal("1.0"))])
 def test_exponentation_only_with_integers(other: Any) -> None:
     with pytest.raises(TypeError):
-        Measurement(1 * Meter, 0.1) ** other
+        _ = Measurement(1 * Meter, 0.1) ** other
 
     with pytest.raises(TypeError):
-        other ** Measurement(1 * Meter, 0.1)
+        _ = other ** Measurement(1 * Meter, 0.1)
 
 
 @pytest.mark.parametrize(
@@ -249,13 +249,13 @@ def test_inequalities_only_with_measurements_or_quantities() -> None:
     length = Measurement(10 * Meter, 1)
 
     with pytest.raises(TypeError):
-        length < 100
+        _ = length < 100
     with pytest.raises(TypeError):
-        length <= 100
+        _ = length <= 100
     with pytest.raises(TypeError):
-        length > 1
+        _ = length > 1
     with pytest.raises(TypeError):
-        length >= 1
+        _ = length >= 1
 
 
 def test_repr() -> None:

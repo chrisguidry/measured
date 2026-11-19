@@ -3,7 +3,7 @@
 `measured` is a library for measurements and quantities.
 
 [![PyPi](https://img.shields.io/pypi/v/measured)](https://pypi.org/project/measured)
-[![Build and test](https://github.com/chrisguidry/measured/actions/workflows/test.yml/badge.svg?event=push)](https://github.com/chrisguidry/measured/actions)
+[![Build and test](https://github.com/chrisguidry/measured/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/chrisguidry/measured/actions)
 [![Code Coverage](https://img.shields.io/codecov/c/github/chrisguidry/measured?flag=python-3.11)](https://app.codecov.io/gh/chrisguidry/measured/)
 [![Documentation Status](https://readthedocs.org/projects/measured/badge/?version=latest)](https://measured.readthedocs.io/en/latest/?badge=latest)
 
@@ -49,5 +49,21 @@ Docs](https://measured.readthedocs.io/).
 
 Contributions are welcome!  Please report bug and submit pull requests to
 https://github.com/chrisguidry/measured.
+
+Development uses [uv](https://docs.astral.sh/uv/).  To set up a checkout, run the
+tests, and run the same checks as CI:
+
+```bash
+$ uv sync
+$ uv run prek install
+$ uv run pytest
+$ uv run prek run --all-files
+```
+
+`prek` runs ruff, codespell, loq, and pyright.  To build the documentation:
+
+```bash
+$ uv run mkdocs build
+```
 
 [![Issues](https://img.shields.io/github/issues/chrisguidry/measured)](https://github.com/chrisguidry/measured/issues) [![Pull Requests](https://img.shields.io/github/issues-pr/chrisguidry/measured)](https://github.com/chrisguidry/measured/pulls)

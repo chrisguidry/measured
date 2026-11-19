@@ -25,7 +25,7 @@ def test_logarithmic_units_are_singletons() -> None:
 
 def test_logarithmic_units_are_not_compatible_with_linear_units() -> None:
     with pytest.raises(TypeError):
-        assert Meter * Bel  # type: ignore
+        assert Meter * Bel  # pyright: ignore[reportOperatorIssue] the test applies the operator to a type it rejects
 
 
 def test_logarithmic_units_can_be_multiplied_by_prefixes() -> None:
@@ -45,7 +45,7 @@ def test_logarithmic_units_can_be_multiplied_by_prefixes() -> None:
 
 def test_logarithmic_units_do_not_produce_levels() -> None:
     with pytest.raises(TypeError):
-        assert 10 * Bel  # type: ignore
+        assert 10 * Bel  # pyright: ignore[reportOperatorIssue] the test applies the operator to a type it rejects
 
 
 def test_logarithmic_units_have_names_and_symbols() -> None:
@@ -153,18 +153,18 @@ def test_logarithmic_addition() -> None:
 
 def test_addition_and_subtraction_only_by_levels() -> None:
     with pytest.raises(TypeError):
-        (10 * dBW) + (1 * Watt)  # type: ignore
+        (10 * dBW) + (1 * Watt)  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
     with pytest.raises(TypeError):
-        (10 * dBW) - (1 * Watt)  # type: ignore
+        (10 * dBW) - (1 * Watt)  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
 
 def test_addition_and_subtraction_only_within_same_unit() -> None:
     with pytest.raises(TypeError):
-        10 * dBW + 1 * Decibel[1 * Volt]
+        _ = 10 * dBW + 1 * Decibel[1 * Volt]
 
     with pytest.raises(TypeError):
-        10 * dBW - 1 * Decibel[1 * Volt]
+        _ = 10 * dBW - 1 * Decibel[1 * Volt]
 
 
 def test_logarithmic_subtraction() -> None:
@@ -184,10 +184,10 @@ def test_logarithmic_division() -> None:
 
 def test_logarithmic_multiplication_only_by_numerics() -> None:
     with pytest.raises(TypeError):
-        (10 * dBW) * (2 * dBW)  # type: ignore
+        (10 * dBW) * (2 * dBW)  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
     with pytest.raises(TypeError):
-        (10 * dBW) / (2 * dBW)  # type: ignore
+        (10 * dBW) / (2 * dBW)  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
 
 def test_power_ratios() -> None:

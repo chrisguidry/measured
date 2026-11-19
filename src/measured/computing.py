@@ -4,7 +4,7 @@ Units and non-standardized conventions from the domain of computing.
 Attributes: Unit
 
     Furman (Unit): A unit of `PlaneAngle` that divides the circle into 2¹⁶ divisions,
-        making it convenient for representation and arithmetic on a commputer.
+        making it convenient for representation and arithmetic on a computer.
 
     Nibble (Unit): A unit of `Information` equal to half a byte
 

@@ -1,13 +1,14 @@
 [build-system]
-requires = ["setuptools>=62", "setuptools_scm[toml]>=6.2"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 [project]
 name = "measured"
 description = "Fast and Pythonic library for working with measurements and quantities"
-readme = "README.md"
+readme = { file = "README.md", content-type = "text/markdown" }
 authors = [{ name = "Chris Guidry", email = "chris@theguidrys.us" }]
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE.txt"]
 requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -45,55 +46,47 @@ measured = "measured.cli:main"
 [project.entry-points.pytest11]
 measured = "measured.pytest"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-    "black[jupyter]",
-    "build",
     # cloudpickle's PyPy code path subclasses the pure-Python pickle.Pickler,
     # which PyPy no longer provides, so the import fails there
     'cloudpickle; implementation_name=="cpython"',
+    "codespell",
     "fastapi",
-    "flake8",
-    "flake8-black",
     "httpx",
     "hypothesis",
     "icecream",
-    "isort>=5.12.0",
     "ipython",
     "jupyter",
     "lark",
+    "loq",
     'memray; implementation_name=="cpython"',
     "mkdocs",
     "mkdocs-material",
     "mkdocstrings[python]",
-    "mypy",
+    "prek",
     # mkdocstrings 1.0.8 still calls pymdownx Highlight without the md
     # argument that pymdown-extensions 12 requires, so the docs build fails.
     "pymdown-extensions<13",
-    "pre-commit",
     "pydantic>2",
+    "pyright",
     "pytest",
     "pytest-asyncio",
     "pytest-benchmark",
     "pytest-cov<7",  # 7.x starts measuring after the pytest11 entry point imports measured
     "pytest-xdist",
+    "ruff",
     "snakeviz",
     "sqlalchemy",
-    "tox",
     "typer",
     "tuna",
-    "twine",
-    "wheel",
-    "types-sqlalchemy",
 ]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.hatch.version]
+source = "vcs"
 
-[tool.setuptools.package-data]
-measured = ["py.typed"]
-
-[tool.setuptools_scm]
+[tool.hatch.build.targets.wheel]
+packages = ["src/measured"]
 
 [tool.coverage.run]
 omit = [
@@ -101,36 +94,33 @@ omit = [
     "src/measured/pytest.py",
 ]
 
-[tool.isort]
-profile = "black"
+[tool.ruff]
+target-version = "py311"
 
-[tool.mypy]
-strict = true
-warn_unused_ignores = false
+[tool.ruff.lint]
+# ruff's default rules before 0.15, plus isort's import ordering
+select = ["E4", "E7", "E9", "F", "I"]
+# Physics names its quantities with single letters, such as I for current.
+ignore = ["E741"]
+# lark generates this module from measured.lark
+exclude = ["src/measured/_parser.py"]
 
-[[tool.mypy.overrides]]
-module = "measured.formatting"
-disallow_untyped_calls = false
+[tool.ruff.lint.per-file-ignores]
+# The notebooks explore the whole namespace with star imports.
+"tests/notebooks/*.ipynb" = ["F403", "F405"]
 
-[[tool.mypy.overrides]]
-module = "tests.test_formatting"
-disallow_untyped_calls = false
-
-[[tool.mypy.overrides]]
-module = "measured._parser"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "cloudpickle"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "icecream"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "IPython.lib.pretty"
-ignore_missing_imports = true
+[tool.pyright]
+include = ["src", "tests"]
+# pyright infers different types from lark's generated parser on newer Pythons,
+# so it checks against the oldest supported version whatever the interpreter.
+pythonVersion = "3.11"
+typeCheckingMode = "strict"
+enableTypeIgnoreComments = false
+reportUnnecessaryTypeIgnoreComment = "error"
+# lark generates this module from measured.lark
+ignore = ["src/measured/_parser.py"]
+venvPath = "."
+venv = ".venv"
 
 [tool.pytest.ini_options]
 minversion = "7.1"
@@ -153,3 +143,8 @@ filterwarnings = [
     "ignore:module 'sre_parse' is deprecated:DeprecationWarning",
     "ignore:module 'sre_constants' is deprecated:DeprecationWarning",
 ]
+
+[tool.codespell]
+# Unit names (the smoot, the light-year, the bushel's "bu.") and a test's
+# made-up unit
+ignore-words-list = "smoot,lightyear,bu,gud"

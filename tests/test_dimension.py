@@ -41,7 +41,7 @@ def test_homogenous_under_addition(a: Dimension, b: Dimension) -> None:
         assert a + b == a
     else:
         with pytest.raises(TypeError):
-            a + b
+            _ = a + b
 
 
 @given(a=dimensions(), b=dimensions())
@@ -54,7 +54,7 @@ def test_homogenous_under_subtraction(a: Dimension, b: Dimension) -> None:
         assert a - b == a
     else:
         with pytest.raises(TypeError):
-            a - b
+            _ = a - b
 
 
 @given(a=dimensions(), b=dimensions(), c=dimensions())
@@ -84,37 +84,37 @@ def test_abelian_commutativity(a: Dimension, b: Dimension) -> None:
 @given(dimension=dimensions())
 def test_no_dimensional_exponentation(dimension: Dimension) -> None:
     with pytest.raises(TypeError):
-        dimension**dimension  # type: ignore
+        dimension**dimension  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
 
 @given(dimension=dimensions())
 def test_no_floating_point_exponentation(dimension: Dimension) -> None:
     with pytest.raises(TypeError):
-        dimension**0.5  # type: ignore
+        dimension**0.5  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
 
 @given(dimension=dimensions())
 def test_no_fractional_exponentation(dimension: Dimension) -> None:
     with pytest.raises(TypeError):
-        dimension ** Fraction(1, 2)  # type: ignore
+        dimension ** Fraction(1, 2)  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
 
 @given(dimension=dimensions())
 def test_only_dimensional_multiplication(dimension: Dimension) -> None:
     with pytest.raises(TypeError):
-        5 * dimension  # type: ignore
+        5 * dimension  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
     with pytest.raises(TypeError):
-        dimension * 5  # type: ignore
+        dimension * 5  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
 
 @given(dimension=dimensions())
 def test_only_dimensional_division(dimension: Dimension) -> None:
     with pytest.raises(TypeError):
-        dimension / 5  # type: ignore
+        dimension / 5  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
     with pytest.raises(TypeError):
-        5 / dimension  # type: ignore
+        5 / dimension  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
 
 @given(dimension=dimensions())
@@ -237,7 +237,7 @@ def test_roots() -> None:
 
 def test_only_integer_roots() -> None:
     with pytest.raises(TypeError):
-        Area.root(0.5)  # type: ignore
+        Area.root(0.5)  # pyright: ignore[reportArgumentType] the test passes a type the call rejects
 
 
 def test_whole_power_roots_only() -> None:

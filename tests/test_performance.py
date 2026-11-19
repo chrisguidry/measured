@@ -1,3 +1,5 @@
+from typing import cast
+
 from pytest_benchmark.fixture import BenchmarkFixture
 
 from measured import One, Quantity
@@ -10,7 +12,7 @@ def test_quantity_construction(benchmark: BenchmarkFixture) -> None:
     def quantity_construction() -> Quantity:
         return Quantity(1000001, Meter)
 
-    result = benchmark(quantity_construction)
+    result = cast(Quantity, benchmark(quantity_construction))
 
     assert result == Quantity(1000001, Meter)
 
@@ -52,4 +54,5 @@ def test_complicated_conversions(benchmark: BenchmarkFixture) -> None:
     def divide() -> Quantity:
         return (t / o).in_unit(One)
 
-    assert benchmark(divide).unit == One
+    quotient = cast(Quantity, benchmark(divide))
+    assert quotient.unit == One

@@ -24,12 +24,12 @@ from measured.us import (
     ],
 )
 def test_areas_equal(left: Quantity, right: Quantity) -> None:
-    assert (
-        left == right
-    ), f"{left} != {right.in_unit(left.unit)} or {right} != {left.in_unit(right.unit)}"
-    assert (
-        right == left
-    ), f"{right} != {left.in_unit(right.unit)} or {left} != {right.in_unit(left.unit)}"
+    assert left == right, (
+        f"{left} != {right.in_unit(left.unit)} or {right} != {left.in_unit(right.unit)}"
+    )
+    assert right == left, (
+        f"{right} != {left.in_unit(right.unit)} or {left} != {right.in_unit(left.unit)}"
+    )
 
 
 @pytest.mark.parametrize(

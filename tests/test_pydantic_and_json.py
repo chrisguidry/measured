@@ -98,19 +98,19 @@ def test_quantity_field() -> None:
 
 
 def test_dimension_field_from_string() -> None:
-    model = ExampleModel(dimension="length")  # type: ignore[arg-type]
+    model = ExampleModel(dimension="length")  # pyright: ignore[reportArgumentType] the test passes a type the call rejects
     assert model.dimension == Length
     assert model.dimension is Length
 
 
 def test_prefix_field_from_string() -> None:
-    model = ExampleModel(prefix="kilo")  # type: ignore[arg-type]
+    model = ExampleModel(prefix="kilo")  # pyright: ignore[reportArgumentType] the test passes a type the call rejects
     assert model.prefix == Kilo
     assert model.prefix is Kilo
 
 
 def test_unit_field_from_string() -> None:
-    model = ExampleModel(unit="meter")  # type: ignore[arg-type]
+    model = ExampleModel(unit="meter")  # pyright: ignore[reportArgumentType] the test passes a type the call rejects
     assert model.unit == Meter
     assert model.unit is Meter
 
@@ -137,37 +137,37 @@ def test_quantity_field_from_none() -> None:
 
 def test_dimension_field_from_incompatible() -> None:
     with pytest.raises(ValueError):
-        ExampleModel(dimension=11)  # type: ignore[arg-type]
+        ExampleModel(dimension=11)  # pyright: ignore[reportArgumentType] the test passes a type the call rejects
 
 
 def test_prefix_field_from_incompatible() -> None:
     with pytest.raises(ValueError):
-        ExampleModel(prefix=11)  # type: ignore[arg-type]
+        ExampleModel(prefix=11)  # pyright: ignore[reportArgumentType] the test passes a type the call rejects
 
 
 def test_unit_field_from_incompatible() -> None:
     with pytest.raises(ValueError):
-        ExampleModel(unit=11)  # type: ignore[arg-type]
+        ExampleModel(unit=11)  # pyright: ignore[reportArgumentType] the test passes a type the call rejects
 
 
 def test_quantity_field_from_incompatible() -> None:
     with pytest.raises(ValueError):
-        ExampleModel(quantity=11)  # type: ignore[arg-type]
+        ExampleModel(quantity=11)  # pyright: ignore[reportArgumentType] the test passes a type the call rejects
 
 
 def test_dimension_field_from_string_must_exist() -> None:
     with pytest.raises(ValueError, match="'flibbity' is not a named Dimension"):
-        ExampleModel(dimension="flibbity")  # type: ignore[arg-type]
+        ExampleModel(dimension="flibbity")  # pyright: ignore[reportArgumentType] the test passes a type the call rejects
 
 
 def test_prefix_field_from_string_must_exist() -> None:
     with pytest.raises(ValueError, match="'kibbity' is not a named Prefix"):
-        ExampleModel(prefix="kibbity")  # type: ignore[arg-type]
+        ExampleModel(prefix="kibbity")  # pyright: ignore[reportArgumentType] the test passes a type the call rejects
 
 
 def test_unit_field_from_string_must_exist() -> None:
     with pytest.raises(ValueError, match="'kibbity' is not a named Unit"):
-        ExampleModel(unit="kibbity")  # type: ignore[arg-type]
+        ExampleModel(unit="kibbity")  # pyright: ignore[reportArgumentType] the test passes a type the call rejects
 
 
 @pytest.fixture
@@ -262,11 +262,11 @@ def test_decimal_json_roundtrip(codecs_installed: None, example: ExampleModel) -
 def api(codecs_installed: None) -> FastAPI:
     app = FastAPI()
 
-    @app.post("/example")  # type: ignore[misc]
+    @app.post("/example")
     def echo_example(example: ExampleModel) -> ExampleModel:
         return example
 
-    @app.post("/parent")  # type: ignore[misc]
+    @app.post("/parent")
     def echo_parent(parent: ParentModel) -> ParentModel:
         return parent
 
@@ -275,7 +275,7 @@ def api(codecs_installed: None) -> FastAPI:
 
 @pytest.fixture
 async def client(api: FastAPI) -> AsyncGenerator[AsyncClient, None]:
-    transport = ASGITransport(app=api)  # type: ignore[arg-type]
+    transport = ASGITransport(app=api)
     async with AsyncClient(base_url="http://measured", transport=transport) as client:
         yield client
 

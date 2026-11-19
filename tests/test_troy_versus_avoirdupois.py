@@ -17,7 +17,7 @@ def test_troy_ounce_ratio() -> None:
 
 
 def test_troy_ounce_conversion() -> None:
-    (1 * troy.Ounce).in_unit(
+    _ = (1 * troy.Ounce).in_unit(
         avoirdupois.Ounce
     ) == 1.0971428571428572 * avoirdupois.Ounce
 

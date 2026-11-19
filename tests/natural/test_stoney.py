@@ -14,10 +14,7 @@ from measured.si import Coulomb, Kilogram, Meter, Second
         (e, 1 * StoneyCharge),
         (
             kₑ,
-            1
-            * (
-                (StoneyLength**3 * StoneyMass) / (StoneyTime**2 * StoneyCharge**2)
-            ),
+            1 * ((StoneyLength**3 * StoneyMass) / (StoneyTime**2 * StoneyCharge**2)),
         ),
         (ℏ, α**-1 * ((StoneyLength**2 * StoneyMass) / StoneyTime)),
     ],

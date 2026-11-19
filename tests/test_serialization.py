@@ -5,7 +5,7 @@ from types import ModuleType
 from typing import Generator, List, Union
 
 try:
-    import cloudpickle
+    import cloudpickle  # pyright: ignore[reportMissingTypeStubs] cloudpickle ships no type information
 except ImportError:  # pragma: no cover
     cloudpickle = None
 
