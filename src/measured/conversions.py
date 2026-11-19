@@ -2,6 +2,7 @@ import functools
 import operator
 from collections import defaultdict
 from functools import reduce
+from math import gcd
 from typing import Dict, Iterable, List, Set, Tuple, TypeVar
 
 from measured import (
@@ -17,8 +18,6 @@ from measured import (
     _mul,  # pyright: ignore[reportPrivateUsage] internal to measured
     ic,  # noqa: F401  # pyright: ignore[reportUnusedImport] kept at hand for debugging
 )
-
-from .compat import gcd
 
 Ratio = Numeric
 Offset = Numeric
