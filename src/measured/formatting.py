@@ -1,8 +1,7 @@
 import math
+from collections.abc import Callable, Sequence
 from functools import wraps
-from typing import TYPE_CHECKING, Callable, Optional, Sequence, Tuple, TypeVar
-
-from typing_extensions import TypeAlias
+from typing import TYPE_CHECKING, Optional, Tuple, TypeAlias, TypeVar
 
 if TYPE_CHECKING:  # pragma: no cover
     from contextlib import AbstractContextManager
