@@ -1,0 +1,12 @@
+default_max_lines = 500
+respect_gitignore = true
+# lark generates src/measured/_parser.py from src/measured/measured.lark.
+exclude = ["**/uv.lock", "**/.git/**", "src/measured/_parser.py"]
+
+[[rules]]
+path = "src/measured/__init__.py"
+max_lines = 2280
+
+[[rules]]
+path = "src/measured/formatting.py"
+max_lines = 609

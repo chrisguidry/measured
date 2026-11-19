@@ -14,10 +14,7 @@ from measured.si import Joule, Kelvin, Kilogram, Meter, Second
         (G, 1 * (PlanckLength**3 / (PlanckMass * PlanckTime**2))),
         (
             k,
-            1
-            * (
-                (PlanckLength**2 * PlanckMass) / (PlanckTemperature * PlanckTime**2)
-            ),
+            1 * ((PlanckLength**2 * PlanckMass) / (PlanckTemperature * PlanckTime**2)),
         ),
     ],
 )

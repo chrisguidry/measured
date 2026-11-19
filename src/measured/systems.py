@@ -1,4 +1,4 @@
-from measured import (  # noqa: F401
+from measured import (
     acoustics,
     apocrypha,
     astronomical,
@@ -17,3 +17,24 @@ from measured import (  # noqa: F401
     troy,
     us,
 )
+
+# Importing this module registers the units of every system.
+__all__ = [
+    "acoustics",
+    "apocrypha",
+    "astronomical",
+    "avoirdupois",
+    "computing",
+    "electronics",
+    "energy",
+    "eu",
+    "fff",
+    "iec",
+    "iso",
+    "metric",
+    "music",
+    "natural",
+    "si",
+    "troy",
+    "us",
+]

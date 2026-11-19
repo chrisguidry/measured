@@ -23,10 +23,10 @@ def test_area_equivalence() -> None:
 
 
 def test_area_conversions() -> None:
-    assert (1 * Meter**2).in_unit(cm**2).unit is cm ** 2
+    assert (1 * Meter**2).in_unit(cm**2).unit is cm**2
     assert (1 * Meter**2).in_unit(cm**2).magnitude == 10000
 
-    assert (1 * Meter**2).in_unit(km**2).unit is km ** 2
+    assert (1 * Meter**2).in_unit(km**2).unit is km**2
     assert (1 * Meter**2).in_unit(km**2).magnitude == 0.000001
 
 

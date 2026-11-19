@@ -14,11 +14,7 @@ from measured.si import Coulomb, Kilogram, Meter, Second
         (ℏ, 1 * ((AtomicLength**2 * AtomicMass) / AtomicTime)),
         (
             kₑ,
-            (
-                1
-                * (AtomicLength**3 * AtomicMass)
-                / (AtomicTime**2 * AtomicCharge**2)
-            ),
+            (1 * (AtomicLength**3 * AtomicMass) / (AtomicTime**2 * AtomicCharge**2)),
         ),
         (c, α**-1 * (AtomicLength / AtomicTime)),
     ],

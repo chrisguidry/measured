@@ -5,6 +5,7 @@ Attributes: LogarithmicUnits
 
     dBW (LogarithmicUnit): Decibels of `Power`, compared to 1 `Watt`
 """
+
 from measured import Decibel
 from measured.si import Watt
 

@@ -3,7 +3,14 @@ import textwrap
 from argparse import ArgumentParser, RawTextHelpFormatter
 from typing import Generator, Iterable, Optional, Set, Tuple
 
-from measured import Quantity, Unit, _add, _mul, conversions, systems  # noqa: F401
+from measured import (
+    Quantity,
+    Unit,
+    _add,  # pyright: ignore[reportPrivateUsage] internal to measured
+    _mul,  # pyright: ignore[reportPrivateUsage] internal to measured
+    conversions,
+    systems,  # noqa: F401  # pyright: ignore[reportUnusedImport] registers every unit system
+)
 
 parser = ArgumentParser(
     description="Unit conversions with measured",
@@ -37,11 +44,11 @@ def all_equivalents(
     else:
         visited.add(unit)
 
-    for other, ratio in conversions._ratios[unit].items():
+    for other, ratio in conversions._ratios[unit].items():  # pyright: ignore[reportPrivateUsage] internal to measured
         if other in visited:
             continue
 
-        offset = conversions._offsets[unit].get(other, 0)
+        offset = conversions._offsets[unit].get(other, 0)  # pyright: ignore[reportPrivateUsage] internal to measured
 
         magnitude = _add(_mul(quantity.magnitude, ratio), offset)
         next_quantity = Quantity(magnitude, other)
@@ -70,7 +77,7 @@ def dot_aligned(
 
 
 def print_unit_list() -> None:
-    for symbol, unit in Unit._by_symbol.items():
+    for symbol, unit in Unit._by_symbol.items():  # pyright: ignore[reportPrivateUsage] internal to measured
         print(f"{symbol} ({unit.name}, {unit.dimension.name or unit.dimension.symbol})")
 
 

@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING, Callable, Optional, Sequence, Tuple, TypeVar
 from typing_extensions import TypeAlias
 
 if TYPE_CHECKING:  # pragma: no cover
-    from IPython.lib.pretty import RepresentationPrinter
+    from contextlib import AbstractContextManager
+    from typing import Protocol
 
     from measured import (
         Dimension,
@@ -18,6 +19,20 @@ if TYPE_CHECKING:  # pragma: no cover
         Quantity,
         Unit,
     )
+
+    class PrettyPrinter(Protocol):
+        """The methods of IPython's RepresentationPrinter that the formatters call"""
+
+        def text(self, obj: str) -> None: ...
+
+        def break_(self) -> None: ...
+
+        def pretty(self, obj: object) -> object: ...
+
+        def group(
+            self, indent: int = 0, open: str = "", close: str = ""
+        ) -> AbstractContextManager[None]: ...
+
 
 SUPERSCRIPTS = {
     "-": "⁻",
@@ -88,7 +103,7 @@ def dimension_str(dimension: "Dimension") -> str:
     return (
         "⋅".join(
             f"{fundamental.symbol}{superscript(dimension.exponents[i])}"
-            for i, fundamental in enumerate(dimension._fundamental)
+            for i, fundamental in enumerate(dimension._fundamental)  # pyright: ignore[reportPrivateUsage] internal to measured
             if dimension.exponents[i] != 0
         )
         or "?"
@@ -96,7 +111,7 @@ def dimension_str(dimension: "Dimension") -> str:
 
 
 def dimension_pretty(
-    dimension: "Dimension", pretty: "RepresentationPrinter", cycle: bool
+    dimension: "Dimension", pretty: "PrettyPrinter", cycle: bool
 ) -> None:
     """Formats the given Dimension to the provided pretty printer"""
     with pretty.group():
@@ -123,7 +138,7 @@ def dimension_mathml(dimension: "Dimension") -> str:
                 "</mn>"
                 "</msup>"
             )
-            for i, dimension in enumerate(dimension._fundamental)
+            for i, dimension in enumerate(dimension._fundamental)  # pyright: ignore[reportPrivateUsage] internal to measured
             if numerator.exponents[i] != 0
         )
         or "<mi>1</mi>"
@@ -138,7 +153,7 @@ def dimension_mathml(dimension: "Dimension") -> str:
             "</mn>"
             "</msup>"
         )
-        for i, dimension in enumerate(dimension._fundamental)
+        for i, dimension in enumerate(dimension._fundamental)  # pyright: ignore[reportPrivateUsage] internal to measured
         if denominator.exponents[i] != 0
     )
 
@@ -162,9 +177,7 @@ def prefix_str(prefix: "Prefix") -> str:
     return f"{prefix.base}{superscript(prefix.exponent)}"
 
 
-def prefix_pretty(
-    prefix: "Prefix", pretty: "RepresentationPrinter", cycle: bool
-) -> None:
+def prefix_pretty(prefix: "Prefix", pretty: "PrettyPrinter", cycle: bool) -> None:
     """Formats the given Prefix to the provided pretty printer"""
     with pretty.group():
         pretty.text(str(prefix))
@@ -264,7 +277,7 @@ def unit_format(unit: "Unit", format_specifier: str) -> str:
     raise ValueError(f"Unrecognized format specifier {format_specifier!r}")
 
 
-def unit_pretty(unit: "Unit", pretty: "RepresentationPrinter", cycle: bool) -> None:
+def unit_pretty(unit: "Unit", pretty: "PrettyPrinter", cycle: bool) -> None:
     """Formats the given Unit to the provided pretty printer"""
     with pretty.group():
         if unit.symbol:
@@ -359,9 +372,7 @@ def quantity_format(quantity: "Quantity", format_specifier: str) -> str:
     return f"{magnitude} {unit}"
 
 
-def quantity_pretty(
-    quantity: "Quantity", pretty: "RepresentationPrinter", cycle: bool
-) -> None:
+def quantity_pretty(quantity: "Quantity", pretty: "PrettyPrinter", cycle: bool) -> None:
     """Formats the given Quantity to the provided pretty printer"""
     with pretty.group():
         pretty.text(f"{quantity::/}")
@@ -418,7 +429,7 @@ def logarithm_str(logarithm: "Logarithm") -> str:
 
 
 def logarithm_pretty(
-    logarithm: "Logarithm", pretty: "RepresentationPrinter", cycle: bool
+    logarithm: "Logarithm", pretty: "PrettyPrinter", cycle: bool
 ) -> None:
     """Formats the given Logarithm to the provided pretty printer"""
     with pretty.group():
@@ -470,7 +481,7 @@ def logarithmic_unit_str(logarithmic_unit: "LogarithmicUnit") -> str:
 
 
 def logarithmic_unit_pretty(
-    logarithmic_unit: "LogarithmicUnit", pretty: "RepresentationPrinter", cycle: bool
+    logarithmic_unit: "LogarithmicUnit", pretty: "PrettyPrinter", cycle: bool
 ) -> None:
     """Formats the given LogarithmicUnit to the provided pretty printer"""
     with pretty.group():
@@ -504,7 +515,7 @@ def level_str(level: "Level") -> str:
     return f"{level.magnitude} {level.unit}"
 
 
-def level_pretty(level: "Level", pretty: "RepresentationPrinter", cycle: bool) -> None:
+def level_pretty(level: "Level", pretty: "PrettyPrinter", cycle: bool) -> None:
     """Formats the given Level to the provided pretty printer"""
     with pretty.group():
         pretty.text(str(level))
@@ -569,7 +580,7 @@ def measurement_format(measurement: "Measurement", format_specifier: str) -> str
 
 
 def measurement_pretty(
-    measurement: "Measurement", pretty: "RepresentationPrinter", cycle: bool
+    measurement: "Measurement", pretty: "PrettyPrinter", cycle: bool
 ) -> None:
     """Formats the given Measurement to the provided pretty printer"""
     with pretty.group():

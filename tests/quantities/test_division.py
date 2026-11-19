@@ -19,7 +19,7 @@ def test_division_of_numbers_by_float_quantities() -> None:
 
 def test_only_numbers_may_be_divided_by_quantities() -> None:
     with pytest.raises(TypeError):
-        "wat" / (1 * Meter)  # type: ignore
+        "wat" / (1 * Meter)  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
     with pytest.raises(TypeError):
-        Length / (1 * Meter)  # type: ignore
+        Length / (1 * Meter)  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects

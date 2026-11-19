@@ -1,18 +1,16 @@
 from io import StringIO
-from reprlib import Repr
 
 import pytest
 
 pytest.importorskip("IPython")
 
-# flake8: noqa: E402 (imports not at top of file)
+# ruff: noqa: E402 (imports not at top of file)
 
 from typing import Union
 from xml.etree import ElementTree
 
 from IPython.lib.pretty import RepresentationPrinter
 
-from measured import systems  # noqa: F401
 from measured import (
     Area,
     Decibel,
@@ -29,6 +27,7 @@ from measured import (
     Unit,
     Volume,
     VolumetricFlow,
+    systems,  # noqa: F401  # pyright: ignore[reportUnusedImport] registers every unit system
 )
 from measured.electronics import dBW
 from measured.formatting import superscript
@@ -152,8 +151,13 @@ Formattable = Union[Dimension, Prefix, Unit, Quantity, Measurement]
 
 
 @pytest.fixture
-def pretty() -> RepresentationPrinter:
-    return RepresentationPrinter(output=StringIO())
+def output() -> StringIO:
+    return StringIO()
+
+
+@pytest.fixture
+def pretty(output: StringIO) -> RepresentationPrinter:
+    return RepresentationPrinter(output=output)
 
 
 @pytest.mark.parametrize(
@@ -177,11 +181,11 @@ def pretty() -> RepresentationPrinter:
     ],
 )
 def test_pretty_repr_includes_string_and_repr_of_self(
-    formattable: Formattable, pretty: RepresentationPrinter
+    formattable: Formattable, pretty: RepresentationPrinter, output: StringIO
 ) -> None:
-    formattable._repr_pretty_(pretty, False)
-    assert str(formattable) in pretty.output.getvalue()
-    assert repr(formattable) in pretty.output.getvalue()
+    formattable._repr_pretty_(pretty, False)  # pyright: ignore[reportPrivateUsage] IPython's protocol method
+    assert str(formattable) in output.getvalue()
+    assert repr(formattable) in output.getvalue()
 
 
 @pytest.mark.parametrize(
@@ -193,10 +197,13 @@ def test_pretty_repr_includes_string_and_repr_of_self(
     ],
 )
 def test_pretty_repr_includes_string_of_self(
-    formattable: Formattable, specifier: str, pretty: RepresentationPrinter
+    formattable: Formattable,
+    specifier: str,
+    pretty: RepresentationPrinter,
+    output: StringIO,
 ) -> None:
-    formattable._repr_pretty_(pretty, False)
-    assert formattable.__format__(specifier) in pretty.output.getvalue()
+    formattable._repr_pretty_(pretty, False)  # pyright: ignore[reportPrivateUsage] IPython's protocol method
+    assert formattable.__format__(specifier) in output.getvalue()
 
 
 @pytest.mark.parametrize(
@@ -231,7 +238,7 @@ def test_pretty_repr_includes_string_of_self(
     ],
 )
 def test_html_is_mathml(formattable: Formattable) -> None:
-    math = ElementTree.fromstring(formattable._repr_html_())
+    math = ElementTree.fromstring(formattable._repr_html_())  # pyright: ignore[reportPrivateUsage] IPython's protocol method
     assert math.tag == "math"
 
 
@@ -243,7 +250,7 @@ def test_html_is_mathml(formattable: Formattable) -> None:
     ],
 )
 def test_mathml_root_is_fraction(formattable: Formattable) -> None:
-    math = ElementTree.fromstring(formattable._repr_html_())
+    math = ElementTree.fromstring(formattable._repr_html_())  # pyright: ignore[reportPrivateUsage] IPython's protocol method
     assert math[0].tag == "mfrac"
 
 
@@ -259,7 +266,7 @@ def test_mathml_root_is_fraction(formattable: Formattable) -> None:
     ],
 )
 def test_mathml_root_is_identifier(formattable: Formattable) -> None:
-    math = ElementTree.fromstring(formattable._repr_html_())
+    math = ElementTree.fromstring(formattable._repr_html_())  # pyright: ignore[reportPrivateUsage] IPython's protocol method
     assert math[0].tag == "mi"
 
 
@@ -284,5 +291,5 @@ def test_mathml_root_is_identifier(formattable: Formattable) -> None:
     ],
 )
 def test_mathml_root_is_subexpression(formattable: Formattable) -> None:
-    math = ElementTree.fromstring(formattable._repr_html_())
+    math = ElementTree.fromstring(formattable._repr_html_())  # pyright: ignore[reportPrivateUsage] IPython's protocol method
     assert math[0].tag == "mrow"

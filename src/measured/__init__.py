@@ -178,7 +178,10 @@ if TYPE_CHECKING:  # pragma: no cover
 try:
     from icecream import ic as _ic
 except ImportError:  # pragma: no cover
-    _ic = lambda *a: None if not a else (a[0] if len(a) == 1 else a)  # noqa
+
+    def _ic(*a: Any) -> Any:
+        return None if not a else (a[0] if len(a) == 1 else a)
+
 
 ic = _ic
 
@@ -190,7 +193,7 @@ Numeric = Union[int, float, Decimal]
 
 class FractionalDimensionError(ValueError):
     """Raised when computing the nth root of a Dimension, Prefix, or Unit would result
-    in a non-integer dimesion"""
+    in a non-integer dimension"""
 
     def __init__(self, degree: int, value: Union["Dimension", "Prefix", "Unit"]):
         super().__init__(
@@ -204,7 +207,7 @@ class Dimension:
 
     Unless you're doing something really cool, you probably won't instantiate new
     dimensions directly.  Instead, you'll import the base dimensions and combine them
-    through multiplication, division, or exponentation.
+    through multiplication, division, or exponentiation.
 
     Attributes:
         name (Optional[str]): The name of this dimension, which may not be set in the
@@ -236,7 +239,7 @@ class Dimension:
         'length'
 
         These dimensions form the basis for more complex dimensions, which can be
-        produced through multiplication, exponentation, and division.
+        produced through multiplication, exponentiation, and division.
 
         >>> from measured import Area, Volume, Frequency, Speed
         >>> assert Area == Length * Length
@@ -440,13 +443,13 @@ class Dimension:
 
             return cls._by_name[value]
 
-        if isinstance(value, Dimension):
+        if isinstance(value, Dimension):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return value
 
         raise ValueError(f"No conversion from {value!r} to Dimension")
 
-    __repr__ = formatting.dimension_repr
-    __str__ = formatting.dimension_str
+    __repr__ = formatting.dimension_repr  # pyright: ignore[reportAssignmentType] the formatter names its parameter for the type
+    __str__ = formatting.dimension_str  # pyright: ignore[reportAssignmentType] the formatter names its parameter for the type
     _repr_pretty_ = formatting.dimension_pretty
     _repr_html_ = formatting.mathml(formatting.dimension_mathml)
 
@@ -476,35 +479,35 @@ class Dimension:
 
     @staticmethod
     @lru_cache(maxsize=None)
-    def _multiply(self: "Dimension", other: "Dimension") -> "Dimension":
-        return Dimension(tuple(s + o for s, o in zip(self.exponents, other.exponents)))
+    def _multiply(left: "Dimension", right: "Dimension") -> "Dimension":
+        return Dimension(tuple(s + o for s, o in zip(left.exponents, right.exponents)))
 
     def __mul__(self, other: "Dimension") -> "Dimension":
-        if not isinstance(other, Dimension):
+        if not isinstance(other, Dimension):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return NotImplemented
 
         return Dimension._multiply(self, other)
 
     @staticmethod
     @lru_cache(maxsize=None)
-    def _divide(self: "Dimension", other: "Dimension") -> "Dimension":
-        return Dimension(tuple(s - o for s, o in zip(self.exponents, other.exponents)))
+    def _divide(left: "Dimension", right: "Dimension") -> "Dimension":
+        return Dimension(tuple(s - o for s, o in zip(left.exponents, right.exponents)))
 
     def __truediv__(self, other: "Dimension") -> "Dimension":
-        if not isinstance(other, Dimension):
+        if not isinstance(other, Dimension):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return NotImplemented
 
         return Dimension._divide(self, other)
 
     def __pow__(self, power: int) -> "Dimension":
-        if not isinstance(power, int):
+        if not isinstance(power, int):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return NotImplemented
 
         return Dimension(tuple(s * power for s in self.exponents))
 
     def root(self, degree: int) -> "Dimension":
         """Returns the nth root of this Dimension"""
-        if not isinstance(degree, int):
+        if not isinstance(degree, int):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             raise TypeError(f"degree should be an integer, not {type(degree)}")
 
         if degree == 0:
@@ -722,13 +725,13 @@ class Prefix:
 
             return cls._by_name[value]
 
-        if isinstance(value, Prefix):
+        if isinstance(value, Prefix):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return value
 
         raise ValueError(f"No conversion from {value!r} to Prefix")
 
-    __repr__ = formatting.prefix_repr
-    __str__ = formatting.prefix_str
+    __repr__ = formatting.prefix_repr  # pyright: ignore[reportAssignmentType] the formatter names its parameter for the type
+    __str__ = formatting.prefix_str  # pyright: ignore[reportAssignmentType] the formatter names its parameter for the type
     _repr_pretty_ = formatting.prefix_pretty
     _repr_html_ = formatting.mathml(formatting.prefix_mathml)
 
@@ -736,16 +739,13 @@ class Prefix:
         return cast(Numeric, self.base**self.exponent)
 
     @overload
-    def __mul__(self, other: "Prefix") -> "Prefix":
-        ...  # pragma: no cover
+    def __mul__(self, other: "Prefix") -> "Prefix": ...  # pragma: no cover
 
     @overload
-    def __mul__(self, other: "Unit") -> "Unit":
-        ...  # pragma: no cover
+    def __mul__(self, other: "Unit") -> "Unit": ...  # pragma: no cover
 
     @overload
-    def __mul__(self, other: Numeric) -> "Quantity":
-        ...  # pragma: no cover
+    def __mul__(self, other: Numeric) -> "Quantity": ...  # pragma: no cover
 
     def __mul__(
         self, other: Union["Prefix", "Unit", Numeric]
@@ -768,7 +768,7 @@ class Prefix:
         if isinstance(other, Unit):
             return Unit(other.prefix * self, other.factors, other.dimension)
 
-        if isinstance(other, NUMERIC_CLASSES):
+        if isinstance(other, NUMERIC_CLASSES):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return (other * One) * self.quantify()
 
         return NotImplemented
@@ -776,7 +776,7 @@ class Prefix:
     __rmul__ = __mul__
 
     def __truediv__(self, other: "Prefix") -> "Prefix":
-        if not isinstance(other, Prefix):
+        if not isinstance(other, Prefix):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return NotImplemented
 
         if other.base == 0:
@@ -796,7 +796,7 @@ class Prefix:
 
     def root(self, degree: int) -> "Prefix":
         """Returns the nth root of this Prefix"""
-        if not isinstance(degree, int):
+        if not isinstance(degree, int):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             raise TypeError(f"degree should be an integer, not {type(degree)}")
 
         if degree == 0:
@@ -1021,7 +1021,9 @@ class Unit:
     def __getnewargs_ex__(
         self,
     ) -> Tuple[Tuple[Prefix, Mapping["Unit", int], Dimension], Dict[str, Any]]:
-        factors = {} if self.factors == {self: 1} else self.factors
+        factors: Mapping["Unit", int] = (
+            {} if self.factors == {self: 1} else self.factors
+        )
         args = (self.prefix, factors, self.dimension)
         kwargs = {"name": self.name, "symbol": self.symbol}
         return args, kwargs
@@ -1079,13 +1081,13 @@ class Unit:
 
             return cls._by_name[value]
 
-        if isinstance(value, Unit):
+        if isinstance(value, Unit):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return value
 
         raise ValueError(f"No conversion from {value!r} to Unit")
 
-    __repr__ = formatting.unit_repr
-    __str__ = formatting.unit_str
+    __repr__ = formatting.unit_repr  # pyright: ignore[reportAssignmentType] the formatter names its parameter for the type
+    __str__ = formatting.unit_str  # pyright: ignore[reportAssignmentType] the formatter names its parameter for the type
     __format__ = formatting.unit_format
     _repr_pretty_ = formatting.unit_pretty
     _repr_html_ = formatting.mathml(formatting.unit_mathml)
@@ -1121,7 +1123,7 @@ class Unit:
             >>> assert Unit.parse('m^2/s') == Unit.parse('m²⋅s⁻¹')
             >>> assert Unit.parse('m^2*s') == Unit.parse('m²⋅s')
         """
-        return cast(Unit, parser.parse(string, start="unit"))
+        return cast(Unit, parser.parse(string, start="unit"))  # pyright: ignore[reportUnknownMemberType] lark generates _parser without annotations
 
     @classmethod
     def _simplify(cls, factors: Mapping["Unit", int]) -> Dict["Unit", int]:
@@ -1161,30 +1163,28 @@ class Unit:
 
     @staticmethod
     @lru_cache(maxsize=None)
-    def _multiply(self: "Unit", other: "Unit") -> "Unit":
-        dimension = self.dimension * other.dimension
-        prefix = self.prefix * other.prefix
+    def _multiply(left: "Unit", right: "Unit") -> "Unit":
+        dimension = left.dimension * right.dimension
+        prefix = left.prefix * right.prefix
 
-        factors: Dict["Unit", int] = defaultdict(int, self.factors)
-        for unit, exponent in other.factors.items():
+        factors: Dict["Unit", int] = defaultdict(int, left.factors)
+        for unit, exponent in right.factors.items():
             factors[unit] += exponent
-        factors = self._simplify(factors)
+        factors = left._simplify(factors)
 
         return Unit(prefix, factors, dimension)
 
     @overload
-    def __mul__(self, other: "Unit") -> "Unit":
-        ...  # pragma: no cover
+    def __mul__(self, other: "Unit") -> "Unit": ...  # pragma: no cover
 
     @overload
-    def __mul__(self, other: Numeric) -> "Quantity":
-        ...  # pragma: no cover
+    def __mul__(self, other: Numeric) -> "Quantity": ...  # pragma: no cover
 
     def __mul__(self, other: Union["Unit", Numeric]) -> Union["Unit", "Quantity"]:
         if isinstance(other, NUMERIC_CLASSES):
             return Quantity(other, self)
 
-        if not isinstance(other, Unit):
+        if not isinstance(other, Unit):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return NotImplemented
 
         return Unit._multiply(self, other)
@@ -1193,25 +1193,25 @@ class Unit:
 
     @staticmethod
     @lru_cache(maxsize=None)
-    def _divide(self: "Unit", other: "Unit") -> "Unit":
-        dimension = self.dimension / other.dimension
-        prefix = self.prefix / other.prefix
+    def _divide(left: "Unit", right: "Unit") -> "Unit":
+        dimension = left.dimension / right.dimension
+        prefix = left.prefix / right.prefix
 
-        factors: Dict["Unit", int] = defaultdict(int, self.factors)
-        for unit, exponent in other.factors.items():
+        factors: Dict["Unit", int] = defaultdict(int, left.factors)
+        for unit, exponent in right.factors.items():
             factors[unit] -= exponent
-        factors = self._simplify(factors)
+        factors = left._simplify(factors)
 
         return Unit(prefix, factors, dimension)
 
     def __truediv__(self, other: "Unit") -> "Unit":
-        if not isinstance(other, Unit):
+        if not isinstance(other, Unit):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return NotImplemented
 
         return Unit._divide(self, other)
 
     def __pow__(self, power: int) -> "Unit":
-        if not isinstance(power, int):
+        if not isinstance(power, int):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return NotImplemented
 
         dimension = self.dimension**power
@@ -1224,7 +1224,7 @@ class Unit:
 
     def root(self, degree: int) -> "Unit":
         """Returns the nth root of this Unit"""
-        if not isinstance(degree, int):
+        if not isinstance(degree, int):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             raise TypeError(f"degree should be an integer, not {type(degree)}")
 
         if degree == 0:
@@ -1420,8 +1420,8 @@ class Quantity:
         """
         return self.magnitude, str(self.unit)
 
-    __repr__ = formatting.quantity_repr
-    __str__ = formatting.quantity_str
+    __repr__ = formatting.quantity_repr  # pyright: ignore[reportAssignmentType] the formatter names its parameter for the type
+    __str__ = formatting.quantity_str  # pyright: ignore[reportAssignmentType] the formatter names its parameter for the type
     __format__ = formatting.quantity_format
     _repr_pretty_ = formatting.quantity_pretty
     _repr_html_ = formatting.mathml(formatting.quantity_mathml)
@@ -1456,20 +1456,20 @@ class Quantity:
             >>> assert Quantity.parse('2 m^2/s') == Quantity.parse('2 m²⋅s⁻¹')
             >>> assert Quantity.parse('2 m^2*s') == Quantity.parse('2 m²⋅s')
         """
-        return cast(Quantity, parser.parse(string, start="quantity"))
+        return cast(Quantity, parser.parse(string, start="quantity"))  # pyright: ignore[reportUnknownMemberType] lark generates _parser without annotations
 
     def __hash__(self) -> int:
         return hash((self.magnitude, self.unit))
 
     def __add__(self, other: "Quantity") -> "Quantity":
-        if isinstance(other, Quantity):
+        if isinstance(other, Quantity):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             other = other.in_unit(self.unit)
             return Quantity(_add(self.magnitude, other.magnitude), self.unit)
 
         return NotImplemented
 
     def __sub__(self, other: "Quantity") -> "Quantity":
-        if isinstance(other, Quantity):
+        if isinstance(other, Quantity):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             other = other.in_unit(self.unit)
             return Quantity(_sub(self.magnitude, other.magnitude), self.unit)
 
@@ -1484,7 +1484,7 @@ class Quantity:
                 _mul(self.magnitude, other.magnitude), self.unit * other.unit
             )
 
-        if isinstance(other, NUMERIC_CLASSES):
+        if isinstance(other, NUMERIC_CLASSES):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return Quantity(_mul(self.magnitude, other), self.unit)
 
         return NotImplemented
@@ -1500,13 +1500,13 @@ class Quantity:
                 _div(self.magnitude, other.magnitude), self.unit / other.unit
             )
 
-        if isinstance(other, NUMERIC_CLASSES):
+        if isinstance(other, NUMERIC_CLASSES):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return Quantity(_div(self.magnitude, other), self.unit)
 
         return NotImplemented
 
     def __rtruediv__(self, other: Numeric) -> "Quantity":
-        if isinstance(other, NUMERIC_CLASSES):
+        if isinstance(other, NUMERIC_CLASSES):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return Quantity(_div(other, self.magnitude), self.unit)
 
         return NotImplemented
@@ -1652,13 +1652,13 @@ class Logarithm:
         self.symbol = symbol
         return self
 
-    __repr__ = formatting.logarithm_repr
-    __str__ = formatting.logarithm_str
+    __repr__ = formatting.logarithm_repr  # pyright: ignore[reportAssignmentType] the formatter names its parameter for the type
+    __str__ = formatting.logarithm_str  # pyright: ignore[reportAssignmentType] the formatter names its parameter for the type
     _repr_pretty_ = formatting.logarithm_pretty
     _repr_html_ = formatting.mathml(formatting.logarithm_mathml)
 
     def __mul__(self, other: Prefix) -> "Logarithm":
-        if isinstance(other, Prefix):
+        if isinstance(other, Prefix):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return Logarithm(self.base, prefix=self.prefix * other)
 
         return NotImplemented
@@ -1755,8 +1755,8 @@ class LogarithmicUnit:
             return 2
         return 1
 
-    __repr__ = formatting.logarithmic_unit_repr
-    __str__ = formatting.logarithmic_unit_str
+    __repr__ = formatting.logarithmic_unit_repr  # pyright: ignore[reportAssignmentType] the formatter names its parameter for the type
+    __str__ = formatting.logarithmic_unit_str  # pyright: ignore[reportAssignmentType] the formatter names its parameter for the type
     _repr_pretty_ = formatting.logarithmic_unit_pretty
     _repr_html_ = formatting.mathml(formatting.logarithmic_unit_mathml)
 
@@ -1794,8 +1794,8 @@ class Level:
         self.magnitude = magnitude
         self.unit = unit
 
-    __repr__ = formatting.level_repr
-    __str__ = formatting.level_str
+    __repr__ = formatting.level_repr  # pyright: ignore[reportAssignmentType] the formatter names its parameter for the type
+    __str__ = formatting.level_str  # pyright: ignore[reportAssignmentType] the formatter names its parameter for the type
     _repr_pretty_ = formatting.level_pretty
     _repr_html_ = formatting.mathml(formatting.level_mathml)
 
@@ -1810,7 +1810,7 @@ class Level:
         return magnitude * reference
 
     def __add__(self, other: "Level") -> "Level":
-        if isinstance(other, Level):
+        if isinstance(other, Level):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             if other.unit != self.unit:
                 return NotImplemented
 
@@ -1831,7 +1831,7 @@ class Level:
         return NotImplemented
 
     def __sub__(self, other: "Level") -> "Level":
-        if isinstance(other, Level):
+        if isinstance(other, Level):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             if other.unit != self.unit:
                 return NotImplemented
 
@@ -1852,13 +1852,13 @@ class Level:
         return NotImplemented
 
     def __mul__(self, other: Numeric) -> "Level":
-        if isinstance(other, NUMERIC_CLASSES):
+        if isinstance(other, NUMERIC_CLASSES):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return Level(_add(self.magnitude, other), self.unit)
 
         return NotImplemented
 
     def __truediv__(self, other: Numeric) -> "Level":
-        if isinstance(other, NUMERIC_CLASSES):
+        if isinstance(other, NUMERIC_CLASSES):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return Level(_sub(self.magnitude, other), self.unit)
 
         return NotImplemented
@@ -1965,8 +1965,8 @@ class Measurement:
         """The uncertainty, expressed as a percent of the magnitude of the measurand"""
         return float(self.uncertainty_ratio) * 100
 
-    __repr__ = formatting.measurement_repr
-    __str__ = formatting.measurement_str
+    __repr__ = formatting.measurement_repr  # pyright: ignore[reportAssignmentType] the formatter names its parameter for the type
+    __str__ = formatting.measurement_str  # pyright: ignore[reportAssignmentType] the formatter names its parameter for the type
     __format__ = formatting.measurement_format
     _repr_pretty_ = formatting.measurement_pretty
     _repr_html_ = formatting.mathml(formatting.measurement_mathml)
@@ -2052,7 +2052,7 @@ class Measurement:
         if isinstance(other, Quantity):
             other = Measurement(other, 0)
 
-        if not isinstance(other, Measurement):
+        if not isinstance(other, Measurement):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return NotImplemented
 
         measurand = self.measurand + other.measurand
@@ -2065,7 +2065,7 @@ class Measurement:
         if isinstance(other, Quantity):
             other = Measurement(other, 0)
 
-        if not isinstance(other, Measurement):
+        if not isinstance(other, Measurement):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return NotImplemented
 
         measurand = self.measurand - other.measurand
@@ -2076,7 +2076,7 @@ class Measurement:
         if isinstance(other, Quantity):
             other = Measurement(other, 0)
 
-        if not isinstance(other, Measurement):
+        if not isinstance(other, Measurement):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return NotImplemented
 
         return other - self
@@ -2085,7 +2085,7 @@ class Measurement:
         if isinstance(other, Quantity):
             other = Measurement(other, 0)
 
-        if not isinstance(other, Measurement):
+        if not isinstance(other, Measurement):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return NotImplemented
 
         measurand = self.measurand * other.measurand
@@ -2098,7 +2098,7 @@ class Measurement:
         if isinstance(other, Quantity):
             other = Measurement(other, 0)
 
-        if not isinstance(other, Measurement):
+        if not isinstance(other, Measurement):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return NotImplemented
 
         measurand = self.measurand / other.measurand
@@ -2128,13 +2128,13 @@ class Measurement:
         if isinstance(other, Quantity):
             other = Measurement(other, 0)
 
-        if not isinstance(other, Measurement):
+        if not isinstance(other, Measurement):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return NotImplemented
 
         return other / self
 
     def __pow__(self, exponent: int) -> "Measurement":
-        if not isinstance(exponent, int):
+        if not isinstance(exponent, int):  # pyright: ignore[reportUnnecessaryIsInstance] guards callers that do not type-check
             return NotImplemented
 
         measurand = self.measurand**exponent

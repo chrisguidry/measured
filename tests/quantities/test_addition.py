@@ -84,7 +84,7 @@ def test_addition_of_different_units(a: Quantity, b: Quantity, c: Quantity) -> N
 
 def test_addition_requires_same_dimension() -> None:
     with pytest.raises(conversions.ConversionNotFound):
-        (1 * Meter) + (1 * Second)
+        _ = (1 * Meter) + (1 * Second)
 
 
 @pytest.mark.parametrize(
@@ -101,4 +101,4 @@ def test_subtraction_of_different_units(a: Quantity, b: Quantity, c: Quantity) -
 
 def test_subtraction_requires_same_dimension() -> None:
     with pytest.raises(conversions.ConversionNotFound):
-        (1 * Meter) - (1 * Second)
+        _ = (1 * Meter) - (1 * Second)

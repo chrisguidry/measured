@@ -4,7 +4,6 @@ from collections import defaultdict
 from functools import reduce
 from typing import Dict, Iterable, List, Set, Tuple, TypeVar
 
-from measured import ic  # noqa: F401
 from measured import (
     Dimension,
     FractionalDimensionError,
@@ -13,9 +12,10 @@ from measured import (
     One,
     Quantity,
     Unit,
-    _add,
-    _div,
-    _mul,
+    _add,  # pyright: ignore[reportPrivateUsage] internal to measured
+    _div,  # pyright: ignore[reportPrivateUsage] internal to measured
+    _mul,  # pyright: ignore[reportPrivateUsage] internal to measured
+    ic,  # noqa: F401  # pyright: ignore[reportUnusedImport] kept at hand for debugging
 )
 
 from .compat import gcd
@@ -115,7 +115,7 @@ def _plan_conversion(start: Unit, end: Unit) -> Plan:
     plan += _match_factors(start_factors, end_factors)
     plan += [
         (1, end, start, exponent)
-        for ratio, start, end, exponent in _match_factors(end_factors, start_factors)
+        for _ratio, start, end, exponent in _match_factors(end_factors, start_factors)
     ]
 
     plan += _cancel_factors(end_factors)

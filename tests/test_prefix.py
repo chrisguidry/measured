@@ -100,18 +100,18 @@ def test_associative_in_denominator() -> None:
 
 def test_multiplying_by_random_things() -> None:
     with pytest.raises(TypeError):
-        "hello" * Kilo  # type: ignore
+        "hello" * Kilo  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
     with pytest.raises(TypeError):
-        Kilo * "hello"  # type: ignore
+        Kilo * "hello"  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
 
 def test_dividing_by_random_things() -> None:
     with pytest.raises(TypeError):
-        "hello" / Kilo  # type: ignore
+        "hello" / Kilo  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
     with pytest.raises(TypeError):
-        Kilo / "hello"  # type: ignore
+        Kilo / "hello"  # pyright: ignore[reportOperatorIssue, reportUnusedExpression] the test applies the operator to a type it rejects
 
 
 def test_prefixed_complex_units() -> None:
@@ -152,7 +152,7 @@ def test_roots() -> None:
 
 def test_only_integer_roots() -> None:
     with pytest.raises(TypeError):
-        Deci.root(0.5)  # type: ignore
+        Deci.root(0.5)  # pyright: ignore[reportArgumentType] the test passes a type the call rejects
 
 
 def test_whole_power_roots_only() -> None:
